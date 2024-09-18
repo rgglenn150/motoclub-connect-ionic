@@ -6,10 +6,14 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-
-  constructor() { }
-
-  ngOnInit() {
+  constructor() {
+   
   }
 
+  ngOnInit() {
+    setTimeout(() => {
+      console.log('rgdb token : ', localStorage.getItem('token'));
+    }, 3000);
+    
+  }
 }

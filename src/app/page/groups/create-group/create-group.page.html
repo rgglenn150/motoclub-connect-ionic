@@ -1,0 +1,35 @@
+<ion-header>
+  <ion-toolbar>
+    <!-- Back Button -->
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/"></ion-back-button> <!-- Provide a fallback URL with defaultHref -->
+    </ion-buttons>
+    <ion-title>Create new group</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-list>
+    <ion-item>
+      <ion-label position="floating">Group Name</ion-label>
+      <ion-input [(ngModel)]="groupName" required></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">Description</ion-label>
+      <ion-textarea [(ngModel)]="description" required></ion-textarea>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">Location</ion-label>
+      <ion-input [(ngModel)]="location"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">Number of Members</ion-label>
+      <ion-input type="number" [(ngModel)]="membersCount"></ion-input>
+    </ion-item>
+
+    <ion-button expand="block" (click)="registerGroup()">Register Group</ion-button>
+  </ion-list>
+</ion-content>

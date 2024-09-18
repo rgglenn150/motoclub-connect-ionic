@@ -10,11 +10,12 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "dev":"ionic serve",
-    "android":"ionic cordova run android"
+    "dev": "ionic serve",
+    "android": "ionic cordova run android"
   },
   "private": true,
   "dependencies": {
+    "@angular/animations": "^18.2.5",
     "@angular/common": "^14.0.0",
     "@angular/core": "^14.0.0",
     "@angular/forms": "^14.0.0",

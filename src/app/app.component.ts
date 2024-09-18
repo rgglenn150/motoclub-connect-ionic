@@ -12,7 +12,7 @@ export class AppComponent {
 
   ngOnInit() {
     const token = localStorage.getItem('token');
-    alert(token==='undefined')
+    
     if (!token || token==='undefined') {
       this.router.navigate(['/login']);
     }
