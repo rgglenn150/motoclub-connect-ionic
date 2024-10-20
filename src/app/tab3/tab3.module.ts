@@ -1,8 +1,8 @@
 import { IonicModule } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
-import { NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Tab3Page } from './tab3.page';
 import { ExploreContainerComponentModule } from '../explore-container/explore-container.module';
 
@@ -17,8 +17,10 @@ import { MePageModule } from '../page/me/me.module';
     ExploreContainerComponentModule,
     MePageModule,
     RouterModule.forChild([{ path: '', component: Tab3Page }]),
-    Tab3PageRoutingModule,
+    MePageModule,
+    ReactiveFormsModule
   ],
-  declarations: [Tab3Page]
+  declarations: [Tab3Page],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class Tab3PageModule {}

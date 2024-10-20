@@ -8,12 +8,12 @@
       <ion-card-content>
         <form [formGroup]="loginForm" >
           <ion-item>
-            <ion-label position="floating">Email</ion-label>
-            <ion-input formControlName="email" type="email"></ion-input>
+           
+            <ion-input formControlName="email" label="Email" type="email"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-label position="floating">Password</ion-label>
-            <ion-input formControlName="password" type="password"></ion-input>
+           
+            <ion-input formControlName="password" label="Password" type="password"></ion-input>
           </ion-item>
           <ion-button color="dark" fill="clear" size="full">Forgot password</ion-button>
           <ion-button color="primary" size="full" (click)="login()">Login</ion-button>

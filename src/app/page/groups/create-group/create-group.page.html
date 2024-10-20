@@ -11,23 +11,23 @@
 <ion-content class="ion-padding">
   <ion-list>
     <ion-item>
-      <ion-label position="floating">Group Name</ion-label>
-      <ion-input [(ngModel)]="groupName" required></ion-input>
+     
+      <ion-input label="Group Name" [(ngModel)]="groupName" required></ion-input>
     </ion-item>
 
     <ion-item>
-      <ion-label position="floating">Description</ion-label>
-      <ion-textarea [(ngModel)]="description" required></ion-textarea>
+      
+      <ion-textarea label="Group Description" [(ngModel)]="description" required></ion-textarea>
     </ion-item>
 
     <ion-item>
-      <ion-label position="floating">Location</ion-label>
-      <ion-input [(ngModel)]="location"></ion-input>
+      
+      <ion-input label="Location" [(ngModel)]="location"></ion-input>
     </ion-item>
 
     <ion-item>
-      <ion-label position="floating">Number of Members</ion-label>
-      <ion-input type="number" [(ngModel)]="membersCount"></ion-input>
+      
+      <ion-input label="Members Count" type="number" [(ngModel)]="membersCount"></ion-input>
     </ion-item>
 
     <ion-button expand="block" (click)="registerGroup()">Register Group</ion-button>

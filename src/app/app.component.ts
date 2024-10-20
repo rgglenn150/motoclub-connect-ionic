@@ -12,6 +12,7 @@ export class AppComponent {
 
   ngOnInit() {
     const token = localStorage.getItem('token');
+    console.log('rgdb token : ', token);
     
     if (!token || token==='undefined') {
       this.router.navigate(['/login']);
