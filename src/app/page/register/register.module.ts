@@ -11,15 +11,13 @@ import { RegisterPage } from './register.page';
 
 @NgModule({
   imports: [
-    
     CommonModule,
     FormsModule,
     IonicModule,
     ReactiveFormsModule,
-    
   ],
   declarations: [RegisterPage],
   exports: [RegisterPage],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA,NO_ERRORS_SCHEMA],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class RegisterPageModule {}
