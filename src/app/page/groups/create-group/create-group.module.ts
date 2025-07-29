@@ -13,7 +13,7 @@ import { CreateGroupPageRoutingModule } from './create-group-routing.module';
     CommonModule,
     FormsModule,
     IonicModule,
-    CreateGroupPageRoutingModule
+    CreateGroupPageRoutingModule,ReactiveFormsModule
   ],
   declarations: [CreateGroupPage],
   exports: [CreateGroupPage],

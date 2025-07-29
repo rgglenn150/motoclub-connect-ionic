@@ -1,8 +1,123 @@
-ion-button[color="dark"] {
-  text-transform: initial;
+/* "Asphalt UI" Styles for Login Page
+  - Defines the color palette and typography from the style guide.
+  - Styles all elements for a modern, rugged look and feel.
+*/
+
+// --- Asphalt UI Color Palette ---
+:host {
+  --asphalt-primary: #2D3748;      // Charcoal
+  --asphalt-secondary: #4A5568;    // Slate Gray
+  --asphalt-accent: #F59E0B;       // Amber
+  --asphalt-danger: #EF4444;       // Red
+  --asphalt-text: #F7FAFC;         // Off-White
+  --asphalt-text-muted: #A0AEC0;   // Muted Gray for subtitles
 }
 
-
-ion-content {
-  --background: var(--ion-color-primary);
+// --- Global Page Styles ---
+.asphalt-background {
+  --background: var(--asphalt-primary);
+  --color: var(--asphalt-text);
 }
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: 0 32px;
+}
+
+// --- Title Section ---
+.title-section {
+  margin-bottom: 48px;
+}
+
+.app-title {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--asphalt-text);
+  letter-spacing: 1px;
+}
+
+.app-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: var(--asphalt-text-muted);
+}
+
+// --- Form Styling ---
+.login-form {
+  width: 100%;
+}
+
+.asphalt-input-item {
+  --background: var(--asphalt-secondary);
+  --padding-start: 16px;
+  --highlight-height: 0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.asphalt-icon {
+  color: var(--asphalt-accent);
+  margin-right: 8px;
+}
+
+.asphalt-input {
+  --color: var(--asphalt-text);
+  font-family: 'Inter', sans-serif;
+}
+
+// --- Links & Buttons ---
+.forgot-password-link {
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.asphalt-text-button {
+  --color: var(--asphalt-accent);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.asphalt-button-primary {
+  --background: var(--asphalt-accent);
+  --background-activated: #d3860a;
+  --background-focused: #d3860a;
+  --color: var(--asphalt-primary);
+  --border-radius: 8px;
+  --box-shadow: none;
+  height: 48px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  margin-top: 16px;
+}
+
+// --- Error Message ---
+.error-message {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--asphalt-danger);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+// --- Registration Link ---
+.register-link {
+  margin-top: 32px;
+  p {
+    font-family: 'Inter', sans-serif;
+    color: var(--asphalt-text-muted);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+

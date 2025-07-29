@@ -1,7 +1,125 @@
-.center-content {
+/* "Asphalt UI" Styles for Create Group Page
+  - Imports variables from the login page for consistency.
+  - Adds styles for new components like image uploader and toggle.
+*/
+
+// --- Import Asphalt UI Color Palette ---
+// Note: In a real app, these variables would live in a global file like variables.scss
+:host {
+  --asphalt-primary: #2D3748;
+  --asphalt-secondary: #4A5568;
+  --asphalt-accent: #F59E0B;
+  --asphalt-danger: #EF4444;
+  --asphalt-text: #F7FAFC;
+  --asphalt-text-muted: #A0AEC0;
+}
+
+// --- Global Page & Header Styles ---
+.asphalt-background {
+  --background: var(--asphalt-primary);
+}
+
+.asphalt-header ion-toolbar {
+  --background: var(--asphalt-secondary);
+  --color: var(--asphalt-text);
+}
+
+.asphalt-header ion-title {
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+// --- Image Uploader ---
+.image-uploader {
+  background-color: var(--asphalt-secondary);
+  border-radius: 8px;
+  height: 150px;
+  margin-bottom: 24px;
   display: flex;
-  justify-content: center;  /* Center horizontally */
-  align-items: center;      /* Center vertically */
-  height: 100%;             /* Full height of the screen */
-  text-align: center;       /* Ensures the button is centered */
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed var(--asphalt-text-muted);
+  cursor: pointer;
+  overflow: hidden;
+
+  .group-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--asphalt-text-muted);
+  }
+
+  .placeholder-icon {
+    font-size: 3rem;
+  }
+}
+
+// --- Form Items ---
+.asphalt-input-item, .asphalt-textarea-item {
+  --background: var(--asphalt-secondary);
+  --padding-start: 16px;
+  --highlight-height: 0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: var(--asphalt-text);
+}
+
+.asphalt-textarea-item {
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+}
+
+.asphalt-icon {
+  color: var(--asphalt-accent);
+  margin-right: 8px;
+}
+
+// --- Toggle ---
+.asphalt-toggle-item {
+  --background: transparent;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+
+.asphalt-toggle {
+  --background: var(--asphalt-secondary);
+  --background-checked: var(--asphalt-secondary);
+  --handle-background: var(--asphalt-text-muted);
+  --handle-background-checked: var(--asphalt-accent);
+}
+
+.field-description {
+  font-size: 0.8rem;
+  color: var(--asphalt-text-muted);
+  margin-top: -12px;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+// --- Footer & Button ---
+.asphalt-footer ion-toolbar {
+  --background: var(--asphalt-primary);
+  padding: 8px 16px;
+}
+
+.asphalt-button-primary {
+  --background: var(--asphalt-accent);
+  --background-activated: #d3860a;
+  --background-focused: #d3860a;
+  --color: var(--asphalt-primary);
+  --border-radius: 8px;
+  --box-shadow: none;
+  height: 48px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  margin: 0;
 }
