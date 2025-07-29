@@ -1,25 +1,72 @@
-<ion-content>
-  <div class="flex-center">
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title color="primary">MotoClub Connect</ion-card-title>
-      </ion-card-header>
+<!-- 
+  Redesigned Login Page
+  - Applies the "Asphalt UI" dark theme.
+  - Introduces a strong visual hierarchy.
+  - Adds icons and clearer calls-to-action.
+-->
+<ion-content class="asphalt-background">
+  <div class="login-container">
 
-      <ion-card-content>
-        <form [formGroup]="loginForm" >
-          <ion-item>
-            <ion-label position="floating">Email</ion-label>
-            <ion-input formControlName="email" type="email"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label position="floating">Password</ion-label>
-            <ion-input formControlName="password" type="password"></ion-input>
-          </ion-item>
-          <ion-button color="dark" fill="clear" size="full">Forgot password</ion-button>
-          <ion-button color="primary" size="full" (click)="login()">Login</ion-button>
-          <ion-button color="primary" fill="clear" size="full" (click)="goToRegister()">Register</ion-button>
-        </form>
-      </ion-card-content>
-    </ion-card>
+    <!-- App Logo/Title Section -->
+    <div class="ion-text-center title-section">
+      <h1 class="app-title">MotoClub Connect</h1>
+      <p class="app-subtitle">Sign in to join the ride</p>
+    </div>
+
+    <!-- Login Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-form">
+      
+      <!-- Email Input with Icon -->
+      <ion-item class="asphalt-input-item" lines="none">
+        <ion-icon name="mail-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-input 
+          formControlName="email" 
+          type="email" 
+          placeholder="Email"
+          class="asphalt-input">
+        </ion-input>
+      </ion-item>
+
+      <!-- Password Input with Icon -->
+      <ion-item class="asphalt-input-item" lines="none">
+        <ion-icon name="lock-closed-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-input 
+          formControlName="password" 
+          type="password" 
+          placeholder="Password"
+          class="asphalt-input">
+        </ion-input>
+      </ion-item>
+
+      <!-- Forgot Password Link -->
+      <div class="ion-text-right forgot-password-link">
+        <ion-button fill="clear" size="small" class="asphalt-text-button">Forgot Password?</ion-button>
+      </div>
+
+      <!-- Error Message Display -->
+      <div *ngIf="errorMessage" class="error-message ion-text-center">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Login Button -->
+      <ion-button 
+        type="submit"
+        expand="block" 
+        class="asphalt-button-primary"
+        [disabled]="loginForm.invalid">
+        Login
+      </ion-button>
+
+    </form>
+
+    <!-- Registration Link -->
+    <div class="ion-text-center register-link">
+      <p>Don't have an account? 
+        <ion-button fill="clear" size="small" (click)="goToRegister()" class="asphalt-text-button">
+          Sign Up
+        </ion-button>
+      </p>
+    </div>
+
   </div>
 </ion-content>

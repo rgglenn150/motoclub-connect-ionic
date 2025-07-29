@@ -1,35 +1,69 @@
-<ion-header>
+<!-- 
+  Redesigned Create Group Page
+  - Applies the "Asphalt UI" theme for a consistent look and feel.
+  - Adds key features: Group Privacy toggle and an Image Uploader.
+  - Uses more descriptive labels and icons for better usability.
+-->
+<ion-header class="asphalt-header">
   <ion-toolbar>
-    <!-- Back Button -->
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/"></ion-back-button> <!-- Provide a fallback URL with defaultHref -->
+      <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>Create new group</ion-title>
+    <ion-title>Create New Club</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <ion-list>
-    <ion-item>
-      <ion-label position="floating">Group Name</ion-label>
-      <ion-input [(ngModel)]="groupName" required></ion-input>
-    </ion-item>
+<ion-content class="asphalt-background">
+  <form [formGroup]="createGroupForm" (ngSubmit)="registerGroup()">
+    <div class="ion-padding">
 
-    <ion-item>
-      <ion-label position="floating">Description</ion-label>
-      <ion-textarea [(ngModel)]="description" required></ion-textarea>
-    </ion-item>
+      <!-- Group Image Uploader -->
+      <div class="image-uploader ion-text-center" (click)="fileInput.click()">
+        <img *ngIf="groupImagePreview" [src]="groupImagePreview" class="group-image-preview" />
+        <div *ngIf="!groupImagePreview" class="placeholder">
+          <ion-icon name="camera-outline" class="placeholder-icon"></ion-icon>
+          <ion-label>Upload Club Logo</ion-label>
+        </div>
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="ion-hide" />
+      </div>
 
-    <ion-item>
-      <ion-label position="floating">Location</ion-label>
-      <ion-input [(ngModel)]="location"></ion-input>
-    </ion-item>
+      <!-- Group Name -->
+      <ion-item class="asphalt-input-item" lines="none">
+        <ion-input formControlName="name" type="text" placeholder="Club Name"></ion-input>
+      </ion-item>
 
-    <ion-item>
-      <ion-label position="floating">Number of Members</ion-label>
-      <ion-input type="number" [(ngModel)]="membersCount"></ion-input>
-    </ion-item>
+      <!-- Group Description -->
+      <ion-item class="asphalt-textarea-item" lines="none">
+        <ion-textarea formControlName="description" placeholder="Club Description (e.g., goals, riding style)" [autoGrow]="true"></ion-textarea>
+      </ion-item>
 
-    <ion-button expand="block" (click)="registerGroup()">Register Group</ion-button>
-  </ion-list>
+      <!-- Group Location -->
+      <ion-item class="asphalt-input-item" lines="none">
+        <ion-icon name="location-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-input formControlName="location" type="text" placeholder="Home Base (e.g., City, State)"></ion-input>
+      </ion-item>
+
+      <!-- Group Privacy Toggle -->
+      <ion-item class="asphalt-toggle-item" lines="none">
+        <ion-label>Private Club</ion-label>
+        <ion-toggle formControlName="isPrivate" slot="end" class="asphalt-toggle"></ion-toggle>
+      </ion-item>
+      <p class="field-description">
+        Private clubs require approval for new members to join. Public clubs are open for anyone.
+      </p>
+
+    </div>
+  </form>
 </ion-content>
+
+<ion-footer class="asphalt-footer">
+  <ion-toolbar>
+    <ion-button 
+      expand="block" 
+      class="asphalt-button-primary" 
+      (click)="registerGroup()" 
+      [disabled]="createGroupForm.invalid">
+      Create Club
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

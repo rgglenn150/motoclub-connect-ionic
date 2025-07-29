@@ -36,12 +36,12 @@ export class LoginPage implements OnInit {
         console.log('rgdb data token ', data)
         localStorage.setItem('token', data.token);
         this.router.navigate(['/home']);
-        this.toastService.presentToast('Login successful !', 'bottom', 2000);
+        this.toastService.presentToast('Login successful !', 'bottom', 5000);
       },
       (error) => {
         this.errorMessage = error.error.message;
         console.log('rgdb error : ', error);
-        this.toastService.presentToast('Login failed !', 'bottom', 2000);
+        this.toastService.presentToast('Login failed ! '+ error.message, 'bottom', 5000);
       }
     );
     /* this.http.post('http://localhost:4200/api/auth/login', this.loginForm.value).subscribe(

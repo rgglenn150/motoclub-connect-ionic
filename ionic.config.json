@@ -1,5 +1,7 @@
 {
   "name": "MotoClub Connect - Ionic",
-  "integrations": {},
+  "integrations": {
+    "capacitor": {}
+  },
   "type": "angular"
 }
