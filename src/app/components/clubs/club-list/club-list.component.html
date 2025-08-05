@@ -1,0 +1,60 @@
+<!-- Pull to Refresh -->
+<ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+  <ion-refresher-content></ion-refresher-content>
+</ion-refresher>
+
+<!-- Loading Skeleton -->
+<div *ngIf="isLoading">
+  <ion-list>
+    <ion-card class="asphalt-card-skeleton" *ngFor="let i of [1,2,3]">
+      <ion-skeleton-text animated style="width: 60%; height: 24px; margin: 16px;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width: 90%; margin: 0 16px 8px;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width: 90%; margin: 0 16px 16px;"></ion-skeleton-text>
+      <div class="footer-skeleton">
+        <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
+      </div>
+    </ion-card>
+  </ion-list>
+</div>
+
+<!-- Error Message -->
+<div *ngIf="error" class="ion-text-center error-message">
+  <ion-icon name="cloud-offline-outline"></ion-icon>
+  <p>{{ error }}</p>
+  <ion-button fill="clear" (click)="loadClubs()">Try Again</ion-button>
+</div>
+
+<!-- Club List -->
+<div *ngIf="!isLoading && !error">
+  <ion-list *ngIf="(clubs$ | async) as clubs; else noClubs">
+    <ion-card *ngFor="let club of clubs" class="asphalt-card">
+      <ion-card-header>
+        <ion-card-title>{{ club.clubName }}</ion-card-title>
+        <ion-card-subtitle>{{ club.location || 'Location not specified' }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        {{ club.description }}
+      </ion-card-content>
+      <div class="card-footer">
+        <div class="footer-item">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>{{ club.members?.length || 0 }} Members</span>
+        </div>
+        <div class="footer-item">
+          <ion-icon [name]="club.isPrivate ? 'lock-closed-outline' : 'lock-open-outline'"></ion-icon>
+          <span>{{ club.isPrivate ? 'Private' : 'Public' }}</span>
+        </div>
+      </div>
+    </ion-card>
+  </ion-list>
+
+  <!-- Template for when there are no clubs -->
+  <ng-template #noClubs>
+    <div class="ion-text-center empty-state">
+      <ion-icon name="sad-outline"></ion-icon>
+      <p>No clubs found.</p>
+      <p>Why not be the first to create one?</p>
+    </div>
+  </ng-template>
+</div>
