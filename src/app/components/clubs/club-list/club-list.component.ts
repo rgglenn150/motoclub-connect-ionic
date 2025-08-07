@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { Group, GroupService } from 'src/app/service/group.service';
 
@@ -13,7 +14,7 @@ export class ClubListComponent implements OnInit {
   isLoading = true;
   error: string | null = null;
 
-  constructor(private groupService: GroupService) { }
+  constructor(private groupService: GroupService, private router: Router) { }
 
   ngOnInit() {
     this.loadClubs();
@@ -41,5 +42,9 @@ export class ClubListComponent implements OnInit {
     this.clubs$.subscribe(() => {
       event.target.complete();
     });
+  }
+
+  goToClubDetails(clubId: string) {
+    this.router.navigate(['/club-details', clubId]);
   }
 }
