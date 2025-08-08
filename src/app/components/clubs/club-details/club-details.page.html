@@ -1,0 +1,68 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/clubs"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{club?.clubName}}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="joinClub()">
+        <ion-icon slot="icon-only" name="person-add-outline"></ion-icon>
+      </ion-button>
+      <ion-button (click)="inviteMember()">
+        <ion-icon slot="icon-only" name="paper-plane-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="custom-fab">
+    <ion-fab-button color="tertiary">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+    <ion-fab-list side="top">
+      <ion-fab-button (click)="goToCreateEvent()" color="secondary">
+        <ion-icon name="calendar-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab-list>
+  </ion-fab>
+
+  <div class="ion-padding">
+    <ion-card class="ion-animated ion-fade-in-up">
+      <img src="https://picsum.photos/800/400?random={{club?.id}}" alt="Club Image">
+      <ion-card-header>
+        <ion-card-title>{{club?.clubName}}</ion-card-title>
+        <ion-card-subtitle>{{club?.location}}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <p>{{club?.description}}</p>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-list>
+      <ion-list-header>
+        <ion-label>Members</ion-label>
+      </ion-list-header>
+      <ion-item *ngFor="let member of club?.members" class="ion-animated ion-fade-in-up">
+        <ion-avatar slot="start">
+          <img src="https://picsum.photos/100/100?random={{member.id}}" alt="User Avatar">
+        </ion-avatar>
+        <ion-label>{{member.username}}</ion-label>
+      </ion-item>
+    </ion-list>
+
+    <ion-list>
+      <ion-list-header>
+        <ion-label>Events</ion-label>
+      </ion-list-header>
+      <ion-item *ngFor="let event of events" class="ion-animated ion-fade-in-up">
+        <ion-label>
+          <h2>{{event.name}}</h2>
+          <p>{{event.description}}</p>
+          <p>{{event.startTime | date:'short'}} - {{event.endTime | date:'short'}}</p>
+          <p>{{event.location}}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+</ion-content>

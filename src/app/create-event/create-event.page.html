@@ -1,0 +1,46 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Create Event</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form (ngSubmit)="createEvent()">
+    <ion-item>
+      <ion-label position="floating">Name</ion-label>
+      <ion-input [(ngModel)]="event.name" name="name"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label position="floating">Description</ion-label>
+      <ion-textarea [(ngModel)]="event.description" name="description"></ion-textarea>
+    </ion-item>
+    <ion-item>
+      <ion-label>Start Time</ion-label>
+      <ion-datetime [(ngModel)]="event.startTime" name="startTime"></ion-datetime>
+    </ion-item>
+    <ion-item>
+      <ion-label>End Time</ion-label>
+      <ion-datetime [(ngModel)]="event.endTime" name="endTime"></ion-datetime>
+    </ion-item>
+    <ion-item>
+      <ion-label position="floating">Location</ion-label>
+      <ion-input [(ngModel)]="event.location" name="location"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label>Event Type</ion-label>
+      <ion-select [(ngModel)]="event.eventType" name="eventType">
+        <ion-select-option value="ride">Ride</ion-select-option>
+        <ion-select-option value="meeting">Meeting</ion-select-option>
+        <ion-select-option value="meetup">Meetup</ion-select-option>
+        <ion-select-option value="event">Event</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-item>
+      <ion-label>Club</ion-label>
+      <ion-select [(ngModel)]="event.club" name="club">
+        <ion-select-option *ngFor="let club of clubs" [value]="club._id">{{club.clubName}}</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-button type="submit" expand="full">Create Event</ion-button>
+  </form>
+</ion-content>
