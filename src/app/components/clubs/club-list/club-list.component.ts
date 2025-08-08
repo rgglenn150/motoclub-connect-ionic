@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { Group, GroupService } from 'src/app/service/group.service';
+import { Club, ClubService } from 'src/app/service/club.service';
 
 @Component({
   selector: 'app-club-list',
@@ -10,11 +10,11 @@ import { Group, GroupService } from 'src/app/service/group.service';
 })
 export class ClubListComponent implements OnInit {
   // Use an observable to handle the data stream
-  clubs$: Observable<Group[]>;
+  clubs$: Observable<Club[]>;
   isLoading = true;
   error: string | null = null;
 
-  constructor(private groupService: GroupService, private router: Router) { }
+  constructor(private clubService: ClubService, private router: Router) { }
 
   ngOnInit() {
     this.loadClubs();
@@ -23,7 +23,7 @@ export class ClubListComponent implements OnInit {
   loadClubs() {
     this.isLoading = true;
     this.error = null;
-    this.clubs$ = this.groupService.getAllClubs();
+    this.clubs$ = this.clubService.getAllClubs();
     
     // Handle loading and error states
     this.clubs$.subscribe({
@@ -44,7 +44,5 @@ export class ClubListComponent implements OnInit {
     });
   }
 
-  goToClubDetails(clubId: string) {
-    this.router.navigate(['/club-details', clubId]);
-  }
+  
 }

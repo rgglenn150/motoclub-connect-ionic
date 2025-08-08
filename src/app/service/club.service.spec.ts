@@ -1,15 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { GroupService } from './group.service';
+import { ClubService } from './club.service';
 
-describe('GroupService', () => {
-  let service: GroupService;
+describe('ClubService', () => {
+  let service: ClubService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
     });
-    service = TestBed.inject(GroupService);
+    service = TestBed.inject(ClubService);
   });
 
   it('should be created', () => {

@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
-
+import { ReactiveFormsModule } from '@angular/forms';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CreateGroupPage } from './create-group.page';
-import { HttpClient, HttpHandler } from '@angular/common/http';
 
 describe('CreateGroupPage', () => {
   let component: CreateGroupPage;
@@ -11,8 +11,7 @@ describe('CreateGroupPage', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ CreateGroupPage ],
-      imports: [IonicModule.forRoot()],
-      providers: [HttpClient, HttpHandler]
+      imports: [IonicModule.forRoot(), ReactiveFormsModule, HttpClientTestingModule]
     }).compileComponents();
 
     fixture = TestBed.createComponent(CreateGroupPage);

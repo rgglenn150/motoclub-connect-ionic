@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { EventService } from '../service/event.service';
 
 @Component({
   selector: 'app-events',
@@ -10,14 +9,14 @@ import { HttpClient } from '@angular/common/http';
 export class EventsPage implements OnInit {
   events: any[] = [];
 
-  constructor(private http: HttpClient, private router: Router) { }
+  constructor(private eventService: EventService) { }
 
   ngOnInit() {
     this.getEvents();
   }
 
   getEvents() {
-    this.http.get('http://localhost:4000/api/event').subscribe((res: any) => {
+    this.eventService.getEvents().subscribe((res: any) => {
       this.events = res;
     });
   }

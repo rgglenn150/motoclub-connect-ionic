@@ -1,19 +1,23 @@
 <ion-header>
-  <ion-toolbar>
+  <ion-toolbar color="primary">
     <ion-title>Events</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content class="ion-padding">
   <ion-list>
-    <ion-item *ngFor="let event of events">
-      <ion-label>
-        <h2>{{event.name}}</h2>
+    <ion-card *ngFor="let event of events" class="ion-animated ion-fade-in-up">
+      <img src="https://picsum.photos/800/400?random={{event.id}}" alt="Event Image">
+      <ion-card-header>
+        <ion-card-title>{{event.name}}</ion-card-title>
+        <ion-card-subtitle>{{event.club.clubName}}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
         <p>{{event.description}}</p>
         <p>{{event.startTime | date:'short'}} - {{event.endTime | date:'short'}}</p>
         <p>{{event.location}}</p>
-        <p>Organized by: {{event.createdBy.username}} for {{event.club.clubName}}</p>
-      </ion-label>
-    </ion-item>
+        <p>Organized by: {{event.createdBy.username}}</p>
+      </ion-card-content>
+    </ion-card>
   </ion-list>
 </ion-content>
