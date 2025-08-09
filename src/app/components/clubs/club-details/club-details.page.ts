@@ -29,7 +29,8 @@ export class ClubDetailsPage implements OnInit {
 
   getClubDetails(id: string) {
     this.clubService.getClubDetails(id).subscribe((res: any) => {
-      this.club = res;
+      // Normalize the response to always have 'id'
+      this.club = { ...res, id: res?.id || res?._id };
       console.log('Club details:', this.club);
     }, error => {
       console.error('Error fetching club details:', error);
@@ -54,8 +55,31 @@ export class ClubDetailsPage implements OnInit {
         },
         {
           text: 'Join',
-          handler: () => {
-            console.log('Joining club...');
+          handler: async () => {
+            const clubId = this.club?.id || this.club?._id;
+            if (!clubId) {
+              console.error('Club not loaded');
+              return;
+            }
+            this.clubService.joinClub(clubId).subscribe({
+              next: async () => {
+                const success = await this.alertController.create({
+                  header: 'Request Sent',
+                  message: 'Your request to join has been sent.',
+                  buttons: ['OK']
+                });
+                await success.present();
+              },
+              error: async (err) => {
+                console.error('Error joining club', err);
+                const failure = await this.alertController.create({
+                  header: 'Join Failed',
+                  message: 'Could not send join request. Please try again.',
+                  buttons: ['OK']
+                });
+                await failure.present();
+              }
+            });
           },
         },
       ],

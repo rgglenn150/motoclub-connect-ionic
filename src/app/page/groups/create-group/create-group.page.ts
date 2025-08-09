@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastService } from 'src/app/service/utils/toast.service';
@@ -12,6 +13,10 @@ import { GroupService, Group } from 'src/app/service/group.service'; // Import t
 export class CreateGroupPage implements OnInit {
   createGroupForm: FormGroup;
   groupImagePreview: string | ArrayBuffer | null = null;
+  private selectedLogoFile: File | null = null;
+  cropperVisible = false;
+  imageChangedEvent: Event | null = null;
+  croppedImageBase64: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -32,14 +37,49 @@ export class CreateGroupPage implements OnInit {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.groupImagePreview = reader.result;
-      };
-      reader.readAsDataURL(file);
-      console.log('File selected:', file);
+      this.imageChangedEvent = event;
+      this.cropperVisible = true;
     }
+  }
+
+  onImageCropped(event: ImageCroppedEvent) {
+    this.croppedImageBase64 = event.base64 || null;
+    // Reflect cropped image in preview immediately; remains after Apply
+    if (this.croppedImageBase64) {
+      this.groupImagePreview = this.croppedImageBase64;
+    }
+  }
+
+  onCropperReady() {}
+  onCropperLoadImageFailed() {
+    this.toastService.presentToast('Failed to load image for cropping.', 'bottom', 3000);
+  }
+
+  applyCrop() {
+    if (!this.croppedImageBase64) {
+      this.toastService.presentToast('Please adjust the crop before applying.', 'bottom', 2000);
+      return;
+    }
+    this.groupImagePreview = this.croppedImageBase64;
+    // Convert base64 to File manually for Angular 14 compatible version
+    const arr = this.croppedImageBase64.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    this.selectedLogoFile = new File([u8arr], 'club-logo.png', { type: mime });
+    this.cropperVisible = false;
+    this.imageChangedEvent = null;
+  }
+
+  cancelCrop() {
+    this.cropperVisible = false;
+    this.imageChangedEvent = null;
+    this.croppedImageBase64 = null;
   }
 
   /**
@@ -57,15 +97,30 @@ export class CreateGroupPage implements OnInit {
     console.log('Submitting Group Data:', groupData);
 
     // Call the service instead of http directly
-    this.groupService.createGroup(groupData).subscribe(
-      (response) => {
-        this.toastService.presentToast('Club created successfully!', 'bottom', 2000);
-        this.router.navigate(['/home']);
+    this.groupService.createGroup(groupData).subscribe({
+      next: (response) => {
+        const clubId = response?._id || response?.id;
+        if (this.selectedLogoFile && clubId) {
+          this.groupService.uploadClubLogo(clubId, this.selectedLogoFile).subscribe({
+            next: () => {
+              this.toastService.presentToast('Club created and logo uploaded!', 'bottom', 2000);
+              this.router.navigate(['/home']);
+            },
+            error: (uploadErr) => {
+              console.error('Error uploading logo:', uploadErr);
+              this.toastService.presentToast('Club created, but logo upload failed.', 'bottom', 3000);
+              this.router.navigate(['/home']);
+            },
+          });
+        } else {
+          this.toastService.presentToast('Club created successfully!', 'bottom', 2000);
+          this.router.navigate(['/home']);
+        }
       },
-      (error) => {
+      error: (error) => {
         console.error('Error creating group:', error);
         this.toastService.presentToast('Error creating club. Please try again.', 'bottom', 3000);
       }
-    );
+    });
   }
 }

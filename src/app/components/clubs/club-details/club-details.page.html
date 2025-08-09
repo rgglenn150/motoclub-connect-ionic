@@ -29,7 +29,7 @@
 
   <div class="ion-padding">
     <ion-card class="ion-animated ion-fade-in-up">
-      <img src="https://picsum.photos/800/400?random={{club?.id}}" alt="Club Image">
+      <img [src]="club?.logoUrl || ('https://picsum.photos/800/400?random=' + club?.id)" alt="Club Logo">
       <ion-card-header>
         <ion-card-title>{{club?.clubName}}</ion-card-title>
         <ion-card-subtitle>{{club?.location}}</ion-card-subtitle>

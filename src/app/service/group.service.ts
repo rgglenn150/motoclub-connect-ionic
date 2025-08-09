@@ -27,6 +27,12 @@ export class GroupService {
     return this.http.post(`${this.baseUrl}/create`, groupData);
   }
 
+  uploadClubLogo(clubId: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return this.http.post(`${this.baseUrl}/${clubId}/logo`, formData);
+  }
+
   /**
    * Fetches all clubs from the backend.
    * @returns An Observable array of Group objects.
