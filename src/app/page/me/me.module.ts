@@ -19,6 +19,6 @@ import { ImageCropperModule } from 'ngx-image-cropper';
   ],
   declarations: [MePage],
   exports: [MePage],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA] 
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
 })
 export class MePageModule {}

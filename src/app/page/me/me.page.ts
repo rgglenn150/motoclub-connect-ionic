@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
+import { UserService } from '../../service/user.service';
 
 @Component({
   selector: 'app-me',
@@ -27,7 +28,7 @@ export class MePage implements OnInit {
   croppedImage: any = '';
   isCropperOpen = false;
 
-  constructor(private http: HttpClient, private router: Router) { }
+  constructor(private http: HttpClient, private router: Router, private userService: UserService) { }
 
   ngOnInit() {
     this.fetchUserData();
@@ -95,7 +96,7 @@ export class MePage implements OnInit {
     const formData = new FormData();
     formData.append('profilePhoto', blob, 'profile.png');
 
-    this.http.post('http://localhost:4200/api/user/profile-photo', formData).subscribe((res: any) => {
+    this.userService.uploadProfilePhoto(formData).subscribe((res: any) => {
       this.user.profilePhotoUrl = res.profilePhotoUrl;
       this.imageChangedEvent = null;
       this.isCropperOpen = false;

@@ -30,7 +30,8 @@ export class ClubDetailsPage implements OnInit {
   getClubDetails(id: string) {
     this.clubService.getClubDetails(id).subscribe((res: any) => {
       // Normalize the response to always have 'id'
-      this.club = { ...res, id: res?.id || res?._id };
+      // eslint-disable-next-line no-underscore-dangle
+      this.club = { ...res, id: res.id || res._id };
       console.log('Club details:', this.club);
     }, error => {
       console.error('Error fetching club details:', error);
@@ -56,7 +57,8 @@ export class ClubDetailsPage implements OnInit {
         {
           text: 'Join',
           handler: async () => {
-            const clubId = this.club?.id || this.club?._id;
+            // eslint-disable-next-line no-underscore-dangle
+            const clubId = this.club.id || this.club._id;
             if (!clubId) {
               console.error('Club not loaded');
               return;

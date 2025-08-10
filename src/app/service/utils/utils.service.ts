@@ -7,7 +7,7 @@ import { ToastController } from '@ionic/angular';
 export class UtilsService {
   constructor(private toastController: ToastController) {}
 
-  async _old_presentToast(
+  async oldPresentToast(
     message: string,
     position: 'top' | 'middle' | 'bottom',
     duration: number = 1500

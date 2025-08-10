@@ -13,10 +13,10 @@ import { GroupService, Group } from 'src/app/service/group.service'; // Import t
 export class CreateGroupPage implements OnInit {
   createGroupForm: FormGroup;
   groupImagePreview: string | ArrayBuffer | null = null;
-  private selectedLogoFile: File | null = null;
   cropperVisible = false;
   imageChangedEvent: Event | null = null;
   croppedImageBase64: string | null = null;
+  private selectedLogoFile: File | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -93,13 +93,14 @@ export class CreateGroupPage implements OnInit {
 
     // Use the Group interface for type safety
     const groupData: Group = this.createGroupForm.value;
-    
+
     console.log('Submitting Group Data:', groupData);
 
     // Call the service instead of http directly
     this.groupService.createGroup(groupData).subscribe({
       next: (response) => {
-        const clubId = response?._id || response?.id;
+        // eslint-disable-next-line no-underscore-dangle
+        const clubId = response.id || response._id;
         if (this.selectedLogoFile && clubId) {
           this.groupService.uploadClubLogo(clubId, this.selectedLogoFile).subscribe({
             next: () => {

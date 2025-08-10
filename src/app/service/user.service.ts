@@ -7,11 +7,11 @@ import { Observable } from 'rxjs';
 })
 export class UserService {
 
-  private apiUrl = 'http://localhost:4200/api/user';
+  private apiUrl = 'http://localhost:4200/api/user'; // Adjust your API base URL here
 
   constructor(private http: HttpClient) { }
 
-  getUser(userId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/${userId}`);
+  uploadProfilePhoto(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/profile-photo`, formData);
   }
 }
