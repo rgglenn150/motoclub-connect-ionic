@@ -35,6 +35,11 @@
   --inner-border-width: 0;
 }
 
+.profile-photo-button {
+  --background: transparent;
+  --box-shadow: none;
+}
+
 .asphalt-danger-button {
     --background: transparent;
     --color: #EF4444;

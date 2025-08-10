@@ -3,7 +3,7 @@
     <!-- Header Section -->
     <div class="p-6 text-center">
       <input type="file" #fileInput (change)="fileChangeEvent($event)" hidden />
-      <ion-button (click)="fileInput.click()" class="profile-photo-button">
+      <ion-button (click)="onProfilePhotoClick()" class="profile-photo-button">
         <img [src]="user?.profilePhotoUrl || 'https://placehold.co/100x100/F59E0B/2D3748?text=R'"
           alt="User Profile Picture" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-slate-600">
       </ion-button>
@@ -12,21 +12,36 @@
     </div>
 
     <!-- Image Cropper Modal -->
-    <div class="image-cropper-container" *ngIf="imageChangedEvent">
-      <image-cropper
-          [imageChangedEvent]="imageChangedEvent"
-          [maintainAspectRatio]="true"
-          [aspectRatio]="1 / 1"
-          [resizeToWidth]="256"
-          format="png"
-          (imageCropped)="imageCropped($event)"
-          (imageLoaded)="imageLoaded()"
-          (cropperReady)="cropperReady()"
-          (loadImageFailed)="loadImageFailed()"
-      ></image-cropper>
-      <ion-button (click)="uploadImage()">Upload</ion-button>
-      <ion-button (click)="cancelCrop()">Cancel</ion-button>
-    </div>
+    <ion-modal [isOpen]="isCropperOpen">
+      <ng-template>
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Crop Image</ion-title>
+            <ion-buttons slot="end">
+              <ion-button (click)="cancelCrop()">Cancel</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+            <image-cropper
+              [imageChangedEvent]="imageChangedEvent"
+              [maintainAspectRatio]="true"
+              [aspectRatio]="1 / 1"
+              [resizeToWidth]="256"
+              format="png"
+              (imageCropped)="imageCropped($event)"
+              (imageLoaded)="imageLoaded()"
+              (cropperReady)="cropperReady()"
+              (loadImageFailed)="loadImageFailed()"
+          ></image-cropper>
+        </ion-content>
+        <ion-footer>
+          <ion-toolbar>
+            <ion-button expand="block" (click)="uploadImage()">Upload</ion-button>
+          </ion-toolbar>
+        </ion-footer>
+      </ng-template>
+    </ion-modal>
 
 
     <!-- Stats Section -->

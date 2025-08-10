@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
 
@@ -9,6 +9,7 @@ import { ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
   styleUrls: ['./me.page.scss'],
 })
 export class MePage implements OnInit {
+  @ViewChild('fileInput') fileInput: ElementRef;
 
   // Placeholder for user data
   user: any = {
@@ -22,8 +23,9 @@ export class MePage implements OnInit {
     }
   };
 
-  imageChangedEvent: any = '';
+  imageChangedEvent: any = null;
   croppedImage: any = '';
+  isCropperOpen = false;
 
   constructor(private http: HttpClient, private router: Router) { }
 
@@ -54,8 +56,15 @@ export class MePage implements OnInit {
     this.router.navigate([`/tabs/me/${page}`]);
   }
 
+  onProfilePhotoClick() {
+    console.log('Profile photo clicked');
+    this.fileInput.nativeElement.click();
+  }
+
   fileChangeEvent(event: any): void {
+    console.log('File change event:', event);
     this.imageChangedEvent = event;
+    this.isCropperOpen = true;
   }
 
   imageCropped(event: ImageCroppedEvent) {
@@ -89,6 +98,7 @@ export class MePage implements OnInit {
     this.http.post('http://localhost:4200/api/user/profile-photo', formData).subscribe((res: any) => {
       this.user.profilePhotoUrl = res.profilePhotoUrl;
       this.imageChangedEvent = null;
+      this.isCropperOpen = false;
     }, (err) => {
       console.error(err);
     });
@@ -96,6 +106,7 @@ export class MePage implements OnInit {
 
   cancelCrop() {
     this.imageChangedEvent = null;
+    this.isCropperOpen = false;
   }
 
 }
