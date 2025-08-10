@@ -2,11 +2,32 @@
   <div class="max-w-md mx-auto">
     <!-- Header Section -->
     <div class="p-6 text-center">
-      <img [src]="user?.profilePhotoUrl || 'https://placehold.co/100x100/F59E0B/2D3748?text=R'"
-        alt="User Profile Picture" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-slate-600">
+      <input type="file" #fileInput (change)="fileChangeEvent($event)" hidden />
+      <ion-button (click)="fileInput.click()" class="profile-photo-button">
+        <img [src]="user?.profilePhotoUrl || 'https://placehold.co/100x100/F59E0B/2D3748?text=R'"
+          alt="User Profile Picture" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-slate-600">
+      </ion-button>
       <h1 class="text-2xl font-bold font-condensed">{{ user?.username || 'Rider Glenn' }}</h1>
       <p class="text-sm asphalt-muted">Joined {{ user?.joinDate || 'March 2024' }}</p>
     </div>
+
+    <!-- Image Cropper Modal -->
+    <div class="image-cropper-container" *ngIf="imageChangedEvent">
+      <image-cropper
+          [imageChangedEvent]="imageChangedEvent"
+          [maintainAspectRatio]="true"
+          [aspectRatio]="1 / 1"
+          [resizeToWidth]="256"
+          format="png"
+          (imageCropped)="imageCropped($event)"
+          (imageLoaded)="imageLoaded()"
+          (cropperReady)="cropperReady()"
+          (loadImageFailed)="loadImageFailed()"
+      ></image-cropper>
+      <ion-button (click)="uploadImage()">Upload</ion-button>
+      <ion-button (click)="cancelCrop()">Cancel</ion-button>
+    </div>
+
 
     <!-- Stats Section -->
     <div class="grid grid-cols-3 gap-4 px-6 pb-6 text-center">

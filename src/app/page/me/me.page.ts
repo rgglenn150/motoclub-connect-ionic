@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
 
 @Component({
   selector: 'app-me',
@@ -20,6 +21,9 @@ export class MePage implements OnInit {
       clubs: 3
     }
   };
+
+  imageChangedEvent: any = '';
+  croppedImage: any = '';
 
   constructor(private http: HttpClient, private router: Router) { }
 
@@ -48,6 +52,50 @@ export class MePage implements OnInit {
 
   goTo(page: string) {
     this.router.navigate([`/tabs/me/${page}`]);
+  }
+
+  fileChangeEvent(event: any): void {
+    this.imageChangedEvent = event;
+  }
+
+  imageCropped(event: ImageCroppedEvent) {
+    this.croppedImage = event.base64;
+  }
+
+  imageLoaded(image: LoadedImage) {
+      // show cropper
+  }
+
+  cropperReady() {
+      // cropper ready
+  }
+
+  loadImageFailed() {
+      // show message
+  }
+
+  uploadImage() {
+    const byteCharacters = atob(this.croppedImage.split(',')[1]);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+
+    const formData = new FormData();
+    formData.append('profilePhoto', blob, 'profile.png');
+
+    this.http.post('http://localhost:4200/api/user/profile-photo', formData).subscribe((res: any) => {
+      this.user.profilePhotoUrl = res.profilePhotoUrl;
+      this.imageChangedEvent = null;
+    }, (err) => {
+      console.error(err);
+    });
+  }
+
+  cancelCrop() {
+    this.imageChangedEvent = null;
   }
 
 }
