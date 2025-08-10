@@ -1,11 +1,84 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Me</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content>
+  <div class="max-w-md mx-auto">
+    <!-- Header Section -->
+    <div class="p-6 text-center">
+      <img [src]="user?.profilePhotoUrl || 'https://placehold.co/100x100/F59E0B/2D3748?text=R'"
+        alt="User Profile Picture" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-slate-600">
+      <h1 class="text-2xl font-bold font-condensed">{{ user?.username || 'Rider Glenn' }}</h1>
+      <p class="text-sm asphalt-muted">Joined {{ user?.joinDate || 'March 2024' }}</p>
+    </div>
 
-<ion-content class="ion-padding">
-  <ion-button expand="block" shape="round" size="large" (click)="logout()" color="danger">
-    Log out
-  </ion-button>
+    <!-- Stats Section -->
+    <div class="grid grid-cols-3 gap-4 px-6 pb-6 text-center">
+      <div>
+        <p class="text-2xl font-bold font-condensed">{{ user?.stats?.rides || 12 }}</p>
+        <p class="text-xs asphalt-muted uppercase">Rides</p>
+      </div>
+      <div>
+        <p class="text-2xl font-bold font-condensed">{{ user?.stats?.kmRidden || 1450 }}</p>
+        <p class="text-xs asphalt-muted uppercase">KM Ridden</p>
+      </div>
+      <div>
+        <p class="text-2xl font-bold font-condensed">{{ user?.stats?.clubs || 3 }}</p>
+        <p class="text-xs asphalt-muted uppercase">Clubs</p>
+      </div>
+    </div>
+
+    <!-- Main Menu List -->
+    <div class="px-4">
+      <div class="rounded-lg overflow-hidden">
+        <!-- Edit Profile -->
+        <ion-item button (click)="goTo('edit-profile')" class="asphalt-list-item">
+          <ion-icon name="person-outline" class="text-xl asphalt-accent" slot="start"></ion-icon>
+          <ion-label class="font-semibold">Edit Profile</ion-label>
+          <ion-icon name="chevron-forward-outline" class="asphalt-muted" slot="end"></ion-icon>
+        </ion-item>
+        <!-- My Garage -->
+        <ion-item button (click)="goTo('garage')" class="asphalt-list-item">
+          <ion-icon name="key-outline" class="text-xl asphalt-accent" slot="start"></ion-icon>
+          <ion-label class="font-semibold">My Garage</ion-label>
+          <ion-icon name="chevron-forward-outline" class="asphalt-muted" slot="end"></ion-icon>
+        </ion-item>
+        <!-- Ride History -->
+        <ion-item button (click)="goTo('ride-history')" class="asphalt-list-item">
+          <ion-icon name="map-outline" class="text-xl asphalt-accent" slot="start"></ion-icon>
+          <ion-label class="font-semibold">Ride History</ion-label>
+          <ion-icon name="chevron-forward-outline" class="asphalt-muted" slot="end"></ion-icon>
+        </ion-item>
+        <!-- Achievements -->
+        <ion-item button (click)="goTo('achievements')" class="asphalt-list-item">
+          <ion-icon name="trophy-outline" class="text-xl asphalt-accent" slot="start"></ion-icon>
+          <ion-label class="font-semibold">Achievements</ion-label>
+          <ion-icon name="chevron-forward-outline" class="asphalt-muted" slot="end"></ion-icon>
+        </ion-item>
+      </div>
+    </div>
+
+    <!-- Settings & Support List -->
+    <div class="px-4 mt-6">
+      <div class="rounded-lg overflow-hidden">
+        <!-- Settings -->
+        <ion-item button (click)="goTo('settings')" class="asphalt-list-item">
+          <ion-icon name="settings-outline" class="text-xl asphalt-accent" slot="start"></ion-icon>
+          <ion-label class="font-semibold">Settings</ion-label>
+          <ion-icon name="chevron-forward-outline" class="asphalt-muted" slot="end"></ion-icon>
+        </ion-item>
+        <!-- Help & Support -->
+        <ion-item button (click)="goTo('help')" class="asphalt-list-item">
+          <ion-icon name="help-buoy-outline" class="text-xl asphalt-accent" slot="start"></ion-icon>
+          <ion-label class="font-semibold">Help & Support</ion-label>
+          <ion-icon name="chevron-forward-outline" class="asphalt-muted" slot="end"></ion-icon>
+        </ion-item>
+      </div>
+    </div>
+
+    <!-- Logout Button -->
+    <div class="p-4 mt-4">
+      <ion-button expand="block" (click)="logout()" class="asphalt-danger-button">
+        <ion-icon name="log-out-outline" slot="start"></ion-icon>
+        Log Out
+      </ion-button>
+    </div>
+
+  </div>
 </ion-content>

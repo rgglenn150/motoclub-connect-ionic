@@ -1,6 +1,85 @@
-.center {
-  display: flex;
-  justify-content: center;  /* Center horizontally */
-  align-items: center;      /* Center vertically */
-  height: 100%;             /* Full height of the screen */
+/* Asphalt UI Color Palette & Base Styles */
+:host {
+  --background: #2D3748; // Charcoal
+  --color: #F7FAFC; // Off-White
+  font-family: 'Inter', sans-serif;
+}
+
+.font-condensed {
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.asphalt-secondary {
+  background-color: #4A5568; // Slate Gray
+}
+
+.asphalt-accent {
+  color: #F59E0B; // Amber
+}
+
+.asphalt-danger {
+  color: #EF4444; // Red
+}
+
+.asphalt-muted {
+  color: #A0AEC0; // Muted Gray
+}
+
+.asphalt-list-item {
+  --background: #4A5568;
+  --border-color: #3a4555; // For item bottom border
+  --inner-border-width: 0 0 1px 0;
+}
+
+.asphalt-list-item:last-child {
+  --inner-border-width: 0;
+}
+
+.asphalt-danger-button {
+    --background: transparent;
+    --color: #EF4444;
+    --border-radius: 8px;
+    --box-shadow: none;
+}
+
+.asphalt-danger-button:hover {
+    --background: rgba(239, 68, 68, 0.1);
+}
+
+
+// TailwindCSS classes converted to SCSS
+// These are just some of the classes from the mockup. You might need to add more.
+.max-w-md { max-width: 28rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.p-6 { padding: 1.5rem; }
+.text-center { text-align: center; }
+.w-24 { width: 6rem; }
+.h-24 { height: 6rem; }
+.rounded-full { border-radius: 9999px; }
+.mb-4 { margin-bottom: 1rem; }
+.border-4 { border-width: 4px; }
+.border-slate-600 { border-color: #4A5568; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+.font-bold { font-weight: 700; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.grid { display: grid; }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.gap-4 { gap: 1rem; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+.pb-6 { padding-bottom: 1.5rem; }
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.uppercase { text-transform: uppercase; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.rounded-lg { border-radius: 0.5rem; }
+.overflow-hidden { overflow: hidden; }
+.mt-6 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 1rem; }
+
+ion-item {
+    --padding-start: 1rem;
+    --inner-padding-end: 1rem;
+}
+
+ion-label {
+    margin-left: 1rem;
 }
