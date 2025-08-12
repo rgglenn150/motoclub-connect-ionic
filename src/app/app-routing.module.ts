@@ -21,6 +21,14 @@ const routes: Routes = [
   {
     path: 'groups',
     loadChildren: () => import('./page/groups/create-group/create-group.module').then( m => m.CreateGroupPageModule)
+  },
+  {
+    path: 'create-event',
+    loadChildren: () => import('./create-event/create-event.module').then( m => m.CreateEventPageModule)
+  },
+  {
+    path: 'club-details/:id',
+    loadChildren: () => import('./components/clubs/club-details/club-details.module').then( m => m.ClubDetailsPageModule)
   }
 ];
 @NgModule({
