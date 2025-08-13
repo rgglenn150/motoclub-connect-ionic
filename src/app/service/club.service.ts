@@ -50,4 +50,8 @@ export class ClubService {
   addMember(clubId: string, memberData: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/addMember`, { clubId, memberData });
   }
+
+  joinClub(clubId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${clubId}/join`, {});
+  }
 }

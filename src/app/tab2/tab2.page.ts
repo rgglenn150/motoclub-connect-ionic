@@ -7,11 +7,10 @@ import { Router } from '@angular/router';
   styleUrls: ['tab2.page.scss']
 })
 export class Tab2Page {
+    constructor( private router: Router) {}
 
-  constructor( private router: Router) {}
-  
   createGroup() {
     this.router.navigate(['/groups/create']);
   }
-  
+
 }

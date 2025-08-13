@@ -27,6 +27,25 @@
         <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="ion-hide" />
       </div>
 
+      <!-- Cropper Modal-like Section -->
+      <div *ngIf="cropperVisible" class="cropper-container">
+        <image-cropper
+          [imageChangedEvent]="imageChangedEvent"
+          [maintainAspectRatio]="true"
+          [aspectRatio]="1"
+          [resizeToWidth]="512"
+          [imageQuality]="0.92"
+          format="png"
+          (imageCropped)="onImageCropped($event)"
+          (cropperReady)="onCropperReady()"
+          (loadImageFailed)="onCropperLoadImageFailed()"
+        ></image-cropper>
+        <div class="cropper-actions">
+          <ion-button fill="clear" color="medium" (click)="cancelCrop()">Cancel</ion-button>
+          <ion-button class="asphalt-button-primary" (click)="applyCrop()">Apply</ion-button>
+        </div>
+      </div>
+
       <!-- Group Name -->
       <ion-item class="asphalt-input-item" lines="none">
         <ion-input formControlName="name" type="text" placeholder="Club Name"></ion-input>

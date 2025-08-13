@@ -19,7 +19,7 @@ export interface Group {
   providedIn: 'root'
 })
 export class GroupService {
-  private baseUrl = `${environment.apiUrl}/club`; 
+  private baseUrl = `${environment.apiUrl}/club`;
 
   constructor(private http: HttpClient) { }
 
@@ -27,12 +27,19 @@ export class GroupService {
     return this.http.post(`${this.baseUrl}/create`, groupData);
   }
 
+  uploadClubLogo(clubId: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return this.http.post(`${this.baseUrl}/${clubId}/logo`, formData);
+  }
+
   /**
    * Fetches all clubs from the backend.
+   *
    * @returns An Observable array of Group objects.
    */
   getAllClubs(): Observable<Group[]> {
-    return this.http.get<{ message: string, clubs: Group[] }>(this.baseUrl)
+    return this.http.get<{ message: string; clubs: Group[] }>(this.baseUrl)
       .pipe(
         map(response => response.clubs) // Extracts the 'clubs' array from the response
       );

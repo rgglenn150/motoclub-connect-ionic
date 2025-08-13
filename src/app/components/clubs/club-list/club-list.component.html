@@ -29,6 +29,7 @@
 <div *ngIf="!isLoading && !error">
   <ion-list *ngIf="(clubs$ | async) as clubs; else noClubs">
     <ion-card *ngFor="let club of clubs" class="asphalt-card" [routerLink]="['/club-details', club.id]">
+      <img [src]="club.logoUrl || ('https://picsum.photos/800/400?random=' + club.id)" alt="Club Logo" />
       <ion-card-header>
         <ion-card-title>{{ club.clubName }}</ion-card-title>
         <ion-card-subtitle>{{ club.location || 'Location not specified' }}</ion-card-subtitle>
