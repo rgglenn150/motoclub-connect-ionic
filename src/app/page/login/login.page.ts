@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/service/auth.service';
@@ -12,6 +12,8 @@ import { ToastService } from 'src/app/service/utils/toast.service';
 })
 export class LoginPage implements OnInit {
   loginForm: FormGroup;
+  deferredPrompt: any;
+  showInstallButton = false;
 
   errorMessage: string;
 
@@ -29,6 +31,15 @@ export class LoginPage implements OnInit {
   }
 
   ngOnInit() {}
+
+  @HostListener('window:beforeinstallprompt', ['$event'])
+  onbeforeinstallprompt(e) {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    this.deferredPrompt = e;
+    this.showInstallButton = true;
+  }
 
   login() {
     this.authService.login(this.loginForm.value).subscribe(
@@ -55,6 +66,20 @@ export class LoginPage implements OnInit {
         console.log('rgdb error : ',error)
       }
     ); */
+  }
+
+  async installPwa() {
+    // Show the install prompt
+    this.deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    const { outcome } = await this.deferredPrompt.userChoice;
+    // We've used the prompt, and can't use it again, so hide the button
+    this.showInstallButton = false;
+    if (outcome === 'accepted') {
+      this.toastService.presentToast('App installed successfully!', 'bottom', 2000);
+    } else {
+      this.toastService.presentToast('Installation dismissed.', 'bottom', 2000);
+    }
   }
 
   goToRegister() {
