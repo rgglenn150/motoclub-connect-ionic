@@ -1,3 +1,5 @@
+
+import { AuthService } from '../../service/auth.service';
 import { HttpClient } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
@@ -28,7 +30,7 @@ export class MePage implements OnInit {
   croppedImage: any = '';
   isCropperOpen = false;
 
-  constructor(private http: HttpClient, private router: Router, private userService: UserService) { }
+  constructor(private http: HttpClient, private router: Router, private userService: UserService, private authService:AuthService) { }
 
   ngOnInit() {
     this.fetchUserData();
@@ -44,13 +46,7 @@ export class MePage implements OnInit {
   }
 
   logout() {
-    this.http.post('http://localhost:4200/api/auth/logout', {}).subscribe(response => {
-      console.log('logout successful');
-      localStorage.removeItem('token');
-      this.router.navigate(['/login']);
-    }, error => {
-      console.error('Logout failed', error);
-    });
+    this.authService.logout();
   }
 
   goTo(page: string) {
