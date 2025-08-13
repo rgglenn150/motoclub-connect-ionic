@@ -16,7 +16,7 @@
 
 // --- Global Page & Header Styles ---
 .asphalt-background {
-  --background: var(--asphalt-primary);
+  --background: #ffffff;
 }
 
 .asphalt-header ion-toolbar {
@@ -32,7 +32,11 @@
 .image-uploader {
   background-color: var(--asphalt-secondary);
   border-radius: 8px;
-  height: 150px;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 1 / 1;
+  margin-left: auto;
+  margin-right: auto;
   margin-bottom: 24px;
   display: flex;
   justify-content: center;
@@ -45,6 +49,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    aspect-ratio: 1 / 1;
   }
 
   .placeholder {
@@ -56,6 +61,35 @@
 
   .placeholder-icon {
     font-size: 3rem;
+  }
+}
+
+.cropper-container {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  z-index: 1000;
+
+  image-cropper {
+    width: 100%;
+    max-width: 480px;
+    background: #222;
+    border-radius: 8px;
+  }
+
+  .cropper-actions {
+    margin-top: 12px;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 8px;
   }
 }
 

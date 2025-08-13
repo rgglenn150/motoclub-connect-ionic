@@ -7,16 +7,18 @@ import { IonicModule } from '@ionic/angular';
 import { MePageRoutingModule } from './me-routing.module';
 
 import { MePage } from './me.page';
+import { ImageCropperModule } from 'ngx-image-cropper';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,ReactiveFormsModule,
-    MePageRoutingModule
+    MePageRoutingModule,
+    ImageCropperModule
   ],
   declarations: [MePage],
   exports: [MePage],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA] 
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
 })
 export class MePageModule {}

@@ -1,5 +1,5 @@
 <ion-header [translucent]="true">
-  <ion-toolbar class="asphalt-toolbar">
+  <ion-toolbar>
     <ion-title>
       Clubs
     </ion-title>
@@ -8,19 +8,15 @@
 
 <ion-content class="ion-padding asphalt-background" [fullscreen]="true">
   <ion-header collapse="condense">
-    <ion-toolbar class="asphalt-toolbar">
+    <ion-toolbar>
       <ion-title size="large">Clubs</ion-title>
     </ion-toolbar>
   </ion-header>
-
-  <!-- The "Create" button is now a Floating Action Button (FAB) for better UX -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="createGroup()" class="asphalt-fab">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 
-  <!-- Display the new club list component -->
   <app-club-list></app-club-list>
-
 </ion-content>

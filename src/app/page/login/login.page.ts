@@ -33,7 +33,7 @@ export class LoginPage implements OnInit {
   login() {
     this.authService.login(this.loginForm.value).subscribe(
       (data: any) => {
-        console.log('rgdb data token ', data)
+        console.log('rgdb data token ', data);
         localStorage.setItem('token', data.token);
         this.router.navigate(['/home']);
         this.toastService.presentToast('Login successful !', 'bottom', 5000);

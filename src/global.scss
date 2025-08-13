@@ -25,6 +25,10 @@
 @import "~@ionic/angular/css/text-transformation.css";
 @import "~@ionic/angular/css/flex-utils.css";
 
+:root {
+    --ion-background-color: #2D3748;
+    --ion-text-color: #F7FAFC;
+}
 
 .flex-center {
   display: flex;
