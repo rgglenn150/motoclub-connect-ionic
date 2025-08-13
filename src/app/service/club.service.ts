@@ -13,6 +13,7 @@ export interface Club {
   members?: any[]; // You can create a more specific interface for members
   createdBy?: string;
   createdAt?: string;
+  logoUrl?: string;
 }
 
 @Injectable({

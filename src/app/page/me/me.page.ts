@@ -68,7 +68,7 @@ export class MePage implements OnInit {
     this.croppedImage = event.base64;
   }
 
-  imageLoaded(image: LoadedImage) {
+  imageLoaded() {
       // show cropper
   }
 
@@ -93,9 +93,11 @@ export class MePage implements OnInit {
     formData.append('profilePhoto', blob, 'profile.png');
 
     this.userService.uploadProfilePhoto(formData).subscribe((res: any) => {
-      this.user.profilePhotoUrl = res.profilePhotoUrl;
+      this.user.profilePhotoUrl = res.imageUrl;
       this.imageChangedEvent = null;
       this.isCropperOpen = false;
+      this.ngOnInit();
+      console.log('Profile photo updated successfully:', this.user.profilePhotoUrl);
     }, (err) => {
       console.error(err);
     });
