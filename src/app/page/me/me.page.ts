@@ -37,7 +37,14 @@ export class MePage implements OnInit {
   }
 
   fetchUserData() {
-//
+    console.log('rgdb fet auth ', this.authService.getLoggedInUser());
+    this.user = this.authService.getLoggedInUser();
+    if (!this.user) {
+      console.error('User not found, redirecting to login');
+      this.router.navigate(['/login']);
+      return;
+    }
+    console.log('User data fetched:', this.user);
   }
 
   logout() {
@@ -91,7 +98,6 @@ export class MePage implements OnInit {
       this.user.profilePhoto = res.imageUrl;
       this.imageChangedEvent = null;
       this.isCropperOpen = false;
-      this.ngOnInit();
       console.log('Profile photo updated successfully:', this.user.profilePhoto);
     }, (err) => {
       console.error(err);

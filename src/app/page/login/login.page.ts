@@ -35,6 +35,7 @@ export class LoginPage implements OnInit {
       (data: any) => {
         console.log('rgdb data token ', data);
         localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         this.router.navigate(['/home']);
         this.toastService.presentToast('Login successful !', 'bottom', 5000);
       },
