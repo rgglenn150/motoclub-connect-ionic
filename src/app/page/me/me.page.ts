@@ -18,7 +18,7 @@ export class MePage implements OnInit {
   user: any = {
     username: 'Rider Glenn',
     joinDate: 'March 2024',
-    profilePhotoUrl: 'https://placehold.co/100x100/F59E0B/2D3748?text=R',
+    profilePhoto: 'https://placehold.co/100x100/F59E0B/2D3748?text=R',
     stats: {
       rides: 12,
       kmRidden: 1450,
@@ -30,19 +30,21 @@ export class MePage implements OnInit {
   croppedImage: any = '';
   isCropperOpen = false;
 
-  constructor(private http: HttpClient, private router: Router, private userService: UserService, private authService:AuthService) { }
+  constructor( private router: Router, private userService: UserService, private authService:AuthService) { }
 
   ngOnInit() {
     this.fetchUserData();
   }
 
   fetchUserData() {
-    // TODO: Replace with actual API call to your backend
-    // this.http.get('http://localhost:4200/api/user').subscribe(response => {
-    //   this.user = response;
-    // }, error => {
-    //   console.error('Error fetching user data', error);
-    // });
+    console.log('rgdb fet auth ', this.authService.getLoggedInUser());
+    this.user = this.authService.getLoggedInUser();
+    if (!this.user) {
+      console.error('User not found, redirecting to login');
+      this.router.navigate(['/login']);
+      return;
+    }
+    console.log('User data fetched:', this.user);
   }
 
   logout() {
@@ -93,11 +95,10 @@ export class MePage implements OnInit {
     formData.append('profilePhoto', blob, 'profile.png');
 
     this.userService.uploadProfilePhoto(formData).subscribe((res: any) => {
-      this.user.profilePhotoUrl = res.imageUrl;
+      this.user.profilePhoto = res.imageUrl;
       this.imageChangedEvent = null;
       this.isCropperOpen = false;
-      this.ngOnInit();
-      console.log('Profile photo updated successfully:', this.user.profilePhotoUrl);
+      console.log('Profile photo updated successfully:', this.user.profilePhoto);
     }, (err) => {
       console.error(err);
     });

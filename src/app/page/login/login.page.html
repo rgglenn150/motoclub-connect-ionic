@@ -68,5 +68,13 @@
       </p>
     </div>
 
+    <!-- PWA Install Button -->
+    <div *ngIf="showInstallButton" class="ion-text-center install-link" style="margin-top: 1rem;">
+        <ion-button fill="outline" (click)="installPwa()" class="asphalt-button-secondary">
+          <ion-icon slot="start" name="download-outline"></ion-icon>
+          Install App
+        </ion-button>
+    </div>
+
   </div>
 </ion-content>

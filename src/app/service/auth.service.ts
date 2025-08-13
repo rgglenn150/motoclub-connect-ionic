@@ -27,13 +27,21 @@ export class AuthService {
       next: () => {
         console.log('logout');
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
         this.router.navigate(['/login']);
       },
       error: (error) => {
         console.log('something went wrong on logout', error);
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
         this.router.navigate(['/login']);
       }
     });
+  }
+
+  getLoggedInUser() {
+    const user = localStorage.getItem('user');
+    console.log('getLoggedInUser', user);
+    return user ? JSON.parse(user) : null;
   }
 }
