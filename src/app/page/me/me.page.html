@@ -4,7 +4,7 @@
     <div class="p-6 text-center">
       <input type="file" #fileInput (change)="fileChangeEvent($event)" hidden />
       <ion-button (click)="onProfilePhotoClick()" class="profile-photo-button">
-        <img [src]="user?.profilePhotoUrl || 'https://placehold.co/100x100/F59E0B/2D3748?text=R'"
+        <img [src]="user?.profilePhoto || 'https://placehold.co/100x100/F59E0B/2D3748?text=R'"
           alt="User Profile Picture" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-slate-600">
       </ion-button>
       <h1 class="text-2xl font-bold font-condensed">{{ user?.username || 'Rider Glenn' }}</h1>
