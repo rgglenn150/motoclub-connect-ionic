@@ -83,6 +83,7 @@ export class LoginPage implements OnInit {
   }
 
   goToRegister() {
+    console.log('rgdb go to register');
     this.router.navigate(['/register']);
   }
 }

@@ -1,40 +1,39 @@
-<ion-header>
-  <ion-toolbar color="primary">
-    <ion-title>Register</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content>
+
   <ion-card>
     <ion-card-header>
+      <div class="ion-text-center title-section">
+       Join and connect with other motorcycle riders nationwide.
+      </div>
       <ion-card-title>
-        Join and connect with other motorcycle riders nationwide.
+        <h1 class="app-title">MotoClub Connect</h1>
+        
       </ion-card-title>
     </ion-card-header>
     <ion-card-content>
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
         <ion-item>
-         
+
           <ion-input type="text" formControlName="username" label="Username"></ion-input>
         </ion-item>
 
         <ion-item>
-         
+
           <ion-input type="text" label="First Name" formControlName="firstName"></ion-input>
         </ion-item>
 
         <ion-item>
-         
+
           <ion-input label="Last Name" type="text" formControlName="lastName"></ion-input>
         </ion-item>
 
         <ion-item>
-          
+
           <ion-input label="Email" type="email" formControlName="email"></ion-input>
         </ion-item>
 
         <ion-item>
-         
+
           <ion-input label="Password" type="password" formControlName="password"></ion-input>
         </ion-item>
 
@@ -42,6 +41,15 @@
 
         <p *ngIf="errorMessage" color="danger">{{ errorMessage }}</p>
       </form>
+      
+      <!-- New Section for Login Link -->
+      <div class="ion-text-center back-to-login-link">
+        <p>Already have an account? 
+          <ion-button class="asphalt-text-button" fill="clear" size="small" (click)="goToLogin()">
+            Login
+          </ion-button>
+        </p>
+      </div>
 
     </ion-card-content>
 
