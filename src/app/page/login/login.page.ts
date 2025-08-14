@@ -48,12 +48,12 @@ export class LoginPage implements OnInit {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         this.router.navigate(['/home']);
-        this.toastService.presentToast('Login successful !', 'bottom', 5000);
+        this.toastService.presentToast('Login successful !', 'bottom', 3000);
       },
       (error) => {
         this.errorMessage = error.error.message;
         console.log('rgdb error : ', error);
-        this.toastService.presentToast('Login failed ! '+ error.message, 'bottom', 5000);
+        this.toastService.presentToast('Login failed ! '+ error.message, 'bottom', 3000);
       }
     );
     /* this.http.post('http://localhost:4200/api/auth/login', this.loginForm.value).subscribe(
@@ -76,7 +76,7 @@ export class LoginPage implements OnInit {
     // We've used the prompt, and can't use it again, so hide the button
     this.showInstallButton = false;
     if (outcome === 'accepted') {
-      this.toastService.presentToast('App installed successfully!', 'bottom', 2000);
+      this.toastService.presentToast('Installing!', 'bottom', 2000);
     } else {
       this.toastService.presentToast('Installation dismissed.', 'bottom', 2000);
     }
