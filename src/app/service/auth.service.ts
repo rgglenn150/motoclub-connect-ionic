@@ -10,33 +10,35 @@ import { environment } from 'src/environments/environment';
 })
 export class AuthService {
   private baseUrl = `${environment.apiUrl}/auth`;
-  destroySubject$: Subject<void> = new Subject();
 
   constructor(private http: HttpClient, private router: Router) {}
 
   login(loginForm: any) {
+    return this.http.post(`${this.baseUrl}/login`, loginForm);
+  }
+
+  register(registerForm: any) {
     return this.http
-      .post(`${this.baseUrl}/login`, loginForm)
-      .pipe(takeUntil(this.destroySubject$));
+      .post(`${this.baseUrl}/signup`, registerForm);
   }
 
   logout() {
-    this.http.post(`${this.baseUrl}/logout`, {}).pipe(
-      takeUntil(this.destroySubject$)
-    ).subscribe({
-      next: () => {
-        console.log('logout');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        this.router.navigate(['/login']);
-      },
-      error: (error) => {
-        console.log('something went wrong on logout', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        this.router.navigate(['/login']);
-      }
-    });
+    this.http
+      .post(`${this.baseUrl}/logout`, {})
+      .subscribe({
+        next: () => {
+          console.log('logout');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          this.router.navigate(['/login']);
+        },
+        error: (error) => {
+          console.log('something went wrong on logout', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          this.router.navigate(['/login']);
+        },
+      });
   }
 
   getLoggedInUser() {

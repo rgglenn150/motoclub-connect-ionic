@@ -1,4 +1,3 @@
-
 import { AuthService } from '../../service/auth.service';
 import { HttpClient } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
@@ -22,15 +21,20 @@ export class MePage implements OnInit {
     stats: {
       rides: 12,
       kmRidden: 1450,
-      clubs: 3
-    }
+      clubs: 3,
+    },
   };
 
   imageChangedEvent: any = null;
   croppedImage: any = '';
   isCropperOpen = false;
+  isLoading = false;
 
-  constructor( private router: Router, private userService: UserService, private authService:AuthService) { }
+  constructor(
+    private router: Router,
+    private userService: UserService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit() {
     this.fetchUserData();
@@ -71,22 +75,23 @@ export class MePage implements OnInit {
   }
 
   imageLoaded() {
-      // show cropper
+    // show cropper
   }
 
   cropperReady() {
-      // cropper ready
+    // cropper ready
   }
 
   loadImageFailed() {
-      // show message
+    // show message
   }
 
   uploadImage() {
+    this.isLoading = true;
     const byteCharacters = atob(this.croppedImage.split(',')[1]);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: 'image/png' });
@@ -94,19 +99,26 @@ export class MePage implements OnInit {
     const formData = new FormData();
     formData.append('profilePhoto', blob, 'profile.png');
 
-    this.userService.uploadProfilePhoto(formData).subscribe((res: any) => {
-      this.user.profilePhoto = res.imageUrl;
-      this.imageChangedEvent = null;
-      this.isCropperOpen = false;
-      console.log('Profile photo updated successfully:', this.user.profilePhoto);
-    }, (err) => {
-      console.error(err);
-    });
+    this.userService.uploadProfilePhoto(formData).subscribe(
+      (res: any) => {
+        this.user.profilePhoto = res.imageUrl;
+        this.imageChangedEvent = null;
+        this.isCropperOpen = false;
+        this.isLoading = false;
+        console.log(
+          'Profile photo updated successfully:',
+          this.user.profilePhoto
+        );
+      },
+      (err) => {
+        this.isLoading = false;
+        console.error(err);
+      }
+    );
   }
 
   cancelCrop() {
     this.imageChangedEvent = null;
     this.isCropperOpen = false;
   }
-
 }

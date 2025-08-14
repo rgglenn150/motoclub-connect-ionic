@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { AuthService } from 'src/app/service/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -7,7 +8,7 @@ import { Component, OnInit } from '@angular/core';
 })
 export class HomePage implements OnInit {
   user = {
-    name: 'Rider Glenn',
+    firstName: 'Rider Glenn',
   };
 
   weather = {
@@ -63,9 +64,16 @@ export class HomePage implements OnInit {
     }
   ];
 
-  constructor() { }
+  constructor(private auth:AuthService) {
+
+   }
 
   ngOnInit() {
+    this.user = this.auth.getLoggedInUser();
+    if (!this.user) {
+      console.error('User not found, redirecting to login');
+      // Redirect to login or handle accordingly
+    }
   }
 
 }

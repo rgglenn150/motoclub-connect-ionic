@@ -14,6 +14,7 @@ export class LoginPage implements OnInit {
   loginForm: FormGroup;
   deferredPrompt: any;
   showInstallButton = false;
+  isLoading: boolean = false; // To control the loading spinner visibility
 
   errorMessage: string;
 
@@ -42,6 +43,7 @@ export class LoginPage implements OnInit {
   }
 
   login() {
+    this.isLoading = true; // Show the loading spinner
     this.authService.login(this.loginForm.value).subscribe(
       (data: any) => {
         console.log('rgdb data token ', data);
@@ -49,23 +51,20 @@ export class LoginPage implements OnInit {
         localStorage.setItem('user', JSON.stringify(data.user));
         this.router.navigate(['/home']);
         this.toastService.presentToast('Login successful !', 'bottom', 3000);
+        this.isLoading = false; // Hide the loading spinner
       },
       (error) => {
         this.errorMessage = error.error.message;
         console.log('rgdb error : ', error);
-        this.toastService.presentToast('Login failed ! '+ error.message, 'bottom', 3000);
+        this.toastService.presentToast(
+          'Login failed ! ' + error.message,
+          'bottom',
+          3000
+        );
+
+        this.isLoading = false; // Hide the loading spinner
       }
     );
-    /* this.http.post('http://localhost:4200/api/auth/login', this.loginForm.value).subscribe(
-      (data: any) => {
-        localStorage.setItem('token', data.token);
-        this.router.navigate(['/home']);
-      },
-      (error) => {
-        this.errorMessage = error.error.message;
-        console.log('rgdb error : ',error)
-      }
-    ); */
   }
 
   async installPwa() {
@@ -83,7 +82,6 @@ export class LoginPage implements OnInit {
   }
 
   goToRegister() {
-    console.log('rgdb go to register');
     this.router.navigate(['/register']);
   }
 }
