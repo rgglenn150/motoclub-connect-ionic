@@ -1,12 +1,10 @@
-<ion-header>
-  <ion-toolbar color="primary">
-    <ion-title>Register</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content>
+
   <ion-card>
     <ion-card-header>
+      <div class="ion-text-center title-section">
+        <h1 class="app-title">MotoClub Connect</h1>
+      </div>
       <ion-card-title>
         Join and connect with other motorcycle riders nationwide.
       </ion-card-title>
@@ -14,27 +12,27 @@
     <ion-card-content>
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
         <ion-item>
-         
+
           <ion-input type="text" formControlName="username" label="Username"></ion-input>
         </ion-item>
 
         <ion-item>
-         
+
           <ion-input type="text" label="First Name" formControlName="firstName"></ion-input>
         </ion-item>
 
         <ion-item>
-         
+
           <ion-input label="Last Name" type="text" formControlName="lastName"></ion-input>
         </ion-item>
 
         <ion-item>
-          
+
           <ion-input label="Email" type="email" formControlName="email"></ion-input>
         </ion-item>
 
         <ion-item>
-         
+
           <ion-input label="Password" type="password" formControlName="password"></ion-input>
         </ion-item>
 
