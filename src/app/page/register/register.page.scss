@@ -73,6 +73,13 @@ ion-button[type="submit"] {
   margin-top: 24px;
 }
 
+.asphalt-text-button {
+  --color: var(--asphalt-accent);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  text-transform: none;
+}
+
 // --- Error Message Styling ---
 // Apply the same error message style as the login page.
 p[color="danger"] {
@@ -85,4 +92,10 @@ p[color="danger"] {
   font-size: 0.9rem;
   font-weight: 500;
   text-align: center;
+}
+
+.back-to-login-link p {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

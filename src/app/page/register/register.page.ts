@@ -33,4 +33,9 @@ export class RegisterPage {
       }
     );
   }
+
+  // New method to navigate to the login page
+  goToLogin() {
+    this.router.navigate(['/login']);
+  }
 }
