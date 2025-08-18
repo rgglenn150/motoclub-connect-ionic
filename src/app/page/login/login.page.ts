@@ -46,7 +46,6 @@ export class LoginPage implements OnInit {
     this.isLoading = true; // Show the loading spinner
     this.authService.login(this.loginForm.value).subscribe(
       (data: any) => {
-        console.log('rgdb data token ', data);
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         this.router.navigate(['/home']);
@@ -55,7 +54,6 @@ export class LoginPage implements OnInit {
       },
       (error) => {
         this.errorMessage = error.error.message;
-        console.log('rgdb error : ', error);
         this.toastService.presentToast(
           'Login failed ! ' + error.message,
           'bottom',

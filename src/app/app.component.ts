@@ -13,7 +13,6 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     const token = localStorage.getItem('token');
-    console.log('rgdb token : ', token);
     this.wakeupServer();
     if (!token || token === 'undefined') {
       this.router.navigate(['/login']);

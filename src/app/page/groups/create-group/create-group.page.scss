@@ -16,7 +16,7 @@
 
 // --- Global Page & Header Styles ---
 .asphalt-background {
-  --background: #ffffff;
+  --background: #2d3849;
 }
 
 .asphalt-header ion-toolbar {
@@ -94,7 +94,8 @@
 }
 
 // --- Form Items ---
-.asphalt-input-item, .asphalt-textarea-item {
+.asphalt-input-item,
+.asphalt-textarea-item {
   --background: var(--asphalt-secondary);
   --padding-start: 16px;
   --highlight-height: 0;
