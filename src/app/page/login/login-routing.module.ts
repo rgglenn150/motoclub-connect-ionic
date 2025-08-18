@@ -2,7 +2,6 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
 import { LoginPage } from './login.page';
-import { LoginPageModule } from './login.module';
 
 const routes: Routes = [
   {
