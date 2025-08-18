@@ -41,7 +41,6 @@ export class MePage implements OnInit {
   }
 
   fetchUserData() {
-    console.log('rgdb fet auth ', this.authService.getLoggedInUser());
     this.user = this.authService.getLoggedInUser();
     if (!this.user) {
       console.error('User not found, redirecting to login');
