@@ -7,14 +7,23 @@
 <div *ngIf="isLoading">
   <ion-list>
     <ion-card class="asphalt-card-skeleton" *ngFor="let i of [1,2,3]">
-      <ion-skeleton-text animated style="width: 60%; height: 24px; margin: 16px;"></ion-skeleton-text>
-      <ion-skeleton-text animated style="width: 90%; margin: 0 16px 8px;"></ion-skeleton-text>
-      <ion-skeleton-text animated style="width: 90%; margin: 0 16px 16px;"></ion-skeleton-text>
+      <div class="card-header-row">
+        <div class="card-text">
+          <ion-skeleton-text animated style="width: 60%; height: 20px; margin-bottom: 6px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 40%; height: 16px;"></ion-skeleton-text>
+        </div>
+        <ion-skeleton-text class="club-thumbnail-skeleton" animated></ion-skeleton-text>
+      </div>
+
+      <ion-skeleton-text animated style="width: 90%; margin: 8px 16px;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width: 80%; margin: 0 16px 16px;"></ion-skeleton-text>
+
       <div class="footer-skeleton">
         <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
         <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
       </div>
     </ion-card>
+
   </ion-list>
 </div>
 
@@ -29,14 +38,19 @@
 <div *ngIf="!isLoading && !error">
   <ion-list *ngIf="(clubs$ | async) as clubs; else noClubs">
     <ion-card *ngFor="let club of clubs" class="asphalt-card" [routerLink]="['/club-details', club.id]">
-      <img [src]="club.logoUrl || ('https://picsum.photos/800/400?random=' + club.id)" alt="Club Logo" />
-      <ion-card-header>
-        <ion-card-title>{{ club.clubName }}</ion-card-title>
-        <ion-card-subtitle>{{ club.location || 'Location not specified' }}</ion-card-subtitle>
-      </ion-card-header>
+      <div class="card-header-row">
+        <div class="card-text">
+          <ion-card-title>{{ club.clubName }}</ion-card-title>
+          <ion-card-subtitle>{{ club.location || 'Location not specified' }}</ion-card-subtitle>
+        </div>
+        <img class="club-thumbnail" [src]="club.logoUrl || ('https://picsum.photos/100/100?random=' + club.id)"
+          alt="Club Logo" />
+      </div>
+
       <ion-card-content>
         {{ club.description }}
       </ion-card-content>
+
       <div class="card-footer">
         <div class="footer-item">
           <ion-icon name="people-outline"></ion-icon>
