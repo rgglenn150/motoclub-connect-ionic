@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { IonicModule } from '@ionic/angular';
 import { of } from 'rxjs';
@@ -10,7 +11,6 @@ describe('ClubListComponent', () => {
   let component: ClubListComponent;
   let fixture: ComponentFixture<ClubListComponent>;
   let clubService: jasmine.SpyObj<ClubService>;
-  let router: Router;
 
   const mockClubs: Club[] = [
     { id: '1', clubName: 'Test Club 1', description: 'Test Description 1', isPrivate: false },
@@ -29,7 +29,6 @@ describe('ClubListComponent', () => {
     fixture = TestBed.createComponent(ClubListComponent);
     component = fixture.componentInstance;
     clubService = TestBed.inject(ClubService) as jasmine.SpyObj<ClubService>;
-    router = TestBed.inject(Router);
   }));
 
   it('should create', () => {
@@ -46,17 +45,12 @@ describe('ClubListComponent', () => {
     });
   });
 
-  it('should navigate to club details on click', () => {
+  it('should have the correct routerLink for club details', () => {
     clubService.getAllClubs.and.returnValue(of(mockClubs));
     fixture.detectChanges();
 
-    const navigateSpy = spyOn(router, 'navigate');
-
-    const clubCard = fixture.nativeElement.querySelector('ion-card');
-    clubCard.click();
-
-    fixture.whenStable().then(() => {
-      expect(navigateSpy).toHaveBeenCalledWith(['/club-details', '1']);
-    });
+    const clubCard = fixture.debugElement.query(By.css('ion-card'));
+    const routerLink = clubCard.nativeElement.getAttribute('ng-reflect-router-link');
+    expect(routerLink).toBe('/club-details,1');
   });
 });
