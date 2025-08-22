@@ -1,25 +1,29 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';
+import { RouterTestingModule } from '@angular/router/testing';
 import { IonicModule } from '@ionic/angular';
+import { LoadingSpinnerComponent } from '../../components/utils/loading-spinner/loading-spinner.component';
 
 import { RegisterPage } from './register.page';
-import { FormBuilder } from '@angular/forms';
-import { HttpClient, HttpHandler } from '@angular/common/http';
 
 describe('RegisterPage', () => {
   let component: RegisterPage;
   let fixture: ComponentFixture<RegisterPage>;
-  let registerForm: any;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [RegisterPage],
-      imports: [IonicModule.forRoot()],
-      providers: [FormBuilder, HttpClient, HttpHandler],
+      declarations: [RegisterPage, LoadingSpinnerComponent],
+      imports: [
+        IonicModule.forRoot(),
+        ReactiveFormsModule,
+        HttpClientTestingModule,
+        RouterTestingModule,
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RegisterPage);
     component = fixture.componentInstance;
-    registerForm = component.registerForm;
     fixture.detectChanges();
   }));
 
@@ -33,6 +37,6 @@ describe('RegisterPage', () => {
     component.registerForm.controls.lastName.setValue('User');
     component.registerForm.controls.email.setValue('test@example.com');
     component.registerForm.controls.password.setValue('123456');
-    expect(registerForm.valid).toBeTruthy();
+    expect(component.registerForm.valid).toBeTruthy();
   });
 });
