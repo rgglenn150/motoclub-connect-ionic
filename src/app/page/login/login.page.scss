@@ -109,6 +109,58 @@
   font-weight: 500;
 }
 
+// --- OR Divider ---
+.divider-container {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--asphalt-secondary);
+}
+
+.divider-text {
+  padding: 0 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  color: var(--asphalt-text-muted);
+  font-weight: 500;
+}
+
+// --- Facebook Button ---
+.facebook-button {
+  --background: #1877F2;
+  --background-activated: #42538B;
+  --background-focused: #42538B;
+  --background-hover: #42538B;
+  --color: #FFFFFF;
+  --border-radius: 8px;
+  --box-shadow: none;
+  height: 48px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: none;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.facebook-icon {
+  color: #FFFFFF;
+  font-size: 1.25rem;
+  margin-right: 8px;
+}
+
+.facebook-spinner {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  --color: #FFFFFF;
+}
+
 // --- Registration Link ---
 .register-link {
   margin-top: 32px;

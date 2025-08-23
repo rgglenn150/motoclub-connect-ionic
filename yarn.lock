@@ -1213,6 +1213,13 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.27.1"
 
+"@capacitor-community/facebook-login@^7.0.0":
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/@capacitor-community/facebook-login/-/facebook-login-7.0.0.tgz#28f3e70472d04719d9933f3ea69b32ac03a7b540"
+  integrity sha512-zwCBaqHysWpjFfb4F/Ax2oJjt1vQVkp+SAdjCOaPtloiak+AceXW9U0mtYVxfk0aOO9gKALbkKnivcfviIDN0A==
+  dependencies:
+    "@capacitor/core" "^7.0.0"
+
 "@capacitor/android@6.1.2":
   version "6.1.2"
   resolved "https://registry.npmjs.org/@capacitor/android/-/android-6.1.2.tgz"
@@ -1251,6 +1258,13 @@
   version "6.1.2"
   resolved "https://registry.npmjs.org/@capacitor/core/-/core-6.1.2.tgz"
   integrity sha512-xFy1/4qLFLp5WCIzIhtwUuVNNoz36+V7/BzHmLqgVJcvotc4MMjswW/TshnPQaLLujEOaLkA4h8ZJ0uoK3ImGg==
+  dependencies:
+    tslib "^2.1.0"
+
+"@capacitor/core@^7.0.0":
+  version "7.4.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/core/-/core-7.4.3.tgz#eaf81286af7d8b109c18be9f0c01a8a94c86c352"
+  integrity sha512-wCWr8fQ9Wxn0466vPg7nMn0tivbNVjNy1yL4GvDSIZuZx7UpU2HeVGNe9QjN/quEd+YLRFeKEBLBw619VqUiNg==
   dependencies:
     tslib "^2.1.0"
 
@@ -4887,7 +4901,7 @@ fs.realpath@^1.0.0:
 
 fsevents@2.3.2:
   version "2.3.2"
-  resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
+  resolved "https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz"
   integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
 
 fsevents@~2.3.2, fsevents@~2.3.3:

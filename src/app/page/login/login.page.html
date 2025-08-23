@@ -59,6 +59,25 @@
 
     </form>
 
+    <!-- OR Divider -->
+    <div class="divider-container">
+      <div class="divider-line"></div>
+      <span class="divider-text">OR</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <!-- Facebook Login Button -->
+    <ion-button 
+      expand="block" 
+      class="facebook-button"
+      (click)="loginWithFacebook()"
+      [disabled]="isFacebookLoading">
+      <ion-icon slot="start" name="logo-facebook" class="facebook-icon"></ion-icon>
+      <ion-spinner *ngIf="isFacebookLoading" name="crescent" class="facebook-spinner"></ion-spinner>
+      <span *ngIf="!isFacebookLoading">Continue with Facebook</span>
+      <span *ngIf="isFacebookLoading">Connecting...</span>
+    </ion-button>
+
     <!-- Registration Link -->
     <div class="ion-text-center register-link">
       <p>Don't have an account? 
