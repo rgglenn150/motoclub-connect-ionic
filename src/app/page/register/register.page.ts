@@ -15,6 +15,7 @@ export class RegisterPage {
   registerForm: FormGroup;
   errorMessage: string;
   isLoading: boolean = false; // To control the loading spinner visibility
+  isFacebookLoading: boolean = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -51,5 +52,28 @@ export class RegisterPage {
   // New method to navigate to the login page
   goToLogin() {
     this.router.navigate(['/login']);
+  }
+
+  async registerWithFacebook() {
+    this.isFacebookLoading = true;
+    try {
+      const response = await this.authService.facebookRegister();
+      
+      response.pipe(takeUntil(this.destroySubject$)).subscribe(
+        (data: any) => {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          this.router.navigate(['/home']);
+          this.isFacebookLoading = false;
+        },
+        (error) => {
+          this.errorMessage = error.error?.message || 'Facebook registration failed';
+          this.isFacebookLoading = false;
+        }
+      );
+    } catch (error: any) {
+      this.errorMessage = error.message || 'Facebook registration failed';
+      this.isFacebookLoading = false;
+    }
   }
 }

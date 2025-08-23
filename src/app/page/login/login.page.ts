@@ -17,6 +17,7 @@ export class LoginPage implements OnInit {
   isLoading: boolean = false; // To control the loading spinner visibility
 
   errorMessage: string;
+  isFacebookLoading: boolean = false;
 
   constructor(
     private router: Router,
@@ -81,5 +82,39 @@ export class LoginPage implements OnInit {
 
   goToRegister() {
     this.router.navigate(['/register']);
+  }
+
+  async loginWithFacebook() {
+    this.isFacebookLoading = true;
+    try {
+      const response = await this.authService.facebookLogin();
+      
+      response.subscribe(
+        (data: any) => {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          this.router.navigate(['/home']);
+          this.toastService.presentToast('Facebook login successful!', 'bottom', 3000);
+          this.isFacebookLoading = false;
+        },
+        (error) => {
+          this.errorMessage = error.error?.message || 'Facebook login failed';
+          this.toastService.presentToast(
+            'Facebook login failed! ' + this.errorMessage,
+            'bottom',
+            3000
+          );
+          this.isFacebookLoading = false;
+        }
+      );
+    } catch (error: any) {
+      this.errorMessage = error.message || 'Facebook login failed';
+      this.toastService.presentToast(
+        'Facebook login failed! ' + this.errorMessage,
+        'bottom',
+        3000
+      );
+      this.isFacebookLoading = false;
+    }
   }
 }

@@ -69,8 +69,12 @@ export class HomePage implements OnInit {
    }
 
   ngOnInit() {
-    this.user = this.auth.getLoggedInUser();
-    if (!this.user) {
+    const loggedInUser = this.auth.getLoggedInUser();
+    if (loggedInUser) {
+      this.user = {
+        firstName: loggedInUser.firstName || loggedInUser.username || 'Rider Glenn'
+      };
+    } else {
       console.error('User not found, redirecting to login');
       // Redirect to login or handle accordingly
     }

@@ -41,6 +41,25 @@
 
         <p *ngIf="errorMessage" color="danger">{{ errorMessage }}</p>
       </form>
+
+      <!-- OR Divider -->
+      <div class="divider-container">
+        <div class="divider-line"></div>
+        <span class="divider-text">OR</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- Facebook Registration Button -->
+      <ion-button 
+        expand="block" 
+        class="facebook-button"
+        (click)="registerWithFacebook()"
+        [disabled]="isFacebookLoading">
+        <ion-icon slot="start" name="logo-facebook" class="facebook-icon"></ion-icon>
+        <ion-spinner *ngIf="isFacebookLoading" name="crescent" class="facebook-spinner"></ion-spinner>
+        <span *ngIf="!isFacebookLoading">Sign up with Facebook</span>
+        <span *ngIf="isFacebookLoading">Creating account...</span>
+      </ion-button>
       
       <!-- New Section for Login Link -->
       <div class="ion-text-center back-to-login-link">

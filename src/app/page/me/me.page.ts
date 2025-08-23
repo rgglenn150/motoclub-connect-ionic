@@ -41,15 +41,14 @@ export class MePage implements OnInit {
   }
 
   fetchUserData() {
-    this.authService.getLoggedInUser().subscribe(user => {
+    const user = this.authService.getLoggedInUser();
+    if (user) {
       this.user = user;
-      if (!this.user) {
-        console.error('User not found, redirecting to login');
-        this.router.navigate(['/login']);
-        return;
-      }
       console.log('User data fetched:', this.user);
-    });
+    } else {
+      console.error('User not found, redirecting to login');
+      this.router.navigate(['/login']);
+    }
   }
 
   logout() {
