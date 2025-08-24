@@ -31,7 +31,7 @@ const routes: Routes = [
     loadChildren: () => import('./components/clubs/club-details/club-details.module').then( m => m.ClubDetailsPageModule)
   },
   {
-    path: 'club-home',
+    path: 'clubs/:id',
     loadChildren: () => import('./pages/clubs/club-home/club-home.module').then( m => m.ClubHomePageModule)
   }
 ];

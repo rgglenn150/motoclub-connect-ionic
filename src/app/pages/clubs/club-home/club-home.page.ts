@@ -1,13 +1,23 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ClubService, Club as ServiceClub } from '../../../service/club.service';
+import { ToastController, LoadingController } from '@ionic/angular';
 
 // Define interfaces for your data structures for type safety
 interface Club {
+  _id?: string;
+  id?: string;
   name: string;
+  clubName?: string; // Backend uses clubName
   location: string;
   memberCount: number;
   coverPhotoUrl: string;
   logoUrl: string;
   isPrivate: boolean;
+  description?: string;
+  members?: any[];
+  createdBy?: string;
+  createdAt?: string;
 }
 
 interface Member {
@@ -39,6 +49,13 @@ interface PinnedPost {
 export class ClubHomePage implements OnInit {
 
   // --- STATE MANAGEMENT ---
+  // Club ID from route parameter
+  clubId: string | null = null;
+  
+  // Loading and error states
+  isLoading: boolean = false;
+  errorMessage: string = '';
+  
   // This variable controls which tab is currently active.
   selectedTab: 'feed' | 'members' | 'events' = 'feed';
   
@@ -47,16 +64,14 @@ export class ClubHomePage implements OnInit {
   // Change this to 'member' or 'non-member' to test different views.
   userStatus: 'admin' | 'member' | 'non-member' = 'admin';
 
-  // --- MOCK DATA ---
-  // In a real application, you would fetch this data from your API
-  // in the ngOnInit lifecycle hook.
+  // Club data - will be populated from API
   club: Club = {
-    name: 'Asphalt Nomads RC',
-    location: 'Oton, Philippines',
-    memberCount: 42,
-    isPrivate: true,
-    coverPhotoUrl: 'https://placehold.co/600x250/2D3748/FFFFFF?text=Club+Cover+Photo',
-    logoUrl: 'https://placehold.co/100x100/4A5568/FFFFFF?text=Logo'
+    name: '',
+    location: '',
+    memberCount: 0,
+    isPrivate: false,
+    coverPhotoUrl: 'https://placehold.co/600x250/2D3748/FFFFFF?text=Loading...',
+    logoUrl: 'https://placehold.co/100x100/4A5568/FFFFFF?text=..'
   };
   
   pinnedPost: PinnedPost = {
@@ -91,12 +106,91 @@ export class ClubHomePage implements OnInit {
     }
   ];
 
-  constructor() { }
+  constructor(
+    private route: ActivatedRoute,
+    private clubService: ClubService,
+    private toastController: ToastController,
+    private loadingController: LoadingController
+  ) { }
 
   ngOnInit() {
-    // This is where you would typically make your API calls to fetch
-    // the club data based on a route parameter (e.g., the club ID).
-    // console.log('Fetching data for club...');
+    // Get the club ID from the route parameter
+    this.clubId = this.route.snapshot.paramMap.get('id');
+    
+    if (this.clubId) {
+      this.fetchClubData(this.clubId);
+    } else {
+      this.errorMessage = 'No club ID provided';
+      this.showErrorToast('Invalid club ID');
+    }
+  }
+
+  // --- API METHODS ---
+  async fetchClubData(clubId: string) {
+    const loading = await this.loadingController.create({
+      message: 'Loading club details...',
+      duration: 10000 // Max 10 seconds
+    });
+    
+    try {
+      this.isLoading = true;
+      this.errorMessage = '';
+      await loading.present();
+      
+      this.clubService.getClubDetails(clubId).subscribe({
+        next: (response) => {
+          console.log('Club data received:', response);
+          this.updateClubData(response);
+          loading.dismiss();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error fetching club data:', error);
+          this.errorMessage = 'Failed to load club details';
+          this.showErrorToast('Failed to load club details');
+          loading.dismiss();
+          this.isLoading = false;
+        }
+      });
+    } catch (error) {
+      console.error('Exception in fetchClubData:', error);
+      this.errorMessage = 'An unexpected error occurred';
+      this.showErrorToast('An unexpected error occurred');
+      loading.dismiss();
+      this.isLoading = false;
+    }
+  }
+
+  private updateClubData(response: any) {
+    // Handle different response structures
+    const clubData = response.club || response;
+    
+    this.club = {
+      ...this.club,
+      _id: clubData._id,
+      id: clubData._id,
+      name: clubData.clubName || clubData.name || 'Unnamed Club',
+      clubName: clubData.clubName,
+      location: clubData.location || 'Location not specified',
+      memberCount: clubData.members ? clubData.members.length : 0,
+      isPrivate: clubData.isPrivate || false,
+      logoUrl: clubData.logoUrl || 'https://placehold.co/100x100/4A5568/FFFFFF?text=Logo',
+      coverPhotoUrl: clubData.coverPhotoUrl || 'https://placehold.co/600x250/2D3748/FFFFFF?text=Club+Cover+Photo',
+      description: clubData.description,
+      members: clubData.members,
+      createdBy: clubData.createdBy,
+      createdAt: clubData.createdAt
+    };
+  }
+
+  private async showErrorToast(message: string) {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: 3000,
+      color: 'danger',
+      position: 'top'
+    });
+    toast.present();
   }
 
   // --- GETTERS FOR CLEANER TEMPLATES ---
@@ -111,7 +205,12 @@ export class ClubHomePage implements OnInit {
   
   get canViewContent(): boolean {
       // Users can view content if they are a member OR if the club is not private.
-      return this.isUserMember || !this.club.isPrivate;
+      // Also check if we have successfully loaded club data
+      return !this.isLoading && this.club.name && (this.isUserMember || !this.club.isPrivate);
+  }
+  
+  get hasError(): boolean {
+    return !!this.errorMessage && !this.isLoading;
   }
 
   // --- EVENT HANDLERS ---
@@ -120,10 +219,49 @@ export class ClubHomePage implements OnInit {
     this.selectedTab = event.detail.value;
   }
   
-  // Placeholder for join button action
-  joinClub() {
-      console.log('Join club button clicked');
-      // Add logic to send a join request to your backend
+  // Join club functionality
+  async joinClub() {
+    if (!this.clubId) {
+      this.showErrorToast('Invalid club ID');
+      return;
+    }
+    
+    const loading = await this.loadingController.create({
+      message: 'Joining club...'
+    });
+    
+    try {
+      await loading.present();
+      
+      this.clubService.joinClub(this.clubId).subscribe({
+        next: (response) => {
+          console.log('Join club response:', response);
+          this.showSuccessToast('Successfully joined the club!');
+          // Refresh club data to update member count and user status
+          this.fetchClubData(this.clubId!);
+          loading.dismiss();
+        },
+        error: (error) => {
+          console.error('Error joining club:', error);
+          this.showErrorToast(error.error?.message || 'Failed to join club');
+          loading.dismiss();
+        }
+      });
+    } catch (error) {
+      console.error('Exception in joinClub:', error);
+      this.showErrorToast('An unexpected error occurred');
+      loading.dismiss();
+    }
+  }
+
+  private async showSuccessToast(message: string) {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: 3000,
+      color: 'success',
+      position: 'top'
+    });
+    toast.present();
   }
   
   // Placeholder for member actions (promote, remove, etc.)

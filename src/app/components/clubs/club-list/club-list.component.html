@@ -37,7 +37,7 @@
 <!-- Club List -->
 <div *ngIf="!isLoading && !error">
   <ion-list *ngIf="(clubs$ | async) as clubs; else noClubs">
-    <ion-card *ngFor="let club of clubs" class="asphalt-card" [routerLink]="['/club-details', club.id]">
+    <ion-card *ngFor="let club of clubs" class="asphalt-card" [routerLink]="['/clubs', club.id]">
       <div class="card-header-row">
         <div class="card-text">
           <ion-card-title>{{ club.clubName }}</ion-card-title>
