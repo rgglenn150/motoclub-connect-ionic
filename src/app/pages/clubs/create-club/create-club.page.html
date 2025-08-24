@@ -1,7 +1,7 @@
 <!-- 
-  Redesigned Create Group Page
+  Redesigned Create Club Page
   - Applies the "Asphalt UI" theme for a consistent look and feel.
-  - Adds key features: Group Privacy toggle and an Image Uploader.
+  - Adds key features: Club Privacy toggle and an Image Uploader.
   - Uses more descriptive labels and icons for better usability.
 -->
 <ion-header class="asphalt-header">
@@ -14,13 +14,13 @@
 </ion-header>
 
 <ion-content class="asphalt-background">
-  <form [formGroup]="createGroupForm" (ngSubmit)="registerGroup()">
+  <form [formGroup]="createClubForm" (ngSubmit)="registerClub()">
     <div class="ion-padding">
 
-      <!-- Group Image Uploader -->
+      <!-- Club Image Uploader -->
       <div class="image-uploader ion-text-center" (click)="fileInput.click()">
-        <img *ngIf="groupImagePreview" [src]="groupImagePreview" class="group-image-preview" />
-        <div *ngIf="!groupImagePreview" class="placeholder">
+        <img *ngIf="clubImagePreview" [src]="clubImagePreview" class="club-image-preview" />
+        <div *ngIf="!clubImagePreview" class="placeholder">
           <ion-icon name="camera-outline" class="placeholder-icon"></ion-icon>
           <ion-label>Upload Club Logo</ion-label>
         </div>
@@ -46,23 +46,23 @@
         </div>
       </div>
 
-      <!-- Group Name -->
+      <!-- Club Name -->
       <ion-item class="asphalt-input-item" lines="none">
         <ion-input formControlName="name" type="text" placeholder="Club Name"></ion-input>
       </ion-item>
 
-      <!-- Group Description -->
+      <!-- Club Description -->
       <ion-item class="asphalt-textarea-item" lines="none">
         <ion-textarea formControlName="description" placeholder="Club Description (e.g., goals, riding style)" [autoGrow]="true"></ion-textarea>
       </ion-item>
 
-      <!-- Group Location -->
+      <!-- Club Location -->
       <ion-item class="asphalt-input-item" lines="none">
         <ion-icon name="location-outline" slot="start" class="asphalt-icon"></ion-icon>
         <ion-input formControlName="location" type="text" placeholder="Home Base (e.g., City, State)"></ion-input>
       </ion-item>
 
-      <!-- Group Privacy Toggle -->
+      <!-- Club Privacy Toggle -->
       <ion-item class="asphalt-toggle-item" lines="none">
         <ion-label>Private Club</ion-label>
         <ion-toggle formControlName="isPrivate" slot="end" class="asphalt-toggle"></ion-toggle>
@@ -80,8 +80,8 @@
     <ion-button 
       expand="block" 
       class="asphalt-button-primary" 
-      (click)="registerGroup()" 
-      [disabled]="createGroupForm.invalid">
+      (click)="registerClub()" 
+      [disabled]="createClubForm.invalid">
       Create Club
     </ion-button>
   </ion-toolbar>

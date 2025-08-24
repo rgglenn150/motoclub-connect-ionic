@@ -8,19 +8,19 @@ const routes: Routes = [
   },
   {
     path: 'login',
-    loadChildren: () => import('./page/login/login.module').then( m => m.LoginPageModule)
+    loadChildren: () => import('./pages/login/login.module').then( m => m.LoginPageModule)
   },
   {
     path: 'register',
-    loadChildren: () => import('./page/register/register.module').then( m => m.RegisterPageModule)
+    loadChildren: () => import('./pages/register/register.module').then( m => m.RegisterPageModule)
   },
   {
     path: 'me',
-    loadChildren: () => import('./page/me/me.module').then( m => m.MePageModule)
+    loadChildren: () => import('./pages/me/me.module').then( m => m.MePageModule)
   },
   {
-    path: 'groups',
-    loadChildren: () => import('./page/groups/create-group/create-group.module').then( m => m.CreateGroupPageModule)
+    path: 'clubs',
+    loadChildren: () => import('./pages/clubs/create-club/create-club.module').then( m => m.CreateClubPageModule)
   },
   {
     path: 'create-event',

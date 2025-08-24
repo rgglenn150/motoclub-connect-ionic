@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 import { ExploreContainerComponentModule } from '../explore-container/explore-container.module';
-import { MePage } from '../page/me/me.page';
+import { MePage } from '../pages/me/me.page';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LoadingSpinnerComponent } from '../components/utils/loading-spinner/loading-spinner.component';
