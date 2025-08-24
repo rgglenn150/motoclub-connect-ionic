@@ -25,10 +25,6 @@ MotoClub Connect is a mobile application built using Ionic Angular, with Express
 - **Database**: MongoDB (with Mongoose)
 - **API Integration**: RESTful API architecture
 
-## Screenshots
-_Include some screenshots of the app if available_
-
-## Installation
 
 ### Prerequisites
 Make sure you have the following installed:
