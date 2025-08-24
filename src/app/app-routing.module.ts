@@ -29,6 +29,10 @@ const routes: Routes = [
   {
     path: 'club-details/:id',
     loadChildren: () => import('./components/clubs/club-details/club-details.module').then( m => m.ClubDetailsPageModule)
+  },
+  {
+    path: 'clubs/:id',
+    loadChildren: () => import('./pages/clubs/club-home/club-home.module').then( m => m.ClubHomePageModule)
   }
 ];
 @NgModule({

@@ -51,6 +51,6 @@ describe('ClubListComponent', () => {
 
     const clubCard = fixture.debugElement.query(By.css('ion-card'));
     const routerLink = clubCard.nativeElement.getAttribute('ng-reflect-router-link');
-    expect(routerLink).toBe('/club-details,1');
+    expect(routerLink).toBe('/clubs,1');
   });
 });
