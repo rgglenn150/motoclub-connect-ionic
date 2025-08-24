@@ -1,63 +1,38 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar class="club-header-toolbar">
-    <!-- Back Button -->
+<ion-header class="ion-no-border club-header">
+  <ion-toolbar>
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
+  </ion-toolbar>
 
-    <!-- Cover Photo and Gradient -->
+  <div class="club-header-content">
     <div class="cover-photo-container">
-      <img [src]="club.coverPhotoUrl || getDefaultCoverPhoto()" 
-           (error)="onCoverPhotoError($event)" 
-           class="cover-photo" 
-           alt="Club Cover Photo"/>
+      <img [src]="club.coverPhotoUrl" class="cover-photo" alt="Club Cover Photo"/>
       <div class="gradient-overlay"></div>
     </div>
-
-    <!-- Club Avatar -->
     <ion-avatar class="club-avatar">
-      <img [src]="club.logoUrl || getDefaultLogoPhoto()" 
-           (error)="onLogoError($event)" 
-           alt="Club Logo"/>
+      <img [src]="club.logoUrl" alt="Club Logo"/>
     </ion-avatar>
-
-    <!-- Header Action Buttons -->
     <div class="header-actions">
-      <!-- Show settings button only to admins -->
       <ion-button *ngIf="isUserAdmin" fill="clear">
         <ion-icon slot="icon-only" name="settings-outline" color="light"></ion-icon>
       </ion-button>
-      
-      <!-- Show join button only to non-members -->
       <ion-button *ngIf="!isUserMember" color="brand-amber" shape="round" (click)="joinClub()">
         <ion-icon slot="start" name="person-add-outline"></ion-icon>
         Join
       </ion-button>
     </div>
-
-    <!-- Club Name and Metadata -->
     <div class="club-info">
       <h1 class="club-name">{{ club.name }}</h1>
       <div class="club-meta">
         <ion-icon name="location-sharp"></ion-icon> {{ club.location }} &middot; {{ club.memberCount }} Members
       </div>
     </div>
-  </ion-toolbar>
+  </div>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <!-- This spacer pushes the content below the absolute-positioned header elements -->
-  <div class="header-spacer"></div>
-
-  <!-- 
-  =================================
-  MAIN CONTENT AREA
-  =================================
-  -->
-
-  <!-- Use *ngIf to check if the user has permission to see the content -->
   <ng-container *ngIf="canViewContent; else privateView">
-    <!-- Segment for Tab Navigation -->
     <ion-segment [value]="selectedTab" (ionChange)="segmentChanged($event)">
       <ion-segment-button value="feed">
         <ion-label>Feed</ion-label>
@@ -70,12 +45,8 @@
       </ion-segment-button>
     </ion-segment>
 
-    <!-- Use ngSwitch to efficiently show/hide content based on the selected tab -->
     <div [ngSwitch]="selectedTab">
-
-      <!-- FEED VIEW -->
       <div *ngSwitchCase="'feed'">
-        <!-- Pinned Announcement -->
         <ion-card class="asphalt-card pinned-announcement" *ngIf="pinnedPost">
           <ion-card-header>
             <ion-card-subtitle class="pinned-subtitle">
@@ -85,18 +56,13 @@
           </ion-card-header>
           <ion-card-content>{{ pinnedPost.content }}</ion-card-content>
         </ion-card>
-
-        <!-- Next Upcoming Ride -->
         <ion-card class="asphalt-card" *ngIf="upcomingRide">
           <div class="card-header-row">
             <div class="card-text">
               <ion-card-subtitle>UPCOMING RIDE &middot; {{ upcomingRide.date | date: 'MMM d, y' }}</ion-card-subtitle>
               <ion-card-title>{{ upcomingRide.title }}</ion-card-title>
             </div>
-            <img [src]="upcomingRide.imageUrl || getDefaultEventPhoto()" 
-                 (error)="onEventImageError($event)" 
-                 class="club-thumbnail" 
-                 [alt]="upcomingRide.title"/>
+            <img [src]="upcomingRide.imageUrl" class="club-thumbnail" [alt]="upcomingRide.title"/>
           </div>
           <div class="card-footer">
             <div class="footer-item">
@@ -111,73 +77,18 @@
         </ion-card>
       </div>
 
-      <!-- MEMBERS VIEW -->
       <div *ngSwitchCase="'members'">
-        <ion-searchbar placeholder="Search for members"></ion-searchbar>
-        <div style="padding: 0 16px;">
-          <ion-list>
-            <ion-item *ngFor="let member of members" lines="none">
-              <ion-avatar slot="start">
-                <img [src]="member.avatarUrl || getDefaultAvatarPhoto()" 
-                     (error)="onAvatarError($event)" 
-                     alt="Member Avatar"/>
-              </ion-avatar>
-              <ion-label>
-                <h2>{{ member.name }}</h2>
-                <p>{{ member.role }}</p>
-              </ion-label>
-              <!-- Show actions button only for admins -->
-              <ion-button *ngIf="isUserAdmin" fill="clear" slot="end" (click)="presentMemberActions(member)">
-                <ion-icon slot="icon-only" name="ellipsis-vertical"></ion-icon>
-              </ion-button>
-            </ion-item>
-          </ion-list>
         </div>
-      </div>
 
-      <!-- EVENTS VIEW -->
       <div *ngSwitchCase="'events'">
-        <ion-card class="asphalt-card" *ngFor="let event of events">
-          <div class="card-header-row">
-            <div class="card-text">
-              <ion-card-subtitle>{{ event.type }} &middot; {{ event.date | date: 'MMM d, y' }}</ion-card-subtitle>
-              <ion-card-title>{{ event.title }}</ion-card-title>
-            </div>
-            <img [src]="event.imageUrl || getDefaultEventPhoto()" 
-                 (error)="onEventImageError($event)" 
-                 class="club-thumbnail" 
-                 [alt]="event.title"/>
-          </div>
-          <div class="card-footer">
-            <div class="footer-item">
-              <ion-icon name="location-sharp"></ion-icon>
-              <span>{{ event.location }}</span>
-            </div>
-            <div class="footer-item">
-              <ion-icon name="people"></ion-icon>
-              <span>{{ event.attendeeCount }} Attending</span>
-            </div>
-          </div>
-        </ion-card>
-      </div>
+        </div>
     </div>
   </ng-container>
 
-  <!-- This is the template for the locked/private view -->
   <ng-template #privateView>
-    <div class="private-club-view">
-      <ion-icon name="lock-closed-outline"></ion-icon>
-      <h2>This Club is Private</h2>
-      <p>Request to join to see their feed, members, and events.</p>
-      <ion-button color="brand-amber" shape="round" (click)="joinClub()">
-        Request to Join
-      </ion-button>
-    </div>
-  </ng-template>
-
+    </ng-template>
 </ion-content>
 
-<!-- Floating Action Button (Admin Only) -->
 <ion-fab *ngIf="isUserAdmin" vertical="bottom" horizontal="end" slot="fixed">
   <ion-fab-button color="brand-amber">
     <ion-icon name="add-outline"></ion-icon>
