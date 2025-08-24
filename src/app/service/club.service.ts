@@ -5,7 +5,8 @@ import { environment } from 'src/environments/environment';
 import { map } from 'rxjs/operators'; // Import the map operator
 
 export interface Club {
-  id?: string;
+  _id?: string;
+  id?: string; // For compatibility with frontend routing
   clubName: string;
   description: string;
   location?: string;
@@ -13,7 +14,7 @@ export interface Club {
   members?: any[]; // You can create a more specific interface for members
   createdBy?: string;
   createdAt?: string;
-  logoUrl?: string;
+  logoUrl?: string; // For club logo display
 }
 
 @Injectable({
@@ -28,6 +29,12 @@ export class ClubService {
     return this.http.post(`${this.baseUrl}/create`, clubData);
   }
 
+  uploadClubLogo(clubId: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return this.http.post(`${this.baseUrl}/${clubId}/logo`, formData);
+  }
+
   /**
    * Fetches all clubs from the backend.
    *
@@ -40,19 +47,44 @@ export class ClubService {
       );
   }
 
-  getClubDetails(id: string): Observable<Club> {
-    return this.http.get<Club>(`${this.baseUrl}/${id}`);
+  /**
+   * Fetches club details by ID.
+   *
+   * @param clubId - The ID of the club to fetch
+   * @returns An Observable with club details
+   */
+  getClubDetails(clubId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${clubId}`);
   }
 
-  getClubEvents(id: string): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/event/club/${id}`);
+  /**
+   * Fetches events for a specific club.
+   *
+   * @param clubId - The ID of the club
+   * @returns An Observable with club events
+   */
+  getClubEvents(clubId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${clubId}/events`);
   }
 
-  addMember(clubId: string, memberData: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/addMember`, { clubId, memberData });
-  }
-
+  /**
+   * Join a club.
+   *
+   * @param clubId - The ID of the club to join
+   * @returns An Observable with join response
+   */
   joinClub(clubId: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/${clubId}/join`, {});
+  }
+
+  /**
+   * Add a member to a club.
+   *
+   * @param clubId - The ID of the club
+   * @param memberData - Member data to add
+   * @returns An Observable with add member response
+   */
+  addMember(clubId: string, memberData: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${clubId}/members`, memberData);
   }
 }

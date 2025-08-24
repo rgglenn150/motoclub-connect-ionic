@@ -2,19 +2,19 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { CreateGroupPage } from './create-group.page';
+import { CreateClubPage } from './create-club.page';
 
-describe('CreateGroupPage', () => {
-  let component: CreateGroupPage;
-  let fixture: ComponentFixture<CreateGroupPage>;
+describe('CreateClubPage', () => {
+  let component: CreateClubPage;
+  let fixture: ComponentFixture<CreateClubPage>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ CreateGroupPage ],
+      declarations: [ CreateClubPage ],
       imports: [IonicModule.forRoot(), ReactiveFormsModule, HttpClientTestingModule]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(CreateGroupPage);
+    fixture = TestBed.createComponent(CreateClubPage);
     component = fixture.componentInstance;
     fixture.detectChanges();
   }));

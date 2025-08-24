@@ -1,4 +1,4 @@
-/* "Asphalt UI" Styles for Create Group Page
+/* "Asphalt UI" Styles for Create Club Page
   - Imports variables from the login page for consistency.
   - Adds styles for new components like image uploader and toggle.
 */
@@ -45,7 +45,7 @@
   cursor: pointer;
   overflow: hidden;
 
-  .group-image-preview {
+  .club-image-preview {
     width: 100%;
     height: 100%;
     object-fit: cover;

@@ -2,6 +2,10 @@
 <resources>
     <string name="app_name">MotoClub Connect - Ionic</string>
     <string name="title_activity_main">MotoClub Connect - Ionic</string>
-    <string name="package_name">io.ionic.starter</string>
-    <string name="custom_url_scheme">io.ionic.starter</string>
+    <string name="package_name">com.motoclub.connect</string>
+    <string name="custom_url_scheme">com.motoclub.connect</string>
+    
+    <!-- Facebook SDK Configuration -->
+    <string name="facebook_app_id">1515940283108537</string>
+    <string name="facebook_client_token">f44a7579384e4f4c0ffc350e4e0d6523</string>
 </resources>

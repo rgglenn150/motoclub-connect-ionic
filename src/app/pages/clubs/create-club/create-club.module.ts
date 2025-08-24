@@ -6,20 +6,20 @@ import { IonicModule } from '@ionic/angular';
 import { ImageCropperModule } from 'ngx-image-cropper';
 
 
-import { CreateGroupPage } from './create-group.page';
-import { CreateGroupPageRoutingModule } from './create-group-routing.module';
+import { CreateClubPage } from './create-club.page';
+import { CreateClubPageRoutingModule } from './create-club-routing.module';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    CreateGroupPageRoutingModule,
+    CreateClubPageRoutingModule,
     ReactiveFormsModule,
     ImageCropperModule
   ],
-  declarations: [CreateGroupPage],
-  exports: [CreateGroupPage],
+  declarations: [CreateClubPage],
+  exports: [CreateClubPage],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class CreateGroupPageModule {}
+export class CreateClubPageModule {}

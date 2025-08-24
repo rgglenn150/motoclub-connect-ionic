@@ -3,16 +3,16 @@ import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastService } from 'src/app/service/utils/toast.service';
-import { GroupService, Group } from 'src/app/service/group.service'; // Import the service and interface
+import { ClubService, Club } from 'src/app/service/club.service'; // Import the service and interface
 
 @Component({
-  selector: 'app-create-group',
-  templateUrl: './create-group.page.html',
-  styleUrls: ['./create-group.page.scss'],
+  selector: 'app-create-club',
+  templateUrl: './create-club.page.html',
+  styleUrls: ['./create-club.page.scss'],
 })
-export class CreateGroupPage implements OnInit {
-  createGroupForm: FormGroup;
-  groupImagePreview: string | ArrayBuffer | null = null;
+export class CreateClubPage implements OnInit {
+  createClubForm: FormGroup;
+  clubImagePreview: string | ArrayBuffer | null = null;
   cropperVisible = false;
   imageChangedEvent: Event | null = null;
   croppedImageBase64: string | null = null;
@@ -20,13 +20,13 @@ export class CreateGroupPage implements OnInit {
 
   constructor(
     private formBuilder: FormBuilder,
-    private groupService: GroupService, // Inject GroupService
+    private clubService: ClubService, // Inject ClubService
     private toastService: ToastService,
     private router: Router
   ) {}
 
   ngOnInit() {
-    this.createGroupForm = this.formBuilder.group({
+    this.createClubForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
       description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
       location: [''],
@@ -46,7 +46,7 @@ export class CreateGroupPage implements OnInit {
     this.croppedImageBase64 = event.base64 || null;
     // Reflect cropped image in preview immediately; remains after Apply
     if (this.croppedImageBase64) {
-      this.groupImagePreview = this.croppedImageBase64;
+      this.clubImagePreview = this.croppedImageBase64;
     }
   }
 
@@ -60,7 +60,7 @@ export class CreateGroupPage implements OnInit {
       this.toastService.presentToast('Please adjust the crop before applying.', 'bottom', 2000);
       return;
     }
-    this.groupImagePreview = this.croppedImageBase64;
+    this.clubImagePreview = this.croppedImageBase64;
     // Convert base64 to File manually for Angular 14 compatible version
     const arr = this.croppedImageBase64.split(',');
     const mimeMatch = arr[0].match(/:(.*?);/);
@@ -83,26 +83,26 @@ export class CreateGroupPage implements OnInit {
   }
 
   /**
-   * Validates the form and uses the GroupService to create a new club.
+   * Validates the form and uses the ClubService to create a new club.
    */
-  registerGroup() {
-    if (this.createGroupForm.invalid) {
+  registerClub() {
+    if (this.createClubForm.invalid) {
       this.toastService.presentToast('Please fill out all required fields correctly.', 'bottom', 3000);
       return;
     }
 
-    // Use the Group interface for type safety
-    const groupData: Group = this.createGroupForm.value;
+    // Use the Club interface for type safety
+    const clubData: Club = this.createClubForm.value;
 
-    console.log('Submitting Group Data:', groupData);
+    console.log('Submitting Club Data:', clubData);
 
     // Call the service instead of http directly
-    this.groupService.createGroup(groupData).subscribe({
+    this.clubService.createClub(clubData).subscribe({
       next: (response) => {
         // eslint-disable-next-line no-underscore-dangle
         const clubId = response.id || response._id;
         if (this.selectedLogoFile && clubId) {
-          this.groupService.uploadClubLogo(clubId, this.selectedLogoFile).subscribe({
+          this.clubService.uploadClubLogo(clubId, this.selectedLogoFile).subscribe({
             next: () => {
               this.toastService.presentToast('Club created and logo uploaded!', 'bottom', 2000);
               this.router.navigate(['/home']);
@@ -119,7 +119,7 @@ export class CreateGroupPage implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error creating group:', error);
+        console.error('Error creating club:', error);
         this.toastService.presentToast('Error creating club. Please try again.', 'bottom', 3000);
       }
     });
