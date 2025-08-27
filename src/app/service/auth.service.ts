@@ -13,7 +13,15 @@ export class AuthService {
   private baseUrl = `${environment.apiUrl}/auth`;
 
   constructor(private http: HttpClient, private router: Router) {
-    this.initializeFacebookLogin();
+    // Only initialize Facebook login if not in test environment
+    if (!this.isTestEnvironment()) {
+      this.initializeFacebookLogin();
+    }
+  }
+
+  private isTestEnvironment(): boolean {
+    // Check if we're running in a test environment
+    return typeof (window as any).jasmine !== 'undefined' || typeof (window as any).__karma__ !== 'undefined';
   }
 
   private async initializeFacebookLogin() {
