@@ -1,18 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+/**
+ * Basic smoke tests for the application
+ */
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
+test('application should load without critical errors', async ({ page }) => {
+  // Navigate to the application
+  await page.goto('/');
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
-
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+  // Verify the page loads successfully (no 404 or 500 errors)
+  // This test will pass if the application starts and serves the login page
+  await expect(page).not.toHaveTitle(/Error/);
+  
+  // Verify we get some content (not a blank page)
+  const bodyContent = await page.textContent('body');
+  expect(bodyContent).not.toBe('');
+  expect(bodyContent).not.toBe(null);
 });

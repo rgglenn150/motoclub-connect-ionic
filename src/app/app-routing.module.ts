@@ -33,6 +33,10 @@ const routes: Routes = [
   {
     path: 'clubs/:id',
     loadChildren: () => import('./pages/clubs/club-home/club-home.module').then( m => m.ClubHomePageModule)
+  },
+  {
+    path: 'notifications',
+    loadChildren: () => import('./pages/notifications/notifications.module').then( m => m.NotificationsPageModule)
   }
 ];
 @NgModule({

@@ -1,0 +1,13 @@
+<ion-button 
+  fill="clear" 
+  (click)="openNotifications($event)"
+  class="notification-bell-button"
+  aria-label="Notifications">
+  <ion-icon name="notifications-outline" slot="icon-only"></ion-icon>
+  <ion-badge 
+    *ngIf="unreadCount > 0" 
+    color="danger" 
+    class="notification-badge">
+    {{ unreadCount > 99 ? '99+' : unreadCount }}
+  </ion-badge>
+</ion-button>

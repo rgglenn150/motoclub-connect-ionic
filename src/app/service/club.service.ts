@@ -17,6 +17,33 @@ export interface Club {
   logoUrl?: string; // For club logo display
 }
 
+export interface JoinRequest {
+  _id: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    profilePicture?: string;
+  };
+  club: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface ClubMember {
+  _id: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    profilePicture?: string;
+  };
+  club: string;
+  role: 'member' | 'admin';
+  joinedAt: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -86,5 +113,92 @@ export class ClubService {
    */
   addMember(clubId: string, memberData: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/${clubId}/members`, memberData);
+  }
+
+  /**
+   * Get the user's membership status for a specific club.
+   *
+   * @param clubId - The ID of the club
+   * @returns An Observable with membership status information
+   */
+  getMembershipStatus(clubId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${clubId}/membership-status`);
+  }
+
+  // --- ADMIN MANAGEMENT METHODS ---
+
+  /**
+   * Get join requests for a club (admin only).
+   *
+   * @param clubId - The ID of the club
+   * @returns An Observable with join requests
+   */
+  getJoinRequests(clubId: string): Observable<JoinRequest[]> {
+    return this.http.get<JoinRequest[]>(`${this.baseUrl}/${clubId}/join-requests`);
+  }
+
+  /**
+   * Approve a join request (admin only).
+   *
+   * @param clubId - The ID of the club
+   * @param requestId - The ID of the join request
+   * @returns An Observable with approval response
+   */
+  approveJoinRequest(clubId: string, requestId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${clubId}/join-requests/${requestId}/approve`, {});
+  }
+
+  /**
+   * Reject a join request (admin only).
+   *
+   * @param clubId - The ID of the club
+   * @param requestId - The ID of the join request
+   * @returns An Observable with rejection response
+   */
+  rejectJoinRequest(clubId: string, requestId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${clubId}/join-requests/${requestId}/reject`, {});
+  }
+
+  /**
+   * Remove a member from the club (admin only).
+   *
+   * @param clubId - The ID of the club
+   * @param memberId - The ID of the member to remove
+   * @returns An Observable with removal response
+   */
+  removeMember(clubId: string, memberId: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/${clubId}/members/${memberId}`);
+  }
+
+  /**
+   * Promote a member to admin (admin only).
+   *
+   * @param clubId - The ID of the club
+   * @param memberId - The ID of the member to promote
+   * @returns An Observable with promotion response
+   */
+  promoteToAdmin(clubId: string, memberId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${clubId}/members/${memberId}/promote`, {});
+  }
+
+  /**
+   * Demote an admin to member (admin only).
+   *
+   * @param clubId - The ID of the club
+   * @param memberId - The ID of the member to demote
+   * @returns An Observable with demotion response
+   */
+  demoteToMember(clubId: string, memberId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${clubId}/members/${memberId}/demote`, {});
+  }
+
+  /**
+   * Get club members (for admin management).
+   *
+   * @param clubId - The ID of the club
+   * @returns An Observable with club members
+   */
+  getClubMembers(clubId: string): Observable<ClubMember[]> {
+    return this.http.get<ClubMember[]>(`${this.baseUrl}/${clubId}/members`);
   }
 }

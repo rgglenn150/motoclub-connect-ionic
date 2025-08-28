@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/service/auth.service';
@@ -10,7 +10,7 @@ import { ToastService } from 'src/app/service/utils/toast.service';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
 })
-export class LoginPage implements OnInit {
+export class LoginPage {
   loginForm: FormGroup;
   deferredPrompt: any;
   showInstallButton = false;
@@ -32,7 +32,6 @@ export class LoginPage implements OnInit {
     });
   }
 
-  ngOnInit() {}
 
   @HostListener('window:beforeinstallprompt', ['$event'])
   onbeforeinstallprompt(e) {
