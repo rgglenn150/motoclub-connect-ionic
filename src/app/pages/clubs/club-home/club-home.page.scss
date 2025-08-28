@@ -395,6 +395,256 @@ ion-fab {
     text-align: center;
 }
 
+/* --- ADMIN MANAGEMENT STYLES --- */
+
+.admin-section {
+    padding: 0;
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        
+        ion-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            
+            ion-icon {
+                color: var(--ion-color-brand-amber);
+                font-size: 1.2rem;
+            }
+        }
+        
+        ion-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+    }
+}
+
+/* Loading and Empty States for Admin Sections */
+.loading-state, .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    
+    ion-spinner {
+        margin-bottom: 12px;
+    }
+    
+    ion-icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+    }
+    
+    h4 {
+        color: #FFFFFF;
+        font-family: 'Roboto Condensed', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+    }
+    
+    p {
+        color: #A0AEC0;
+        font-size: 0.9rem;
+        margin: 0;
+        line-height: 1.4;
+    }
+}
+
+/* Join Request Items */
+.request-item {
+    --background: #2D3748;
+    --border-radius: 12px;
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --inner-padding-end: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #4A5568;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        --background: #374151;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    ion-avatar {
+        --size: 50px;
+        margin-right: 12px;
+        
+        img {
+            border: 2px solid #4A5568;
+        }
+    }
+    
+    ion-label {
+        h3 {
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+        
+        p {
+            color: #A0AEC0;
+            font-size: 0.85rem;
+            margin: 2px 0;
+            
+            &.request-date {
+                color: #718096;
+                font-size: 0.8rem;
+                font-style: italic;
+            }
+        }
+    }
+}
+
+/* Request Action Buttons */
+.request-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    
+    ion-button {
+        --border-radius: 8px;
+        --padding-start: 12px;
+        --padding-end: 12px;
+        min-height: 32px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        
+        &[color="success"] {
+            --color: #48BB78;
+            --color-hover: #38A169;
+        }
+        
+        &[color="danger"] {
+            --color: #F56565;
+            --color-hover: #E53E3E;
+        }
+        
+        &:disabled {
+            opacity: 0.6;
+        }
+        
+        ion-icon {
+            margin-right: 4px;
+            font-size: 1rem;
+        }
+        
+        ion-spinner {
+            margin-right: 4px;
+        }
+    }
+}
+
+/* Member Management Items */
+.member-item {
+    --background: #2D3748;
+    --border-radius: 12px;
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --inner-padding-end: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #4A5568;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        --background: #374151;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    ion-avatar {
+        --size: 50px;
+        margin-right: 12px;
+        
+        img {
+            border: 2px solid #4A5568;
+        }
+    }
+    
+    ion-label {
+        h3 {
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-bottom: 6px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            
+            .role-badge {
+                font-size: 0.7rem;
+                font-weight: 600;
+                padding: 2px 8px;
+                border-radius: 12px;
+            }
+        }
+        
+        p {
+            color: #A0AEC0;
+            font-size: 0.85rem;
+            margin: 2px 0;
+            
+            &.join-date {
+                color: #718096;
+                font-size: 0.8rem;
+                font-style: italic;
+            }
+        }
+    }
+    
+    ion-button[slot="end"] {
+        --border-radius: 50%;
+        --padding-start: 8px;
+        --padding-end: 8px;
+        width: 36px;
+        height: 36px;
+        
+        &:hover {
+            --color: var(--ion-color-brand-amber);
+        }
+    }
+}
+
+/* Members and Events sections general styling */
+.members-section, .events-section {
+    padding: 0;
+    
+    .members-list {
+        padding: 0;
+        
+        ion-item {
+            --background: #2D3748;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            
+            ion-avatar {
+                --size: 45px;
+            }
+            
+            ion-label {
+                h3 {
+                    font-weight: 600;
+                    color: #FFFFFF;
+                }
+                
+                p {
+                    color: #A0AEC0;
+                    font-size: 0.9rem;
+                }
+            }
+        }
+    }
+}
+
 /* Loading and Error Container Styles */
 .loading-container {
     display: flex;

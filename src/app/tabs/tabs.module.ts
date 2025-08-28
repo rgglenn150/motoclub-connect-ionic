@@ -7,13 +7,15 @@ import { TabsPageRoutingModule } from './tabs-routing.module';
 
 import { TabsPage } from './tabs.page';
 import { HomePageModule } from '../pages/home/home.module';
+import { NotificationBellModule } from '../components/notification-bell/notification-bell.module';
 
 @NgModule({
   imports: [
     IonicModule,
     CommonModule,
     FormsModule,ReactiveFormsModule,
-    TabsPageRoutingModule,HomePageModule
+    TabsPageRoutingModule,HomePageModule,
+    NotificationBellModule
   ],
   declarations: [TabsPage]
 })

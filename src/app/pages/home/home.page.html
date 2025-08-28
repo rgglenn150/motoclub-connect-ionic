@@ -1,8 +1,13 @@
 <ion-content>
-  <!-- Header -->
-  <div class="p-6">
+  <!-- Header with Notification Bell -->
+  <div class="p-6 flex justify-between items-start">
+    <div>
       <p class="text-md text-gray-400">Good Evening,</p>
       <h1 class="text-3xl font-bold font-condensed">{{user.firstName}}</h1>
+    </div>
+    <div class="flex items-center mt-2">
+      <app-notification-bell></app-notification-bell>
+    </div>
   </div>
 
   <!-- Weather Widget -->

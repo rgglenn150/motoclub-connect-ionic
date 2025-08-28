@@ -1,0 +1,87 @@
+<div class="notification-popover-content">
+  <!-- Header -->
+  <div class="popover-header">
+    <h2>Notifications</h2>
+    <ion-button 
+      fill="clear" 
+      size="small" 
+      (click)="closePopover()"
+      class="close-button">
+      <ion-icon name="close" slot="icon-only"></ion-icon>
+    </ion-button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <ion-spinner name="dots"></ion-spinner>
+    <p>Loading notifications...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <ion-icon name="warning-outline" color="warning"></ion-icon>
+    <p>{{ error }}</p>
+    <ion-button fill="outline" size="small" (click)="retry()">
+      Retry
+    </ion-button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && notifications.length === 0" class="empty-state">
+    <ion-icon name="notifications-off-outline" color="medium"></ion-icon>
+    <p>No notifications yet</p>
+    <small>You'll see notifications here when clubs or events have updates.</small>
+  </div>
+
+  <!-- Notifications List -->
+  <div *ngIf="!loading && !error && notifications.length > 0" class="notifications-list">
+    <div 
+      *ngFor="let notification of notifications; trackBy: trackByNotificationId"
+      class="notification-item"
+      [class.unread]="!notification.read"
+      (click)="onNotificationClick(notification)">
+      
+      <div class="notification-icon">
+        <ion-icon 
+          [name]="getNotificationIcon(notification.type)"
+          [color]="getNotificationColor(notification.type)">
+        </ion-icon>
+      </div>
+
+      <div class="notification-content">
+        <p class="notification-message">
+          {{ formatMessage(notification) }}
+        </p>
+        <small class="notification-time">
+          {{ getTimeAgo(notification.createdAt) }}
+        </small>
+      </div>
+
+      <div class="notification-status" *ngIf="!notification.read">
+        <div class="unread-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div *ngIf="!loading && !error" class="popover-footer">
+    <div class="footer-actions">
+      <ion-button 
+        *ngIf="notifications.length > 0"
+        fill="clear" 
+        size="small" 
+        (click)="markAllAsRead()"
+        class="action-button">
+        Mark all read
+      </ion-button>
+      
+      <ion-button 
+        fill="clear" 
+        size="small" 
+        (click)="viewAllNotifications()"
+        class="action-button">
+        View all
+      </ion-button>
+    </div>
+  </div>
+</div>
