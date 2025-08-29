@@ -5,7 +5,24 @@
     </ion-buttons>
   </ion-toolbar>
 
-  <div class="club-header-content">
+  <!-- Skeleton Loader for Header -->
+  <div *ngIf="isLoading || statusLoading" class="club-header-content skeleton-header">
+    <div class="cover-photo-container">
+      <ion-skeleton-text animated class="cover-photo-skeleton"></ion-skeleton-text>
+      <div class="gradient-overlay"></div>
+    </div>
+    <ion-skeleton-text animated class="club-avatar-skeleton"></ion-skeleton-text>
+    <div class="header-actions">
+      <ion-skeleton-text animated class="join-button-skeleton"></ion-skeleton-text>
+    </div>
+    <div class="club-info">
+      <ion-skeleton-text animated style="width: 70%; height: 32px; margin-bottom: 8px;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width: 50%; height: 16px;"></ion-skeleton-text>
+    </div>
+  </div>
+
+  <!-- Actual Header Content -->
+  <div *ngIf="!isLoading && !statusLoading" class="club-header-content">
     <div class="cover-photo-container">
       <img [src]="club.coverPhotoUrl" class="cover-photo" alt="Club Cover Photo"/>
       <div class="gradient-overlay"></div>
@@ -23,6 +40,7 @@
         [color]="getJoinButtonColor()" 
         shape="round" 
         [disabled]="isJoinButtonDisabled()"
+        [class.loading-button]="shouldShowSpinner()"
         (click)="isJoinButtonActionable() ? joinClub() : null">
         
         <!-- Loading spinner -->
@@ -57,8 +75,18 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <!-- Loading State -->
-  <div *ngIf="isLoading || statusLoading" class="loading-container">
+  <!-- Pull to Refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="chevron-down-circle-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Loading State - Only show when not refreshing -->
+  <div *ngIf="(isLoading || statusLoading) && !isRefreshing" class="loading-container">
     <ion-spinner name="crescent" color="primary"></ion-spinner>
     <p *ngIf="isLoading && !statusLoading">Loading club details...</p>
     <p *ngIf="statusLoading && !isLoading">Checking membership status...</p>
@@ -76,6 +104,49 @@
     </ion-button>
   </div>
   
+  <!-- Skeleton Loader for Segments and Content -->
+  <ng-container *ngIf="(isLoading || statusLoading) && !isRefreshing && !hasError">
+    <!-- Skeleton Segment -->
+    <div class="segment-skeleton">
+      <ion-skeleton-text animated style="width: 100%; height: 48px; border-radius: 12px; margin: 20px;"></ion-skeleton-text>
+    </div>
+
+    <!-- Skeleton Content based on selected tab -->
+    <div class="content-skeleton">
+      <!-- Feed Skeleton -->
+      <ion-card class="asphalt-card-skeleton">
+        <div class="card-header-row">
+          <div class="card-text">
+            <ion-skeleton-text animated style="width: 40%; height: 16px; margin-bottom: 6px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 70%; height: 20px;"></ion-skeleton-text>
+          </div>
+          <ion-skeleton-text animated class="club-thumbnail-skeleton"></ion-skeleton-text>
+        </div>
+        <ion-skeleton-text animated style="width: 90%; margin: 8px 16px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 80%; margin: 0 16px 16px;"></ion-skeleton-text>
+        <div class="footer-skeleton">
+          <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
+        </div>
+      </ion-card>
+      
+      <!-- Another card -->
+      <ion-card class="asphalt-card-skeleton">
+        <div class="card-header-row">
+          <div class="card-text">
+            <ion-skeleton-text animated style="width: 50%; height: 16px; margin-bottom: 6px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 60%; height: 20px;"></ion-skeleton-text>
+          </div>
+          <ion-skeleton-text animated class="club-thumbnail-skeleton"></ion-skeleton-text>
+        </div>
+        <div class="footer-skeleton">
+          <ion-skeleton-text animated style="width: 35%; height: 20px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 25%; height: 20px;"></ion-skeleton-text>
+        </div>
+      </ion-card>
+    </div>
+  </ng-container>
+
   <!-- Main Content -->
   <ng-container *ngIf="canViewContent && !isLoading && !hasError; else privateView">
     <ion-segment [value]="selectedTab" (ionChange)="segmentChanged($event)">
@@ -105,6 +176,29 @@
           </ion-card-header>
           <ion-card-content>{{ pinnedPost.content }}</ion-card-content>
         </ion-card>
+        
+        <!-- Operation-specific error indicators -->
+        <div *ngIf="operationErrors.clubData && canViewContent" class="operation-error">
+          <ion-item lines="none" class="error-item">
+            <ion-icon 
+              [name]="getErrorIcon(operationErrors.clubData)" 
+              [color]="getErrorColor(operationErrors.clubData)" 
+              slot="start">
+            </ion-icon>
+            <ion-label>
+              <h4>Club data may be outdated</h4>
+              <p>{{ getErrorMessage(operationErrors.clubData) }}</p>
+            </ion-label>
+            <ion-button 
+              *ngIf="shouldShowRetryButton(operationErrors.clubData)" 
+              slot="end" 
+              fill="clear" 
+              size="small" 
+              (click)="retryFetchClubData()">
+              <ion-icon name="refresh-outline"></ion-icon>
+            </ion-button>
+          </ion-item>
+        </div>
         <ion-card class="asphalt-card" *ngIf="upcomingRide">
           <div class="card-header-row">
             <div class="card-text">
@@ -188,14 +282,80 @@
             </ion-card-header>
             
             <ion-card-content>
-              <!-- Loading State -->
+              <!-- Join Operation Error State -->
+              <div *ngIf="operationErrors.joinOperation" class="operation-error join-error">
+                <ion-item lines="none" class="error-item">
+                  <ion-icon 
+                    [name]="getErrorIcon(operationErrors.joinOperation)" 
+                    [color]="getErrorColor(operationErrors.joinOperation)" 
+                    slot="start">
+                  </ion-icon>
+                  <ion-label>
+                    <h4>Join Operation Failed</h4>
+                    <p>{{ getErrorMessage(operationErrors.joinOperation) }}</p>
+                  </ion-label>
+                  <ion-button 
+                    *ngIf="shouldShowRetryButton(operationErrors.joinOperation)" 
+                    slot="end" 
+                    fill="clear" 
+                    size="small" 
+                    color="primary"
+                    (click)="retryJoinClub()"
+                    [disabled]="isRetrying">
+                    <ion-spinner *ngIf="isRetrying" name="crescent" size="small"></ion-spinner>
+                    <ion-icon *ngIf="!isRetrying" name="refresh-outline"></ion-icon>
+                  </ion-button>
+                </ion-item>
+              </div>
+              
+              <!-- Loading State with Skeleton -->
               <div *ngIf="joinRequestsLoading" class="loading-state">
-                <ion-spinner name="crescent" color="brand-amber"></ion-spinner>
-                <p>Loading join requests...</p>
+                <!-- Skeleton for join requests -->
+                <div class="requests-skeleton">
+                  <ion-item class="request-item-skeleton" *ngFor="let i of [1,2]">
+                    <ion-avatar slot="start">
+                      <ion-skeleton-text animated></ion-skeleton-text>
+                    </ion-avatar>
+                    <ion-label>
+                      <ion-skeleton-text animated style="width: 60%; height: 18px; margin-bottom: 4px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 80%; height: 14px; margin-bottom: 2px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 45%; height: 12px;"></ion-skeleton-text>
+                    </ion-label>
+                    <div slot="end" class="request-actions-skeleton">
+                      <ion-skeleton-text animated style="width: 80px; height: 32px; border-radius: 8px; margin-right: 8px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 70px; height: 32px; border-radius: 8px;"></ion-skeleton-text>
+                    </div>
+                  </ion-item>
+                </div>
+              </div>
+              
+              <!-- Admin Operations Error State -->
+              <div *ngIf="operationErrors.adminOperations" class="operation-error admin-error">
+                <ion-item lines="none" class="error-item">
+                  <ion-icon 
+                    [name]="getErrorIcon(operationErrors.adminOperations)" 
+                    [color]="getErrorColor(operationErrors.adminOperations)" 
+                    slot="start">
+                  </ion-icon>
+                  <ion-label>
+                    <h4>Admin Operation Failed</h4>
+                    <p>{{ getErrorMessage(operationErrors.adminOperations) }}</p>
+                  </ion-label>
+                  <ion-button 
+                    *ngIf="shouldShowRetryButton(operationErrors.adminOperations)" 
+                    slot="end" 
+                    fill="clear" 
+                    size="small" 
+                    (click)="loadAdminData()"
+                    [disabled]="isRetrying">
+                    <ion-spinner *ngIf="isRetrying" name="crescent" size="small"></ion-spinner>
+                    <ion-icon *ngIf="!isRetrying" name="refresh-outline"></ion-icon>
+                  </ion-button>
+                </ion-item>
               </div>
               
               <!-- Empty State -->
-              <div *ngIf="!joinRequestsLoading && joinRequests.length === 0" class="empty-state">
+              <div *ngIf="!joinRequestsLoading && joinRequests.length === 0 && !operationErrors.adminOperations" class="empty-state">
                 <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
                 <h4>No Pending Requests</h4>
                 <p>All join requests have been processed.</p>
@@ -219,22 +379,34 @@
                       fill="clear" 
                       color="success" 
                       size="small"
-                      [disabled]="isRequestProcessing(request._id)"
-                      (click)="approveRequest(request)">
+                      [disabled]="isRequestProcessing(request._id) || !networkStatus.online"
+                      [class.loading-button]="isRequestProcessing(request._id)"
+                      (click)="approveRequest(request)"
+                      [attr.aria-label]="'Approve join request from ' + request.user.name">
                       <ion-spinner *ngIf="isRequestProcessing(request._id)" name="crescent" size="small"></ion-spinner>
                       <ion-icon *ngIf="!isRequestProcessing(request._id)" name="checkmark-outline"></ion-icon>
                       <span *ngIf="!isRequestProcessing(request._id)">Approve</span>
+                      <span *ngIf="isRequestProcessing(request._id)" style="margin-left: 6px;">Processing...</span>
                     </ion-button>
                     <ion-button 
                       fill="clear" 
                       color="danger" 
                       size="small"
-                      [disabled]="isRequestProcessing(request._id)"
-                      (click)="rejectRequest(request)">
+                      [disabled]="isRequestProcessing(request._id) || !networkStatus.online"
+                      [class.loading-button]="isRequestProcessing(request._id)"
+                      (click)="rejectRequest(request)"
+                      [attr.aria-label]="'Reject join request from ' + request.user.name">
                       <ion-spinner *ngIf="isRequestProcessing(request._id)" name="crescent" size="small"></ion-spinner>
                       <ion-icon *ngIf="!isRequestProcessing(request._id)" name="close-outline"></ion-icon>
                       <span *ngIf="!isRequestProcessing(request._id)">Reject</span>
+                      <span *ngIf="isRequestProcessing(request._id)" style="margin-left: 6px;">Processing...</span>
                     </ion-button>
+                    
+                    <!-- Offline indicator for this request -->
+                    <ion-badge *ngIf="!networkStatus.online" color="warning" class="offline-badge">
+                      <ion-icon name="cloud-offline-outline"></ion-icon>
+                      Offline
+                    </ion-badge>
                   </div>
                 </ion-item>
               </div>
@@ -254,10 +426,22 @@
             </ion-card-header>
             
             <ion-card-content>
-              <!-- Loading State -->
+              <!-- Loading State with Skeleton -->
               <div *ngIf="membersLoading" class="loading-state">
-                <ion-spinner name="crescent" color="brand-amber"></ion-spinner>
-                <p>Loading members...</p>
+                <!-- Skeleton for members -->
+                <div class="members-skeleton">
+                  <ion-item class="member-item-skeleton" *ngFor="let i of [1,2,3]">
+                    <ion-avatar slot="start">
+                      <ion-skeleton-text animated></ion-skeleton-text>
+                    </ion-avatar>
+                    <ion-label>
+                      <ion-skeleton-text animated style="width: 50%; height: 18px; margin-bottom: 6px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 70%; height: 14px; margin-bottom: 2px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 40%; height: 12px;"></ion-skeleton-text>
+                    </ion-label>
+                    <ion-skeleton-text slot="end" animated style="width: 36px; height: 36px; border-radius: 50%;"></ion-skeleton-text>
+                  </ion-item>
+                </div>
               </div>
               
               <!-- Empty State -->
@@ -287,16 +471,24 @@
                   </ion-label>
                   
                   <!-- Member Actions -->
-                  <ion-button 
-                    *ngIf="member._id !== membershipData.memberId"
-                    slot="end" 
-                    fill="clear" 
-                    color="medium"
-                    [disabled]="isMemberProcessing(member._id)"
-                    (click)="presentMemberActions(member)">
-                    <ion-spinner *ngIf="isMemberProcessing(member._id)" name="crescent" size="small"></ion-spinner>
-                    <ion-icon *ngIf="!isMemberProcessing(member._id)" name="ellipsis-vertical"></ion-icon>
-                  </ion-button>
+                  <div slot="end" class="member-actions">
+                    <ion-button 
+                      *ngIf="member._id !== membershipData.memberId"
+                      fill="clear" 
+                      color="medium"
+                      [disabled]="isMemberProcessing(member._id) || !networkStatus.online"
+                      [class.loading-button]="isMemberProcessing(member._id)"
+                      (click)="presentMemberActions(member)"
+                      [attr.aria-label]="'Manage ' + member.user.name">
+                      <ion-spinner *ngIf="isMemberProcessing(member._id)" name="crescent" size="small"></ion-spinner>
+                      <ion-icon *ngIf="!isMemberProcessing(member._id)" name="ellipsis-vertical"></ion-icon>
+                    </ion-button>
+                    
+                    <!-- Offline indicator -->
+                    <ion-badge *ngIf="!networkStatus.online" color="warning" class="offline-badge">
+                      <ion-icon name="cloud-offline-outline"></ion-icon>
+                    </ion-badge>
+                  </div>
                 </ion-item>
               </div>
             </ion-card-content>

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 
 import { ClubHomePageRoutingModule } from './club-home-routing.module';
+import { NetworkIndicatorModule } from '../../../components/network-indicator/network-indicator.module';
 
 import { ClubHomePage } from './club-home.page';
 
@@ -13,7 +14,8 @@ import { ClubHomePage } from './club-home.page';
     CommonModule,
     FormsModule,
     IonicModule,
-    ClubHomePageRoutingModule
+    ClubHomePageRoutingModule,
+    NetworkIndicatorModule
   ],
   declarations: [ClubHomePage]
 })

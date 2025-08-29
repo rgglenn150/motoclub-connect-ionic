@@ -1,7 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ClubService, Club as ServiceClub, JoinRequest, ClubMember } from '../../../service/club.service';
 import { ToastController, LoadingController, AlertController, ActionSheetController } from '@ionic/angular';
+import { NetworkService, NetworkStatus, ConnectionQuality } from '../../../service/network.service';
+import { ErrorService, ErrorInfo } from '../../../service/error.service';
+import { Subscription } from 'rxjs';
+import { switchMap, tap, finalize } from 'rxjs/operators';
 
 // Define interfaces for your data structures for type safety
 interface Club {
@@ -46,7 +50,7 @@ interface PinnedPost {
   templateUrl: './club-home.page.html',
   styleUrls: ['./club-home.page.scss'],
 })
-export class ClubHomePage implements OnInit {
+export class ClubHomePage implements OnInit, OnDestroy {
 
   // --- STATE MANAGEMENT ---
   // Club ID from route parameter
@@ -56,7 +60,39 @@ export class ClubHomePage implements OnInit {
   isLoading: boolean = false;
   statusLoading: boolean = false;
   joiningClub: boolean = false;
+  isRefreshing: boolean = false;
   errorMessage: string = '';
+  
+  // Enhanced error handling
+  currentError: ErrorInfo | null = null;
+  retryAttempts: number = 0;
+  maxRetryAttempts: number = 3;
+  isRetrying: boolean = false;
+  
+  // Network status
+  networkStatus: NetworkStatus = { online: true };
+  connectionQuality: ConnectionQuality = {
+    quality: 'good',
+    description: 'Connected',
+    color: 'success',
+    icon: 'wifi-outline'
+  };
+  
+  // Operation-specific error states
+  operationErrors: {
+    clubData: ErrorInfo | null;
+    membershipStatus: ErrorInfo | null;
+    joinOperation: ErrorInfo | null;
+    adminOperations: ErrorInfo | null;
+  } = {
+    clubData: null,
+    membershipStatus: null,
+    joinOperation: null,
+    adminOperations: null
+  };
+  
+  // Subscriptions for cleanup
+  private subscriptions: Subscription[] = [];
   
   // This variable controls which tab is currently active.
   selectedTab: 'feed' | 'members' | 'events' | 'manage' = 'feed';
@@ -85,6 +121,38 @@ export class ClubHomePage implements OnInit {
   // Operation loading states
   processingRequests: Set<string> = new Set(); // Track which requests are being processed
   processingMembers: Set<string> = new Set(); // Track which members are being processed
+
+  // --- RACE CONDITION PREVENTION ---
+  // Track ongoing operations to prevent race conditions
+  private operationLocks = {
+    joinClub: false,
+    refreshData: false,
+    membershipStatusCheck: false,
+    adminDataLoad: false
+  };
+  
+  // Debounce timer for join action
+  private joinDebounceTimer: any = null;
+  private readonly JOIN_DEBOUNCE_MS = 500;
+  
+  // Track last membership status check timestamp
+  private lastStatusCheckTime = 0;
+  private readonly STATUS_CHECK_COOLDOWN_MS = 2000;
+  
+  // Queue for pending operations
+  private operationQueue: Array<{type: string, data: any, resolve: Function, reject: Function}> = [];
+  private isProcessingQueue = false;
+  
+  // Action state tracking
+  private actionInProgress = {
+    join: false,
+    refresh: false,
+    loadData: false,
+    adminActions: false
+  };
+  
+  // Request deduplication tracking
+  private pendingRequests = new Map<string, Promise<any>>();
 
   // Club data - will be populated from API
   club: Club = {
@@ -134,56 +202,320 @@ export class ClubHomePage implements OnInit {
     private toastController: ToastController,
     private loadingController: LoadingController,
     private alertController: AlertController,
-    private actionSheetController: ActionSheetController
+    private actionSheetController: ActionSheetController,
+    private networkService: NetworkService,
+    private errorService: ErrorService
   ) { }
 
   ngOnInit() {
     // Get the club ID from the route parameter
     this.clubId = this.route.snapshot.paramMap.get('id');
     
+    // Subscribe to network status changes
+    this.setupNetworkMonitoring();
+    
     if (this.clubId) {
       this.fetchClubData(this.clubId);
       // Check user's membership status after getting club ID
       this.checkMembershipStatus();
     } else {
-      this.errorMessage = 'No club ID provided';
+      this.currentError = {
+        type: 'validation',
+        message: 'No club ID provided',
+        userMessage: 'Invalid club ID provided',
+        retryable: false
+      };
       this.showErrorToast('Invalid club ID');
     }
   }
 
-  // --- API METHODS ---
+  ngOnDestroy() {
+    // Clean up subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    
+    // Clear any pending operations in error service
+    this.errorService.clearQueue();
+  }
+
+  // --- REFRESH FUNCTIONALITY ---
+  
+  /**
+   * Handle pull-to-refresh with comprehensive race condition prevention
+   */
+  async handleRefresh(event: any) {
+    // Prevent multiple concurrent refresh operations
+    if (this.operationLocks.refreshData || this.actionInProgress.refresh) {
+      console.warn('Refresh operation already in progress');
+      event.target.complete();
+      return;
+    }
+
+    // Disable all actions during refresh
+    this.operationLocks.refreshData = true;
+    this.actionInProgress.refresh = true;
+    this.isRefreshing = true;
+    this.errorMessage = '';
+
+    try {
+      if (this.clubId) {
+        // Cancel any pending debounced operations
+        if (this.joinDebounceTimer) {
+          clearTimeout(this.joinDebounceTimer);
+          this.joinDebounceTimer = null;
+        }
+
+        // Wait for any critical operations to complete before refreshing
+        await this.waitForCriticalOperations();
+
+        // Clear pending requests that might conflict with refresh
+        this.pendingRequests.clear();
+
+        // Refresh all data concurrently
+        const refreshPromises = [
+          this.refreshClubData(),
+          this.refreshMembershipStatus()
+        ];
+
+        // If user is admin and manage tab is selected, refresh admin data
+        if (this.isUserAdmin && this.selectedTab === 'manage') {
+          refreshPromises.push(this.refreshAdminData());
+        }
+
+        await Promise.all(refreshPromises);
+      }
+    } catch (error) {
+      console.error('Error during refresh:', error);
+      this.presentToast('Failed to refresh data', 'danger');
+    } finally {
+      // Clean up state
+      this.operationLocks.refreshData = false;
+      this.actionInProgress.refresh = false;
+      this.isRefreshing = false;
+      event.target.complete();
+    }
+  }
+
+  /**
+   * Wait for critical operations to complete before allowing refresh
+   */
+  private async waitForCriticalOperations(): Promise<void> {
+    const maxWaitTime = 3000; // 3 seconds max wait
+    const checkInterval = 100; // Check every 100ms
+    let waitTime = 0;
+
+    return new Promise((resolve) => {
+      const checkOperations = () => {
+        const criticalOperationsInProgress = 
+          this.operationLocks.joinClub ||
+          this.operationLocks.membershipStatusCheck ||
+          this.actionInProgress.join ||
+          this.actionInProgress.adminActions;
+
+        if (!criticalOperationsInProgress || waitTime >= maxWaitTime) {
+          resolve();
+        } else {
+          waitTime += checkInterval;
+          setTimeout(checkOperations, checkInterval);
+        }
+      };
+
+      checkOperations();
+    });
+  }
+
+  /**
+   * Refresh club data without loading indicators
+   */
+  private async refreshClubData(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.clubId) {
+        resolve();
+        return;
+      }
+
+      this.clubService.getClubDetails(this.clubId).subscribe({
+        next: (response) => {
+          this.updateClubData(response);
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error refreshing club data:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Refresh membership status without loading indicators
+   */
+  private async refreshMembershipStatus(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.clubId) {
+        resolve();
+        return;
+      }
+
+      this.clubService.getMembershipStatus(this.clubId).subscribe({
+        next: (response) => {
+          this.updateMembershipStatus(response);
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error refreshing membership status:', error);
+          // Don't reject on membership status errors, just default to not-member
+          this.userStatus = 'not-member';
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
+   * Refresh admin data (join requests and members)
+   */
+  private async refreshAdminData(): Promise<void> {
+    if (!this.isUserAdmin || !this.clubId) return Promise.resolve();
+
+    const refreshPromises = [
+      this.refreshJoinRequests(),
+      this.refreshClubMembers()
+    ];
+
+    return Promise.all(refreshPromises).then(() => {});
+  }
+
+  /**
+   * Refresh join requests
+   */
+  private async refreshJoinRequests(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.clubId) {
+        resolve();
+        return;
+      }
+
+      this.clubService.getJoinRequests(this.clubId).subscribe({
+        next: (requests) => {
+          this.joinRequests = requests.filter(req => req.status === 'pending');
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error refreshing join requests:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Refresh club members
+   */
+  private async refreshClubMembers(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.clubId) {
+        resolve();
+        return;
+      }
+
+      this.clubService.getClubMembers(this.clubId).subscribe({
+        next: (members) => {
+          this.clubMembers = members;
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error refreshing club members:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  // --- NETWORK MONITORING ---
+  private setupNetworkMonitoring() {
+    // Subscribe to network status changes
+    const networkSub = this.networkService.networkStatus.subscribe(
+      status => {
+        this.networkStatus = status;
+        
+        // If we just came back online and have pending operations, process them
+        if (status.online && this.errorService.getQueueLength() > 0) {
+          this.presentToast('Connection restored. Retrying operations...', 'success');
+        }
+      }
+    );
+    
+    // Subscribe to connection quality changes
+    const qualitySub = this.networkService.connectionQuality.subscribe(
+      quality => {
+        this.connectionQuality = quality;
+        
+        // Show warning for poor connections
+        if (quality.quality === 'poor' && this.networkStatus.online) {
+          this.presentToast('Slow connection detected. Some operations may take longer.', 'warning');
+        }
+      }
+    );
+    
+    this.subscriptions.push(networkSub, qualitySub);
+  }
+
+  // --- API METHODS WITH ENHANCED ERROR HANDLING ---
   async fetchClubData(clubId: string) {
     const loading = await this.loadingController.create({
       message: 'Loading club details...',
-      duration: 10000 // Max 10 seconds
+      duration: this.networkService.getRecommendedTimeout()
     });
     
     try {
       this.isLoading = true;
       this.errorMessage = '';
+      this.operationErrors.clubData = null;
+      this.currentError = null;
       await loading.present();
       
-      this.clubService.getClubDetails(clubId).subscribe({
-        next: (response) => {
+      // Use error service for retry logic
+      const clubDataRequest = this.errorService.withRetry(
+        this.clubService.getClubDetails(clubId),
+        'Fetch Club Data'
+      ).pipe(
+        tap(response => {
           console.log('Club data received:', response);
           this.updateClubData(response);
-          loading.dismiss();
+        }),
+        finalize(() => {
           this.isLoading = false;
+          loading.dismiss();
+        })
+      );
+      
+      const subscription = clubDataRequest.subscribe({
+        next: (response) => {
+          this.retryAttempts = 0; // Reset retry attempts on success
         },
         error: (error) => {
-          console.error('Error fetching club data:', error);
-          this.errorMessage = 'Failed to load club details';
-          this.showErrorToast('Failed to load club details');
-          loading.dismiss();
-          this.isLoading = false;
+          const errorInfo = error as ErrorInfo;
+          console.error('Error fetching club data:', errorInfo);
+          
+          this.operationErrors.clubData = errorInfo;
+          this.currentError = errorInfo;
+          this.errorMessage = errorInfo.userMessage;
+          
+          this.showErrorToast(this.errorService.createErrorMessage(errorInfo));
         }
       });
+      
+      this.subscriptions.push(subscription);
+      
     } catch (error) {
       console.error('Exception in fetchClubData:', error);
-      this.errorMessage = 'An unexpected error occurred';
-      this.showErrorToast('An unexpected error occurred');
-      loading.dismiss();
+      const errorInfo = this.errorService.analyzeError(error, 'Fetch Club Data');
+      this.operationErrors.clubData = errorInfo;
+      this.currentError = errorInfo;
+      this.errorMessage = errorInfo.userMessage;
+      this.showErrorToast(this.errorService.createErrorMessage(errorInfo));
       this.isLoading = false;
+      loading.dismiss();
     }
   }
 
@@ -209,44 +541,92 @@ export class ClubHomePage implements OnInit {
     };
   }
 
-  // Check user's membership status for this club
+  // Check user's membership status with enhanced error handling
   async checkMembershipStatus() {
     if (!this.clubId) {
       console.error('No club ID available for status check');
       return;
     }
 
+    // Prevent concurrent membership status checks
+    if (this.operationLocks.membershipStatusCheck) {
+      console.warn('Membership status check already in progress');
+      return;
+    }
+
     try {
+      this.operationLocks.membershipStatusCheck = true;
       this.statusLoading = true;
+      this.operationErrors.membershipStatus = null;
+      this.lastStatusCheckTime = Date.now();
       
-      this.clubService.getMembershipStatus(this.clubId).subscribe({
-        next: (response) => {
+      const requestKey = `status-${this.clubId}`;
+      
+      // Check if we already have a pending status request
+      if (this.pendingRequests.has(requestKey)) {
+        const existingRequest = this.pendingRequests.get(requestKey);
+        await existingRequest;
+        return;
+      }
+
+      // Use error service for retry logic
+      const statusRequest = this.errorService.withRetry(
+        this.clubService.getMembershipStatus(this.clubId),
+        'Check Membership Status'
+      ).pipe(
+        tap(response => {
           console.log('Membership status received:', response);
           this.updateMembershipStatus(response);
+        }),
+        finalize(() => {
           this.statusLoading = false;
-        },
-        error: (error) => {
-          console.error('Error fetching membership status:', error);
-          // Handle different error scenarios
-          if (error.status === 401) {
-            // Unauthorized - redirect to login or default to not-member
-            this.userStatus = 'not-member';
-          } else if (error.status === 404) {
-            // Club not found
-            this.showErrorToast('Club not found');
-            this.userStatus = 'not-member';
-          } else {
-            // Other errors - default to not-member and show generic error
-            console.warn('Defaulting to not-member status due to error');
-            this.userStatus = 'not-member';
+          this.operationLocks.membershipStatusCheck = false;
+        })
+      );
+
+      // Create promise for tracking
+      const statusPromise = statusRequest.toPromise();
+      this.pendingRequests.set(requestKey, statusPromise);
+
+      try {
+        await statusPromise;
+        this.pendingRequests.delete(requestKey);
+      } catch (error) {
+        this.pendingRequests.delete(requestKey);
+        
+        const errorInfo = error as ErrorInfo;
+        console.error('Error fetching membership status:', errorInfo);
+        
+        this.operationErrors.membershipStatus = errorInfo;
+        
+        // Handle specific error scenarios
+        if (errorInfo.type === 'authorization') {
+          this.userStatus = 'not-member';
+          if (errorInfo.status === 401) {
+            this.presentToast('Please log in to continue', 'warning');
           }
-          this.statusLoading = false;
+        } else if (errorInfo.status === 404) {
+          this.userStatus = 'not-member';
+          this.showErrorToast('Club not found');
+        } else {
+          // For other errors, default to not-member but show error
+          console.warn('Defaulting to not-member status due to error');
+          this.userStatus = 'not-member';
+          
+          // Only show error toast for retryable errors
+          if (errorInfo.retryable) {
+            this.showErrorToast('Unable to check membership status');
+          }
         }
-      });
+      }
+
     } catch (error) {
       console.error('Exception in checkMembershipStatus:', error);
+      const errorInfo = this.errorService.analyzeError(error, 'Check Membership Status');
+      this.operationErrors.membershipStatus = errorInfo;
       this.userStatus = 'not-member';
       this.statusLoading = false;
+      this.operationLocks.membershipStatusCheck = false;
     }
   }
 
@@ -291,7 +671,19 @@ export class ClubHomePage implements OnInit {
   }
   
   get hasError(): boolean {
-    return !!this.errorMessage && !this.isLoading;
+    return !!this.currentError && !this.isLoading;
+  }
+  
+  get hasNetworkError(): boolean {
+    return !!this.currentError && this.currentError.type === 'network';
+  }
+  
+  get hasServerError(): boolean {
+    return !!this.currentError && this.currentError.type === 'server';
+  }
+  
+  get showNetworkIndicator(): boolean {
+    return !this.networkStatus.online || this.connectionQuality.quality === 'poor';
   }
 
   // --- EVENT HANDLERS ---
@@ -305,68 +697,185 @@ export class ClubHomePage implements OnInit {
     }
   }
   
-  // Join club functionality with enhanced flow for public vs private clubs
+  // Join club functionality with comprehensive race condition prevention
   async joinClub() {
+    // Debounce multiple rapid clicks
+    if (this.joinDebounceTimer) {
+      clearTimeout(this.joinDebounceTimer);
+    }
+    
+    this.joinDebounceTimer = setTimeout(() => {
+      this.processJoinClub();
+    }, this.JOIN_DEBOUNCE_MS);
+  }
+
+  private async processJoinClub() {
+    // Validate club ID
     if (!this.clubId) {
       this.showErrorToast('Invalid club ID');
       return;
     }
-    
+
+    // Check network connectivity first
+    if (!this.networkStatus.online) {
+      // Queue the operation for when network comes back
+      this.presentToast('No internet connection. Operation will be retried when connection is restored.', 'warning');
+      
+      try {
+        const result = await this.errorService.queueOperation(
+          () => this.clubService.joinClub(this.clubId!),
+          'Join Club'
+        );
+        
+        this.handleJoinSuccess(result);
+      } catch (error) {
+        const errorInfo = error as ErrorInfo;
+        this.operationErrors.joinOperation = errorInfo;
+        this.showErrorToast(this.errorService.createErrorMessage(errorInfo));
+      }
+      return;
+    }
+
+    // Prevent multiple simultaneous join attempts
+    if (this.operationLocks.joinClub || this.actionInProgress.join) {
+      console.warn('Join operation already in progress, ignoring duplicate request');
+      return;
+    }
+
+    // Check if we have a pending request for this club
+    const requestKey = `join-${this.clubId}`;
+    if (this.pendingRequests.has(requestKey)) {
+      console.warn('Join request already pending for this club');
+      return;
+    }
+
+    // Validate current membership status before proceeding
+    if (!await this.validateMembershipStatusForJoin()) {
+      return;
+    }
+
+    // Set locks to prevent race conditions
+    this.operationLocks.joinClub = true;
+    this.actionInProgress.join = true;
+    this.joiningClub = true;
+    this.operationErrors.joinOperation = null;
+
     // Determine loading message based on club privacy
     const loadingMessage = this.club?.isPrivate ? 'Sending join request...' : 'Joining club...';
     const loading = await this.loadingController.create({
-      message: loadingMessage
+      message: loadingMessage,
+      duration: this.networkService.getRecommendedTimeout()
     });
-    
+
     try {
-      this.joiningClub = true;
       await loading.present();
       
-      this.clubService.joinClub(this.clubId).subscribe({
-        next: (response) => {
+      // Use error service for retry logic
+      const joinRequest = this.errorService.withRetry(
+        this.clubService.joinClub(this.clubId),
+        'Join Club'
+      ).pipe(
+        tap(response => {
           console.log('Join club response:', response);
-          
-          // Enhanced success message based on response type
-          if (response.instant) {
-            // Public club - instant join
-            this.presentToast('Successfully joined club!', 'success');
-          } else {
-            // Private club - join request sent
-            this.presentToast('Join request sent! Waiting for admin approval.', 'primary');
-          }
-          
-          // Refresh club data to update member count and user status
-          this.fetchClubData(this.clubId!);
-          // Also refresh membership status
-          this.checkMembershipStatus();
-          loading.dismiss();
+        }),
+        finalize(() => {
+          this.operationLocks.joinClub = false;
+          this.actionInProgress.join = false;
           this.joiningClub = false;
-        },
-        error: (error) => {
-          console.error('Error joining club:', error);
-          let errorMessage = 'Failed to join club';
-          
-          // Handle specific error scenarios
-          if (error.error?.message) {
-            errorMessage = error.error.message;
-          } else if (error.status === 401) {
-            errorMessage = 'Please log in to join clubs';
-          } else if (error.status === 404) {
-            errorMessage = 'Club not found';
-          } else if (error.status === 409) {
-            errorMessage = 'You are already a member or have a pending request';
-          }
-          
-          this.showErrorToast(errorMessage);
           loading.dismiss();
-          this.joiningClub = false;
-        }
-      });
+        })
+      );
+
+      // Track the pending request
+      const joinPromise = joinRequest.toPromise();
+      this.pendingRequests.set(requestKey, joinPromise);
+
+      // Wait for the join operation to complete
+      const response: any = await joinPromise;
+      
+      this.handleJoinSuccess(response);
+      
+    } catch (error: any) {
+      const errorInfo = error as ErrorInfo;
+      console.error('Error joining club:', errorInfo);
+      
+      this.operationErrors.joinOperation = errorInfo;
+      this.showErrorToast(this.errorService.createErrorMessage(errorInfo));
+      
+    } finally {
+      // Clean up tracking
+      this.pendingRequests.delete(requestKey);
+    }
+  }
+  
+  private handleJoinSuccess(response: any) {
+    // Enhanced success message based on response type
+    if (response.instant) {
+      // Public club - instant join
+      this.presentToast('Successfully joined club!', 'success');
+    } else {
+      // Private club - join request sent
+      this.presentToast('Join request sent! Waiting for admin approval.', 'primary');
+    }
+
+    // Refresh data after successful join
+    this.refreshDataAfterJoin();
+  }
+
+  // Validate membership status before attempting to join
+  private async validateMembershipStatusForJoin(): Promise<boolean> {
+    // Check if status was recently verified to avoid redundant checks
+    const now = Date.now();
+    if (now - this.lastStatusCheckTime < this.STATUS_CHECK_COOLDOWN_MS) {
+      // Use cached status
+      if (this.userStatus !== 'not-member') {
+        this.showStatusBasedMessage();
+        return false;
+      }
+      return true;
+    }
+
+    // Refresh membership status if needed
+    if (!this.operationLocks.membershipStatusCheck) {
+      await this.refreshMembershipStatus();
+    }
+
+    // Validate current status
+    if (this.userStatus !== 'not-member') {
+      this.showStatusBasedMessage();
+      return false;
+    }
+
+    return true;
+  }
+
+  // Show appropriate message based on current membership status
+  private showStatusBasedMessage() {
+    switch (this.userStatus) {
+      case 'member':
+        this.presentToast('You are already a member of this club', 'warning');
+        break;
+      case 'admin':
+        this.presentToast('You are already an admin of this club', 'warning');
+        break;
+      case 'pending':
+        this.presentToast('Your join request is pending approval', 'primary');
+        break;
+    }
+  }
+
+  // Refresh data after successful join operation
+  private async refreshDataAfterJoin(): Promise<void> {
+    try {
+      const refreshPromises = [
+        this.refreshClubData(),
+        this.refreshMembershipStatus()
+      ];
+
+      await Promise.all(refreshPromises);
     } catch (error) {
-      console.error('Exception in joinClub:', error);
-      this.showErrorToast('An unexpected error occurred');
-      loading.dismiss();
-      this.joiningClub = false;
+      console.error('Error refreshing data after join:', error);
+      // Don't throw error as join was successful
     }
   }
 
@@ -572,43 +1081,93 @@ export class ClubHomePage implements OnInit {
   }
 
   /**
-   * Process a join request (approve or reject)
+   * Process a join request (approve or reject) with race condition prevention
    */
   private async processJoinRequest(request: JoinRequest, action: 'approve' | 'reject') {
     if (!this.clubId) return;
 
+    // Prevent concurrent processing of the same request
+    if (this.processingRequests.has(request._id)) {
+      console.warn(`Request ${request._id} is already being processed`);
+      return;
+    }
+
+    // Prevent admin actions during other critical operations
+    if (this.operationLocks.refreshData || this.actionInProgress.refresh) {
+      this.presentToast('Please wait for current operation to complete', 'warning');
+      return;
+    }
+
+    const requestKey = `${action}-request-${request._id}`;
+    
+    // Check for duplicate operations
+    if (this.pendingRequests.has(requestKey)) {
+      console.warn(`Duplicate ${action} request detected for ${request._id}`);
+      return;
+    }
+
     try {
       this.processingRequests.add(request._id);
+      this.actionInProgress.adminActions = true;
       
-      const serviceCall = action === 'approve' 
-        ? this.clubService.approveJoinRequest(this.clubId, request._id)
-        : this.clubService.rejectJoinRequest(this.clubId, request._id);
+      // Create operation promise
+      const operationPromise = new Promise((resolve, reject) => {
+        const serviceCall = action === 'approve' 
+          ? this.clubService.approveJoinRequest(this.clubId!, request._id)
+          : this.clubService.rejectJoinRequest(this.clubId!, request._id);
 
-      serviceCall.subscribe({
-        next: (response) => {
-          const actionText = action === 'approve' ? 'approved' : 'rejected';
-          this.presentToast(`Successfully ${actionText} ${request.user.name}'s request`, 'success');
-          
-          // Remove the request from the list
-          this.joinRequests = this.joinRequests.filter(req => req._id !== request._id);
-          
-          // If approved, refresh member count and members list
-          if (action === 'approve') {
-            this.fetchClubData(this.clubId!); // Refresh club data for member count
-            this.loadClubMembers(); // Refresh members list
+        serviceCall.subscribe({
+          next: (response) => {
+            resolve(response);
+          },
+          error: (error) => {
+            reject(error);
           }
-          
-          this.processingRequests.delete(request._id);
-        },
-        error: (error) => {
-          console.error(`Error ${action}ing join request:`, error);
-          this.handleAdminError(`Failed to ${action} request`, error);
-          this.processingRequests.delete(request._id);
-        }
+        });
       });
-    } catch (error) {
-      console.error(`Exception in ${action} request:`, error);
+
+      // Track the pending request
+      this.pendingRequests.set(requestKey, operationPromise);
+
+      // Wait for operation to complete
+      await operationPromise;
+
+      const actionText = action === 'approve' ? 'approved' : 'rejected';
+      this.presentToast(`Successfully ${actionText} ${request.user.name}'s request`, 'success');
+      
+      // Remove the request from the list
+      this.joinRequests = this.joinRequests.filter(req => req._id !== request._id);
+      
+      // If approved, refresh member count and members list without conflicts
+      if (action === 'approve') {
+        await this.safeRefreshAfterMemberChange();
+      }
+
+    } catch (error: any) {
+      console.error(`Error ${action}ing join request:`, error);
+      this.handleAdminError(`Failed to ${action} request`, error);
+    } finally {
+      // Clean up state
       this.processingRequests.delete(request._id);
+      this.actionInProgress.adminActions = false;
+      this.pendingRequests.delete(requestKey);
+    }
+  }
+
+  /**
+   * Safely refresh data after member changes without causing race conditions
+   */
+  private async safeRefreshAfterMemberChange(): Promise<void> {
+    try {
+      // Only refresh if no other refresh operations are in progress
+      if (!this.operationLocks.refreshData && !this.actionInProgress.refresh) {
+        await Promise.all([
+          this.refreshClubData(),
+          this.refreshClubMembers()
+        ]);
+      }
+    } catch (error) {
+      console.error('Error during safe refresh:', error);
     }
   }
 
@@ -743,95 +1302,266 @@ export class ClubHomePage implements OnInit {
   }
 
   /**
-   * Process member role change (promote/demote)
+   * Process member role change (promote/demote) with race condition prevention
    */
   private async processMemberRoleChange(member: ClubMember, action: 'promote' | 'demote') {
     if (!this.clubId) return;
 
+    // Prevent concurrent processing of the same member
+    if (this.processingMembers.has(member._id)) {
+      console.warn(`Member ${member._id} is already being processed`);
+      return;
+    }
+
+    // Prevent admin actions during other critical operations
+    if (this.operationLocks.refreshData || this.actionInProgress.refresh) {
+      this.presentToast('Please wait for current operation to complete', 'warning');
+      return;
+    }
+
+    const requestKey = `${action}-member-${member._id}`;
+    
+    // Check for duplicate operations
+    if (this.pendingRequests.has(requestKey)) {
+      console.warn(`Duplicate ${action} member request detected for ${member._id}`);
+      return;
+    }
+
     try {
       this.processingMembers.add(member._id);
+      this.actionInProgress.adminActions = true;
       
-      const serviceCall = action === 'promote' 
-        ? this.clubService.promoteToAdmin(this.clubId, member._id)
-        : this.clubService.demoteToMember(this.clubId, member._id);
+      // Create operation promise
+      const operationPromise = new Promise((resolve, reject) => {
+        const serviceCall = action === 'promote' 
+          ? this.clubService.promoteToAdmin(this.clubId!, member._id)
+          : this.clubService.demoteToMember(this.clubId!, member._id);
 
-      serviceCall.subscribe({
-        next: (response) => {
-          const actionText = action === 'promote' ? 'promoted' : 'demoted';
-          const newRole = action === 'promote' ? 'admin' : 'member';
-          
-          this.presentToast(`Successfully ${actionText} ${member.user.name}`, 'success');
-          
-          // Update the member role locally
-          const memberIndex = this.clubMembers.findIndex(m => m._id === member._id);
-          if (memberIndex !== -1) {
-            this.clubMembers[memberIndex].role = newRole;
+        serviceCall.subscribe({
+          next: (response) => {
+            resolve(response);
+          },
+          error: (error) => {
+            reject(error);
           }
-          
-          this.processingMembers.delete(member._id);
-        },
-        error: (error) => {
-          console.error(`Error ${action}ing member:`, error);
-          this.handleAdminError(`Failed to ${action} member`, error);
-          this.processingMembers.delete(member._id);
-        }
+        });
       });
-    } catch (error) {
-      console.error(`Exception in ${action} member:`, error);
+
+      // Track the pending request
+      this.pendingRequests.set(requestKey, operationPromise);
+
+      // Wait for operation to complete
+      await operationPromise;
+
+      const actionText = action === 'promote' ? 'promoted' : 'demoted';
+      const newRole = action === 'promote' ? 'admin' : 'member';
+      
+      this.presentToast(`Successfully ${actionText} ${member.user.name}`, 'success');
+      
+      // Update the member role locally
+      const memberIndex = this.clubMembers.findIndex(m => m._id === member._id);
+      if (memberIndex !== -1) {
+        this.clubMembers[memberIndex].role = newRole;
+      }
+
+    } catch (error: any) {
+      console.error(`Error ${action}ing member:`, error);
+      this.handleAdminError(`Failed to ${action} member`, error);
+    } finally {
+      // Clean up state
       this.processingMembers.delete(member._id);
+      this.actionInProgress.adminActions = false;
+      this.pendingRequests.delete(requestKey);
     }
   }
 
   /**
-   * Process member removal
+   * Process member removal with race condition prevention
    */
   private async processMemberRemoval(member: ClubMember) {
     if (!this.clubId) return;
 
+    // Prevent concurrent processing of the same member
+    if (this.processingMembers.has(member._id)) {
+      console.warn(`Member ${member._id} is already being processed`);
+      return;
+    }
+
+    // Prevent admin actions during other critical operations
+    if (this.operationLocks.refreshData || this.actionInProgress.refresh) {
+      this.presentToast('Please wait for current operation to complete', 'warning');
+      return;
+    }
+
+    const requestKey = `remove-member-${member._id}`;
+    
+    // Check for duplicate operations
+    if (this.pendingRequests.has(requestKey)) {
+      console.warn(`Duplicate remove member request detected for ${member._id}`);
+      return;
+    }
+
     try {
       this.processingMembers.add(member._id);
+      this.actionInProgress.adminActions = true;
       
-      this.clubService.removeMember(this.clubId, member._id).subscribe({
-        next: (response) => {
-          this.presentToast(`Successfully removed ${member.user.name}`, 'success');
-          
-          // Remove member from local list
-          this.clubMembers = this.clubMembers.filter(m => m._id !== member._id);
-          
-          // Refresh club data for updated member count
-          this.fetchClubData(this.clubId!);
-          
-          this.processingMembers.delete(member._id);
-        },
-        error: (error) => {
-          console.error('Error removing member:', error);
-          this.handleAdminError('Failed to remove member', error);
-          this.processingMembers.delete(member._id);
-        }
+      // Create operation promise
+      const operationPromise = new Promise((resolve, reject) => {
+        this.clubService.removeMember(this.clubId!, member._id).subscribe({
+          next: (response) => {
+            resolve(response);
+          },
+          error: (error) => {
+            reject(error);
+          }
+        });
       });
-    } catch (error) {
-      console.error('Exception in remove member:', error);
+
+      // Track the pending request
+      this.pendingRequests.set(requestKey, operationPromise);
+
+      // Wait for operation to complete
+      await operationPromise;
+
+      this.presentToast(`Successfully removed ${member.user.name}`, 'success');
+      
+      // Remove member from local list
+      this.clubMembers = this.clubMembers.filter(m => m._id !== member._id);
+      
+      // Safely refresh club data for updated member count
+      await this.safeRefreshAfterMemberChange();
+
+    } catch (error: any) {
+      console.error('Error removing member:', error);
+      this.handleAdminError('Failed to remove member', error);
+    } finally {
+      // Clean up state
       this.processingMembers.delete(member._id);
+      this.actionInProgress.adminActions = false;
+      this.pendingRequests.delete(requestKey);
     }
   }
 
   /**
-   * Handle admin operation errors
+   * Handle admin operation errors with enhanced error analysis
    */
   private handleAdminError(message: string, error: any) {
-    let errorMessage = message;
+    const errorInfo = this.errorService.analyzeError(error, 'Admin Operation');
+    this.operationErrors.adminOperations = errorInfo;
     
-    if (error.status === 403) {
-      errorMessage = 'You do not have permission to perform this action';
-    } else if (error.status === 404) {
-      errorMessage = 'Resource not found';
-    } else if (error.status === 409) {
-      errorMessage = error.error?.message || 'Operation conflict';
-    } else if (error.error?.message) {
-      errorMessage = error.error.message;
+    const errorMessage = this.errorService.createErrorMessage(errorInfo);
+    this.presentToast(errorMessage, this.errorService.getErrorColor(errorInfo) as any);
+  }
+  
+  // --- RETRY AND RECOVERY METHODS ---
+  
+  /**
+   * Retry the main club data loading operation
+   */
+  async retryFetchClubData() {
+    if (!this.clubId || this.isRetrying) return;
+    
+    this.isRetrying = true;
+    this.retryAttempts++;
+    
+    try {
+      await this.fetchClubData(this.clubId);
+    } finally {
+      this.isRetrying = false;
+    }
+  }
+  
+  /**
+   * Retry checking membership status
+   */
+  async retryMembershipStatus() {
+    if (this.isRetrying) return;
+    
+    this.isRetrying = true;
+    
+    try {
+      await this.checkMembershipStatus();
+    } finally {
+      this.isRetrying = false;
+    }
+  }
+  
+  /**
+   * Retry the join operation
+   */
+  async retryJoinClub() {
+    if (this.isRetrying) return;
+    
+    this.isRetrying = true;
+    
+    try {
+      await this.processJoinClub();
+    } finally {
+      this.isRetrying = false;
+    }
+  }
+  
+  /**
+   * Clear all errors and retry all failed operations
+   */
+  async retryAllOperations() {
+    if (this.isRetrying) return;
+    
+    this.isRetrying = true;
+    this.currentError = null;
+    this.operationErrors = {
+      clubData: null,
+      membershipStatus: null,
+      joinOperation: null,
+      adminOperations: null
+    };
+    
+    const retryPromises = [];
+    
+    if (this.clubId) {
+      retryPromises.push(this.fetchClubData(this.clubId));
+      retryPromises.push(this.checkMembershipStatus());
     }
     
-    this.presentToast(errorMessage, 'danger');
+    try {
+      await Promise.allSettled(retryPromises);
+      this.presentToast('Operations retried successfully', 'success');
+    } catch (error) {
+      console.error('Error during retry all operations:', error);
+    } finally {
+      this.isRetrying = false;
+    }
+  }
+  
+  /**
+   * Check if a specific operation can be retried
+   */
+  canRetryOperation(operation: keyof typeof this.operationErrors): boolean {
+    const error = this.operationErrors[operation];
+    return !!error && error.retryable && !this.isRetrying;
+  }
+  
+  /**
+   * Get error info for display
+   */
+  getOperationError(operation: keyof typeof this.operationErrors): ErrorInfo | null {
+    return this.operationErrors[operation];
+  }
+  
+  /**
+   * Check network connectivity manually
+   */
+  async checkNetworkConnectivity() {
+    try {
+      const isOnline = await this.networkService.checkConnectivity();
+      if (isOnline) {
+        this.presentToast('Connection restored!', 'success');
+      } else {
+        this.presentToast('Still no internet connection', 'warning');
+      }
+    } catch (error) {
+      this.presentToast('Unable to check connectivity', 'danger');
+    }
   }
 
   /**
@@ -858,5 +1588,39 @@ export class ClubHomePage implements OnInit {
     // Create initials-based placeholder
     const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '??';
     return `https://placehold.co/80x80/718096/FFFFFF?text=${initials}`;
+  }
+  
+  // --- ERROR DISPLAY HELPERS ---
+  
+  /**
+   * Get the appropriate error icon for display
+   */
+  getErrorIcon(errorInfo?: ErrorInfo): string {
+    if (!errorInfo) return 'alert-circle-outline';
+    return this.errorService.getErrorIcon(errorInfo);
+  }
+  
+  /**
+   * Get the appropriate error color for display
+   */
+  getErrorColor(errorInfo?: ErrorInfo): string {
+    if (!errorInfo) return 'danger';
+    return this.errorService.getErrorColor(errorInfo);
+  }
+  
+  /**
+   * Get a user-friendly error message
+   */
+  getErrorMessage(errorInfo?: ErrorInfo): string {
+    if (!errorInfo) return 'An unexpected error occurred';
+    return this.errorService.createErrorMessage(errorInfo);
+  }
+  
+  /**
+   * Check if retry button should be shown for an error
+   */
+  shouldShowRetryButton(errorInfo?: ErrorInfo): boolean {
+    if (!errorInfo) return false;
+    return this.errorService.shouldShowRetry(errorInfo);
   }
 }
