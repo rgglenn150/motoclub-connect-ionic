@@ -72,7 +72,7 @@ export class HomePage implements OnInit {
     const loggedInUser = this.auth.getLoggedInUser();
     if (loggedInUser) {
       this.user = {
-        firstName: loggedInUser.firstName || loggedInUser.username || 'Rider Glenn'
+        firstName: loggedInUser.firstName || loggedInUser.username || 'RIDER NAME HERE'
       };
     } else {
       console.error('User not found, redirecting to login');

@@ -178,11 +178,10 @@ export class ClubHomePage implements OnInit, OnDestroy {
       attendeeCount: 18
   };
   
-  members: Member[] = [
-    { name: 'John Doe', role: 'Admin', avatarUrl: 'https://placehold.co/80x80/718096/FFFFFF?text=JD' },
-    { name: 'Jane Smith', role: 'Member', avatarUrl: 'https://placehold.co/80x80/718096/FFFFFF?text=JS' },
-    { name: 'Mike Williams', role: 'Member', avatarUrl: 'https://placehold.co/80x80/718096/FFFFFF?text=MW' }
-  ];
+  // Members data will be loaded from the API when the members tab is viewed
+  membersForPublicView: ClubMember[] = []; // For non-admin users
+  membersDataLoading: boolean = false; // Loading state for member data
+  memberError: string | null = null; // Error state for member loading
 
   events: ClubEvent[] = [
     this.upcomingRide, // Include the upcoming ride in the events list
@@ -279,6 +278,11 @@ export class ClubHomePage implements OnInit, OnDestroy {
         // If user is admin and manage tab is selected, refresh admin data
         if (this.isUserAdmin && this.selectedTab === 'manage') {
           refreshPromises.push(this.refreshAdminData());
+        }
+
+        // If members tab is selected, refresh member data
+        if (this.selectedTab === 'members') {
+          refreshPromises.push(this.refreshMembersData());
         }
 
         await Promise.all(refreshPromises);
@@ -429,6 +433,18 @@ export class ClubHomePage implements OnInit, OnDestroy {
         }
       });
     });
+  }
+
+  /**
+   * Refresh members data for public display
+   */
+  private async refreshMembersData(): Promise<void> {
+    try {
+      await this.loadMembersForDisplay();
+    } catch (error) {
+      console.error('Error refreshing members data:', error);
+      throw error;
+    }
   }
 
   // --- NETWORK MONITORING ---
@@ -642,6 +658,11 @@ export class ClubHomePage implements OnInit, OnDestroy {
       permissions: response.permissions,
       memberId: response.memberId
     };
+    
+    // If user is admin, preload admin data for better UX
+    if (this.userStatus === 'admin' && !this.operationLocks.adminDataLoad) {
+      this.preloadAdminData();
+    }
   }
 
   private async showErrorToast(message: string) {
@@ -694,6 +715,11 @@ export class ClubHomePage implements OnInit, OnDestroy {
     // Load admin data when manage tab is selected
     if (this.selectedTab === 'manage' && this.isUserAdmin) {
       this.loadAdminData();
+    }
+    
+    // Load member data when members tab is selected
+    if (this.selectedTab === 'members') {
+      this.loadMembersForDisplay();
     }
   }
   
@@ -969,6 +995,28 @@ export class ClubHomePage implements OnInit, OnDestroy {
   // --- ADMIN MANAGEMENT METHODS ---
 
   /**
+   * Preload admin data silently in the background for better UX
+   */
+  private async preloadAdminData() {
+    if (!this.isUserAdmin || !this.clubId || this.operationLocks.adminDataLoad) return;
+    
+    try {
+      this.operationLocks.adminDataLoad = true;
+      
+      // Load admin data in background without showing loading indicators
+      await Promise.all([
+        this.loadJoinRequestsSilently(),
+        this.loadClubMembersSilently()
+      ]);
+    } catch (error) {
+      console.error('Error preloading admin data:', error);
+      // Don't show errors for background preloading
+    } finally {
+      this.operationLocks.adminDataLoad = false;
+    }
+  }
+
+  /**
    * Load all admin data (join requests and members)
    */
   async loadAdminData() {
@@ -1028,6 +1076,114 @@ export class ClubHomePage implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Exception in loadClubMembers:', error);
       this.membersLoading = false;
+    }
+  }
+
+  /**
+   * Load join requests silently in the background (no loading indicators)
+   */
+  private async loadJoinRequestsSilently(): Promise<void> {
+    if (!this.clubId) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+      this.clubService.getJoinRequests(this.clubId!).subscribe({
+        next: (requests) => {
+          this.joinRequests = requests.filter(req => req.status === 'pending');
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error silently loading join requests:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Load club members silently in the background (no loading indicators)
+   */
+  private async loadClubMembersSilently(): Promise<void> {
+    if (!this.clubId) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+      this.clubService.getClubMembers(this.clubId!).subscribe({
+        next: (members) => {
+          this.clubMembers = members;
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error silently loading club members:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Load members for display in the members tab
+   * This method handles both admin and non-admin member loading
+   */
+  async loadMembersForDisplay() {
+    if (!this.clubId || this.membersDataLoading) return;
+
+    try {
+      this.membersDataLoading = true;
+      this.memberError = null;
+
+      // Try to get members data regardless of admin status
+      // The API will return appropriate data based on user permissions
+      this.clubService.getClubMembers(this.clubId).subscribe({
+        next: (members) => {
+          this.membersForPublicView = members;
+          this.membersDataLoading = false;
+          
+          // If user is admin, also update the admin members list
+          if (this.isUserAdmin) {
+            this.clubMembers = [...members];
+          }
+        },
+        error: (error) => {
+          console.error('Error loading members via API:', error);
+          
+          // If API fails (likely due to permissions), try to extract from club data
+          this.loadMembersFromClubData();
+        }
+      });
+    } catch (error) {
+      console.error('Exception in loadMembersForDisplay:', error);
+      this.loadMembersFromClubData();
+    }
+  }
+
+  /**
+   * Fallback method to load member data from the club object
+   */
+  private loadMembersFromClubData() {
+    try {
+      if (this.club.members && this.club.members.length > 0) {
+        // Map club.members to the expected format
+        this.membersForPublicView = this.club.members.map((member: any) => ({
+          _id: member._id || member.id || `member-${Date.now()}-${Math.random()}`,
+          user: {
+            _id: member.user?._id || member._id || member.id,
+            name: member.user?.name || member.name || member.username || 'Member',
+            email: member.user?.email || member.email || '',
+            profilePicture: member.user?.profilePicture || member.profilePicture
+          },
+          club: this.clubId!,
+          role: member.role || (member.roles && member.roles.includes && member.roles.includes('admin') ? 'admin' : 'member'),
+          joinedAt: member.joinedDate || member.joinedAt || new Date().toISOString()
+        }));
+      } else {
+        // No member data available - show empty state
+        this.membersForPublicView = [];
+      }
+    } catch (error) {
+      console.error('Error parsing member data from club:', error);
+      this.memberError = 'Unable to display member information';
+      this.membersForPublicView = [];
+    } finally {
+      this.membersDataLoading = false;
     }
   }
 
@@ -1221,7 +1377,8 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
     const actionSheet = await this.actionSheetController.create({
       header: `Manage ${member.user.name}`,
-      buttons: buttons
+      buttons: buttons,
+      cssClass: 'dark-theme-action-sheet'
     });
 
     await actionSheet.present();

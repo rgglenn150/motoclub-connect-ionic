@@ -17,6 +17,7 @@ export class CreateClubPage implements OnInit {
   imageChangedEvent: Event | null = null;
   croppedImageBase64: string | null = null;
   private selectedLogoFile: File | null = null;
+  isLoading = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -52,12 +53,12 @@ export class CreateClubPage implements OnInit {
 
   onCropperReady() {}
   onCropperLoadImageFailed() {
-    this.toastService.presentToast('Failed to load image for cropping.', 'bottom', 3000);
+    this.toastService.presentToast('Failed to load image for cropping.', 'top', 3000);
   }
 
   applyCrop() {
     if (!this.croppedImageBase64) {
-      this.toastService.presentToast('Please adjust the crop before applying.', 'bottom', 2000);
+      this.toastService.presentToast('Please adjust the crop before applying.', 'top', 2000);
       return;
     }
     this.clubImagePreview = this.croppedImageBase64;
@@ -87,9 +88,12 @@ export class CreateClubPage implements OnInit {
    */
   registerClub() {
     if (this.createClubForm.invalid) {
-      this.toastService.presentToast('Please fill out all required fields correctly.', 'bottom', 3000);
+      this.toastService.presentToast('Please fill out all required fields correctly.', 'top', 3000);
       return;
     }
+
+    // Show loading spinner
+    this.isLoading = true;
 
     // Use the Club interface for type safety
     const clubData: Club = this.createClubForm.value;
@@ -104,23 +108,27 @@ export class CreateClubPage implements OnInit {
         if (this.selectedLogoFile && clubId) {
           this.clubService.uploadClubLogo(clubId, this.selectedLogoFile).subscribe({
             next: () => {
-              this.toastService.presentToast('Club created and logo uploaded!', 'bottom', 2000);
+              this.isLoading = false; // Hide loading spinner
+              this.toastService.presentToast('Club created and logo uploaded!', 'top', 2000);
               this.router.navigate(['/home']);
             },
             error: (uploadErr) => {
+              this.isLoading = false; // Hide loading spinner
               console.error('Error uploading logo:', uploadErr);
-              this.toastService.presentToast('Club created, but logo upload failed.', 'bottom', 3000);
+              this.toastService.presentToast('Club created, but logo upload failed.', 'top', 3000);
               this.router.navigate(['/home']);
             },
           });
         } else {
-          this.toastService.presentToast('Club created successfully!', 'bottom', 2000);
+          this.isLoading = false; // Hide loading spinner
+          this.toastService.presentToast('Club created successfully!', 'top', 2000);
           this.router.navigate(['/home']);
         }
       },
       error: (error) => {
+        this.isLoading = false; // Hide loading spinner
         console.error('Error creating club:', error);
-        this.toastService.presentToast('Error creating club. Please try again.', 'bottom', 3000);
+        this.toastService.presentToast('Error creating club. Please try again.', 'top', 3000);
       }
     });
   }

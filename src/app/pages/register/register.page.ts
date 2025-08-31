@@ -39,6 +39,7 @@ export class RegisterPage {
       .subscribe(
         (data: any) => {
           localStorage.setItem('token', data.token);
+           localStorage.setItem('user', JSON.stringify(data.user));
           this.router.navigate(['/home']);
           this.isLoading = false; // Hide the loading spinner
         },
@@ -55,7 +56,7 @@ export class RegisterPage {
   }
 
   async registerWithFacebook() {
-    this.isFacebookLoading = true;
+    this.isLoading = true;
     try {
       const response = await this.authService.facebookRegister();
       
@@ -64,16 +65,16 @@ export class RegisterPage {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           this.router.navigate(['/home']);
-          this.isFacebookLoading = false;
+          this.isLoading = false;
         },
         (error) => {
           this.errorMessage = error.error?.message || 'Facebook registration failed';
-          this.isFacebookLoading = false;
+          this.isLoading = false;
         }
       );
     } catch (error: any) {
       this.errorMessage = error.message || 'Facebook registration failed';
-      this.isFacebookLoading = false;
+      this.isLoading = false;
     }
   }
 }

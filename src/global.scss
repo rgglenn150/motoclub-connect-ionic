@@ -12,6 +12,9 @@
 /* Core CSS required for Ionic components to work properly */
 @import "~@ionic/angular/css/core.css";
 
+/* Action Sheet Dark Theme Override */
+@import "./action-sheet-dark-theme.scss";
+
 /* Basic CSS for apps built with Ionic */
 @import "~@ionic/angular/css/normalize.css";
 @import "~@ionic/angular/css/structure.css";
@@ -35,4 +38,66 @@
   justify-content: center;
   align-items: center;
   height: 100%;
+}
+
+/* Global Action Sheet Dark Theme Support - High Specificity Override */
+ion-action-sheet,
+ion-action-sheet.dark-theme-action-sheet,
+.action-sheet-backdrop ion-action-sheet {
+  --background: #2D3748 !important;
+  --color: #F7FAFC !important;
+}
+
+/* Force action sheet button colors with maximum specificity */
+ion-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button,
+.action-sheet-md .action-sheet-wrapper .action-sheet-group .action-sheet-button,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-group .action-sheet-button {
+  color: #F7FAFC !important;
+  background: transparent !important;
+  
+  /* Text content and spans inside buttons */
+  * {
+    color: #F7FAFC !important;
+  }
+}
+
+/* Destructive buttons */
+ion-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive,
+.action-sheet-md .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive {
+  color: #F56565 !important;
+  
+  * {
+    color: #F56565 !important;
+  }
+}
+
+/* Cancel buttons */
+ion-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel,
+.action-sheet-md .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel {
+  color: #A0AEC0 !important;
+  
+  * {
+    color: #A0AEC0 !important;
+  }
+}
+
+/* Background overrides */
+ion-action-sheet .action-sheet-wrapper .action-sheet-group,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-group,
+.action-sheet-md .action-sheet-wrapper .action-sheet-group,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-group {
+  background: #2D3748 !important;
+}
+
+/* Title overrides */
+ion-action-sheet .action-sheet-wrapper .action-sheet-title,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-title,
+.action-sheet-md .action-sheet-wrapper .action-sheet-title,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-title {
+  color: #F7FAFC !important;
 }

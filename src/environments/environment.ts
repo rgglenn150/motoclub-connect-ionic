@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:4200/api', // Backend server URL
+  apiUrl: 'http://localhost:4201/api', // Backend server URL
   facebookAppId: '1515940283108537' // Facebook App ID (matches capacitor.config.ts)
 };
 

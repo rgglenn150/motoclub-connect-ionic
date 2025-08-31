@@ -101,7 +101,7 @@
 .club-header {
   position: relative;
   /* Set a fixed height for the entire header area */
-  height: 320px;
+  height: 370px;
   background-color: var(--ion-background-color);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
@@ -240,7 +240,7 @@
 ion-segment {
     --background: #2D3748;
     border-radius: 12px;
-    margin: 20px 20px 20px;
+    margin: 20px 0px 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     border: 1px solid #4A5568;
 }
@@ -687,24 +687,64 @@ ion-fab {
     .members-list {
         padding: 0;
         
-        ion-item {
+        .member-item {
             --background: #2D3748;
-            margin-bottom: 8px;
-            border-radius: 8px;
+            --border-radius: 12px;
+            --padding-start: 16px;
+            --padding-end: 16px;
+            --inner-padding-end: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #4A5568;
+            transition: all 0.2s ease;
+            
+            &:hover {
+                --background: #374151;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            }
             
             ion-avatar {
-                --size: 45px;
+                --size: 50px;
+                margin-right: 12px;
+                
+                img {
+                    border: 2px solid #4A5568;
+                }
             }
             
             ion-label {
                 h3 {
                     font-weight: 600;
                     color: #FFFFFF;
+                    margin-bottom: 6px;
+                    font-size: 1rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    
+                    .role-badge {
+                        font-size: 0.7rem;
+                        font-weight: 600;
+                        padding: 2px 8px;
+                        border-radius: 12px;
+                    }
                 }
                 
                 p {
                     color: #A0AEC0;
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
+                    margin: 2px 0;
+                    
+                    &.member-email {
+                        color: #CBD5E0;
+                        font-size: 0.8rem;
+                    }
+                    
+                    &.join-date {
+                        color: #718096;
+                        font-size: 0.8rem;
+                        font-style: italic;
+                    }
                 }
             }
         }
@@ -1173,6 +1213,92 @@ ion-button:focus-visible,
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* --- ACTION SHEET DARK THEME FIXES --- */
+
+/* Custom action sheet styling for dark theme */
+ion-action-sheet.dark-theme-action-sheet {
+  --background: #2D3748;
+  --color: #F7FAFC;
+  
+  .action-sheet-wrapper {
+    background: #2D3748 !important;
+  }
+  
+  .action-sheet-title {
+    color: #F7FAFC !important;
+    font-weight: 600;
+  }
+  
+  .action-sheet-button {
+    color: #F7FAFC !important;
+    background: transparent !important;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    &.action-sheet-destructive {
+      color: #F56565 !important;
+    }
+    
+    &.action-sheet-cancel {
+      color: #A0AEC0 !important;
+      border-top: 1px solid #4A5568;
+    }
+    
+    .action-sheet-icon {
+      color: inherit !important;
+    }
+  }
+  
+  .action-sheet-group {
+    background: #2D3748 !important;
+    border-radius: 12px;
+  }
+  
+  .action-sheet-container {
+    background: transparent !important;
+  }
+}
+
+/* Ensure proper action sheet button text color in dark theme */
+.action-sheet-md .action-sheet-button,
+.action-sheet-ios .action-sheet-button {
+  color: var(--ion-text-color, #F7FAFC) !important;
+  
+  &.action-sheet-destructive {
+    color: var(--ion-color-danger, #F56565) !important;
+  }
+  
+  &.action-sheet-cancel {
+    color: var(--ion-color-medium-tint, #A0AEC0) !important;
+  }
+}
+
+/* Global action sheet dark theme support */
+.action-sheet-md,
+.action-sheet-ios {
+  --background: var(--ion-background-color, #2D3748);
+  --color: var(--ion-text-color, #F7FAFC);
+  
+  .action-sheet-wrapper {
+    background: var(--ion-background-color, #2D3748) !important;
+  }
+  
+  .action-sheet-container {
+    background: transparent !important;
+  }
+  
+  .action-sheet-group {
+    background: var(--ion-background-color, #2D3748) !important;
+  }
+  
+  .action-sheet-title {
+    color: var(--ion-text-color, #F7FAFC) !important;
+    font-weight: 600;
   }
 }
 

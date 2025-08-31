@@ -1,0 +1,70 @@
+/* 
+ * Standalone Action Sheet Dark Theme Override
+ * This file provides nuclear-option styling for action sheets
+ */
+
+/* Universal Action Sheet Override - covers all possible selectors */
+ion-action-sheet,
+ion-action-sheet *,
+.action-sheet-backdrop ion-action-sheet,
+.action-sheet-backdrop ion-action-sheet * {
+  --background: #2D3748;
+  --color: #F7FAFC;
+}
+
+/* Button text override with maximum specificity */
+ion-action-sheet .action-sheet-button,
+ion-action-sheet .action-sheet-button *,
+ion-action-sheet .action-sheet-button span,
+ion-action-sheet .action-sheet-button-inner,
+.action-sheet-button,
+.action-sheet-button *,
+.action-sheet-button span,
+.action-sheet-button-inner {
+  color: #F7FAFC !important;
+  background: transparent !important;
+}
+
+/* Platform-specific overrides */
+.action-sheet-md .action-sheet-button,
+.action-sheet-md .action-sheet-button *,
+.action-sheet-ios .action-sheet-button,  
+.action-sheet-ios .action-sheet-button * {
+  color: #F7FAFC !important;
+}
+
+/* Destructive action override */
+ion-action-sheet .action-sheet-button.action-sheet-destructive,
+ion-action-sheet .action-sheet-button.action-sheet-destructive *,
+.action-sheet-button.action-sheet-destructive,
+.action-sheet-button.action-sheet-destructive * {
+  color: #F56565 !important;
+}
+
+/* Cancel button override */
+ion-action-sheet .action-sheet-button.action-sheet-cancel,
+ion-action-sheet .action-sheet-button.action-sheet-cancel *,
+.action-sheet-button.action-sheet-cancel,
+.action-sheet-button.action-sheet-cancel * {
+  color: #A0AEC0 !important;
+}
+
+/* Background overrides */
+ion-action-sheet .action-sheet-group,
+ion-action-sheet .action-sheet-wrapper,
+.action-sheet-group,
+.action-sheet-wrapper {
+  background: #2D3748 !important;
+}
+
+/* Title override */
+ion-action-sheet .action-sheet-title,
+.action-sheet-title {
+  color: #F7FAFC !important;
+}
+
+/* Icon color override */
+ion-action-sheet .action-sheet-icon,
+.action-sheet-icon {
+  color: inherit !important;
+}

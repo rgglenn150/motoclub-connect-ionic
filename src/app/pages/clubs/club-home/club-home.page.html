@@ -221,24 +221,72 @@
       </div>
 
       <div *ngSwitchCase="'members'">
+        <!-- Members Section Start-->
         <div class="members-section">
           <ion-card class="asphalt-card">
             <ion-card-header>
               <ion-card-title>Club Members ({{ club.memberCount }})</ion-card-title>
             </ion-card-header>
             <ion-card-content class="members-list">
-              <ion-item *ngFor="let member of members" class="member-item">
-                <ion-avatar slot="start">
-                  <img [src]="member.avatarUrl" [alt]="member.name">
-                </ion-avatar>
-                <ion-label>
-                  <h3>{{ member.name }}</h3>
-                  <p>{{ member.role }}</p>
-                </ion-label>
-              </ion-item>
+              
+              <!-- Loading State -->
+              <div *ngIf="membersDataLoading" class="loading-state">
+                <div class="members-skeleton">
+                  <ion-item class="member-item-skeleton" *ngFor="let i of [1,2,3,4]">
+                    <ion-avatar slot="start">
+                      <ion-skeleton-text animated></ion-skeleton-text>
+                    </ion-avatar>
+                    <ion-label>
+                      <ion-skeleton-text animated style="width: 60%; height: 18px; margin-bottom: 6px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 40%; height: 14px;"></ion-skeleton-text>
+                    </ion-label>
+                  </ion-item>
+                </div>
+              </div>
+
+              <!-- Error State -->
+              <div *ngIf="memberError && !membersDataLoading" class="error-container">
+                <ion-icon name="people-outline" color="medium" size="large"></ion-icon>
+                <h4>Unable to Load Members</h4>
+                <p>{{ memberError }}</p>
+                <ion-button color="primary" fill="clear" (click)="loadMembersForDisplay()">
+                  <ion-icon slot="start" name="refresh"></ion-icon>
+                  Try Again
+                </ion-button>
+              </div>
+
+              <!-- Empty State -->
+              <div *ngIf="!membersDataLoading && !memberError && membersForPublicView.length === 0" class="empty-state">
+                <ion-icon name="people-outline" color="medium"></ion-icon>
+                <h4>No Members Found</h4>
+                <p>This club doesn't have any members yet.</p>
+              </div>
+
+              <!-- Members List -->
+              <div *ngIf="!membersDataLoading && !memberError && membersForPublicView.length > 0">
+                <ion-item *ngFor="let member of membersForPublicView" class="member-item">
+                  <ion-avatar slot="start">
+                    <img [src]="getAvatarUrl(member.user.profilePicture, member.user.name)" [alt]="member.user.name">
+                  </ion-avatar>
+                  <ion-label>
+                    <h3>
+                      {{ member.user.name }}
+                      <ion-badge 
+                        [color]="member.role === 'admin' ? 'success' : 'medium'" 
+                        class="role-badge">
+                        {{ member.role | titlecase }}
+                      </ion-badge>
+                    </h3>
+                    <p class="member-email">{{ member.user.email }}</p>
+                    <p class="join-date">Member since {{ member.joinedAt | date:'MMM d, y' }}</p>
+                  </ion-label>
+                </ion-item>
+              </div>
+
             </ion-card-content>
           </ion-card>
         </div>
+         <!-- Members Section End-->
       </div>
 
       <div *ngSwitchCase="'events'">
