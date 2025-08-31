@@ -5,9 +5,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { ImageCropperModule } from 'ngx-image-cropper';
 
-
 import { CreateClubPage } from './create-club.page';
 import { CreateClubPageRoutingModule } from './create-club-routing.module';
+import { LoadingSpinnerModule } from 'src/app/components/utils/loading-spinner/loading-spinner.module';
 
 @NgModule({
   imports: [
@@ -16,7 +16,8 @@ import { CreateClubPageRoutingModule } from './create-club-routing.module';
     IonicModule,
     CreateClubPageRoutingModule,
     ReactiveFormsModule,
-    ImageCropperModule
+    ImageCropperModule,
+    LoadingSpinnerModule
   ],
   declarations: [CreateClubPage],
   exports: [CreateClubPage],

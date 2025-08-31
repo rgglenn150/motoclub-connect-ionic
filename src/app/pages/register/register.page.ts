@@ -39,6 +39,7 @@ export class RegisterPage {
       .subscribe(
         (data: any) => {
           localStorage.setItem('token', data.token);
+           localStorage.setItem('user', JSON.stringify(data.user));
           this.router.navigate(['/home']);
           this.isLoading = false; // Hide the loading spinner
         },

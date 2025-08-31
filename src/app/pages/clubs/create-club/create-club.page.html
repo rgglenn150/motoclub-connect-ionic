@@ -14,6 +14,9 @@
 </ion-header>
 
 <ion-content class="asphalt-background">
+  <!-- Loading Spinner Overlay -->
+  <app-loading-spinner [isLoading]="isLoading"></app-loading-spinner>
+  
   <form [formGroup]="createClubForm" (ngSubmit)="registerClub()">
     <div class="ion-padding">
 

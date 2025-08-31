@@ -17,6 +17,7 @@ export class CreateClubPage implements OnInit {
   imageChangedEvent: Event | null = null;
   croppedImageBase64: string | null = null;
   private selectedLogoFile: File | null = null;
+  isLoading = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -91,6 +92,9 @@ export class CreateClubPage implements OnInit {
       return;
     }
 
+    // Show loading spinner
+    this.isLoading = true;
+
     // Use the Club interface for type safety
     const clubData: Club = this.createClubForm.value;
 
@@ -104,21 +108,25 @@ export class CreateClubPage implements OnInit {
         if (this.selectedLogoFile && clubId) {
           this.clubService.uploadClubLogo(clubId, this.selectedLogoFile).subscribe({
             next: () => {
+              this.isLoading = false; // Hide loading spinner
               this.toastService.presentToast('Club created and logo uploaded!', 'bottom', 2000);
               this.router.navigate(['/home']);
             },
             error: (uploadErr) => {
+              this.isLoading = false; // Hide loading spinner
               console.error('Error uploading logo:', uploadErr);
               this.toastService.presentToast('Club created, but logo upload failed.', 'bottom', 3000);
               this.router.navigate(['/home']);
             },
           });
         } else {
+          this.isLoading = false; // Hide loading spinner
           this.toastService.presentToast('Club created successfully!', 'bottom', 2000);
           this.router.navigate(['/home']);
         }
       },
       error: (error) => {
+        this.isLoading = false; // Hide loading spinner
         console.error('Error creating club:', error);
         this.toastService.presentToast('Error creating club. Please try again.', 'bottom', 3000);
       }
