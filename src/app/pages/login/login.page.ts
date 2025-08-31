@@ -49,14 +49,14 @@ export class LoginPage {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         this.router.navigate(['/home']);
-        this.toastService.presentToast('Login successful !', 'bottom', 3000);
+        this.toastService.presentToast('Login successful !', 'top', 3000);
         this.isLoading = false; // Hide the loading spinner
       },
       (error) => {
         this.errorMessage = error.error.message;
         this.toastService.presentToast(
           'Login failed ! ' + error.message,
-          'bottom',
+          'top',
           3000
         );
 
@@ -73,9 +73,9 @@ export class LoginPage {
     // We've used the prompt, and can't use it again, so hide the button
     this.showInstallButton = false;
     if (outcome === 'accepted') {
-      this.toastService.presentToast('Installing!', 'bottom', 2000);
+      this.toastService.presentToast('Installing!', 'top', 2000);
     } else {
-      this.toastService.presentToast('Installation dismissed.', 'bottom', 2000);
+      this.toastService.presentToast('Installation dismissed.', 'top', 2000);
     }
   }
 
@@ -93,14 +93,14 @@ export class LoginPage {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           this.router.navigate(['/home']);
-          this.toastService.presentToast('Facebook login successful!', 'bottom', 3000);
+          this.toastService.presentToast('Facebook login successful!', 'top', 3000);
           this.isFacebookLoading = false;
         },
         (error) => {
           this.errorMessage = error.error?.message || 'Facebook login failed';
           this.toastService.presentToast(
             'Facebook login failed! ' + this.errorMessage,
-            'bottom',
+            'top',
             3000
           );
           this.isFacebookLoading = false;
@@ -110,7 +110,7 @@ export class LoginPage {
       this.errorMessage = error.message || 'Facebook login failed';
       this.toastService.presentToast(
         'Facebook login failed! ' + this.errorMessage,
-        'bottom',
+        'top',
         3000
       );
       this.isFacebookLoading = false;

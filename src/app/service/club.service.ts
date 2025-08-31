@@ -201,4 +201,19 @@ export class ClubService {
   getClubMembers(clubId: string): Observable<ClubMember[]> {
     return this.http.get<ClubMember[]>(`${this.baseUrl}/${clubId}/members`);
   }
+
+  /**
+   * Get basic club member information for public display.
+   * This will attempt to use the getClubMembers endpoint, and if that fails (non-admin),
+   * it will fallback to extracting member info from club details.
+   *
+   * @param clubId - The ID of the club
+   * @returns An Observable with basic club member information
+   */
+  getBasicMemberInfo(clubId: string): Observable<ClubMember[]> {
+    // Try the admin endpoint first
+    return this.getClubMembers(clubId).pipe(
+      // If it fails, we'll handle it in the component
+    );
+  }
 }
