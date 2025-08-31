@@ -134,7 +134,10 @@ export class ClubService {
    * @returns An Observable with join requests
    */
   getJoinRequests(clubId: string): Observable<JoinRequest[]> {
-    return this.http.get<JoinRequest[]>(`${this.baseUrl}/${clubId}/join-requests`);
+    return this.http.get<{ joinRequests: JoinRequest[] }>(`${this.baseUrl}/${clubId}/join-requests`)
+      .pipe(
+        map(response => response.joinRequests || [])
+      );
   }
 
   /**

@@ -658,6 +658,11 @@ export class ClubHomePage implements OnInit, OnDestroy {
       permissions: response.permissions,
       memberId: response.memberId
     };
+    
+    // If user is admin, preload admin data for better UX
+    if (this.userStatus === 'admin' && !this.operationLocks.adminDataLoad) {
+      this.preloadAdminData();
+    }
   }
 
   private async showErrorToast(message: string) {
@@ -990,6 +995,28 @@ export class ClubHomePage implements OnInit, OnDestroy {
   // --- ADMIN MANAGEMENT METHODS ---
 
   /**
+   * Preload admin data silently in the background for better UX
+   */
+  private async preloadAdminData() {
+    if (!this.isUserAdmin || !this.clubId || this.operationLocks.adminDataLoad) return;
+    
+    try {
+      this.operationLocks.adminDataLoad = true;
+      
+      // Load admin data in background without showing loading indicators
+      await Promise.all([
+        this.loadJoinRequestsSilently(),
+        this.loadClubMembersSilently()
+      ]);
+    } catch (error) {
+      console.error('Error preloading admin data:', error);
+      // Don't show errors for background preloading
+    } finally {
+      this.operationLocks.adminDataLoad = false;
+    }
+  }
+
+  /**
    * Load all admin data (join requests and members)
    */
   async loadAdminData() {
@@ -1050,6 +1077,46 @@ export class ClubHomePage implements OnInit, OnDestroy {
       console.error('Exception in loadClubMembers:', error);
       this.membersLoading = false;
     }
+  }
+
+  /**
+   * Load join requests silently in the background (no loading indicators)
+   */
+  private async loadJoinRequestsSilently(): Promise<void> {
+    if (!this.clubId) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+      this.clubService.getJoinRequests(this.clubId!).subscribe({
+        next: (requests) => {
+          this.joinRequests = requests.filter(req => req.status === 'pending');
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error silently loading join requests:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Load club members silently in the background (no loading indicators)
+   */
+  private async loadClubMembersSilently(): Promise<void> {
+    if (!this.clubId) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+      this.clubService.getClubMembers(this.clubId!).subscribe({
+        next: (members) => {
+          this.clubMembers = members;
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error silently loading club members:', error);
+          reject(error);
+        }
+      });
+    });
   }
 
   /**
@@ -1310,7 +1377,8 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
     const actionSheet = await this.actionSheetController.create({
       header: `Manage ${member.user.name}`,
-      buttons: buttons
+      buttons: buttons,
+      cssClass: 'dark-theme-action-sheet'
     });
 
     await actionSheet.present();

@@ -1216,6 +1216,92 @@ ion-button:focus-visible,
   }
 }
 
+/* --- ACTION SHEET DARK THEME FIXES --- */
+
+/* Custom action sheet styling for dark theme */
+ion-action-sheet.dark-theme-action-sheet {
+  --background: #2D3748;
+  --color: #F7FAFC;
+  
+  .action-sheet-wrapper {
+    background: #2D3748 !important;
+  }
+  
+  .action-sheet-title {
+    color: #F7FAFC !important;
+    font-weight: 600;
+  }
+  
+  .action-sheet-button {
+    color: #F7FAFC !important;
+    background: transparent !important;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    &.action-sheet-destructive {
+      color: #F56565 !important;
+    }
+    
+    &.action-sheet-cancel {
+      color: #A0AEC0 !important;
+      border-top: 1px solid #4A5568;
+    }
+    
+    .action-sheet-icon {
+      color: inherit !important;
+    }
+  }
+  
+  .action-sheet-group {
+    background: #2D3748 !important;
+    border-radius: 12px;
+  }
+  
+  .action-sheet-container {
+    background: transparent !important;
+  }
+}
+
+/* Ensure proper action sheet button text color in dark theme */
+.action-sheet-md .action-sheet-button,
+.action-sheet-ios .action-sheet-button {
+  color: var(--ion-text-color, #F7FAFC) !important;
+  
+  &.action-sheet-destructive {
+    color: var(--ion-color-danger, #F56565) !important;
+  }
+  
+  &.action-sheet-cancel {
+    color: var(--ion-color-medium-tint, #A0AEC0) !important;
+  }
+}
+
+/* Global action sheet dark theme support */
+.action-sheet-md,
+.action-sheet-ios {
+  --background: var(--ion-background-color, #2D3748);
+  --color: var(--ion-text-color, #F7FAFC);
+  
+  .action-sheet-wrapper {
+    background: var(--ion-background-color, #2D3748) !important;
+  }
+  
+  .action-sheet-container {
+    background: transparent !important;
+  }
+  
+  .action-sheet-group {
+    background: var(--ion-background-color, #2D3748) !important;
+  }
+  
+  .action-sheet-title {
+    color: var(--ion-text-color, #F7FAFC) !important;
+    font-weight: 600;
+  }
+}
+
 /* --- RESPONSIVE DESIGN ENHANCEMENTS --- */
 
 @media (max-width: 576px) {
