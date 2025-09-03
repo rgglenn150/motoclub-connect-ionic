@@ -5,7 +5,8 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:4201/api', // Backend server URL
-  facebookAppId: '1515940283108537' // Facebook App ID (matches capacitor.config.ts)
+  facebookAppId: '1515940283108537', // Facebook App ID (matches capacitor.config.ts)
+  googleMapsApiKey: 'YOUR_GOOGLE_MAPS_API_KEY_HERE' // Google Maps Places API key - Replace with actual key
 };
 
 

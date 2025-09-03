@@ -1,0 +1,280 @@
+/* "Asphalt UI" Styles for Create Event Page
+  - Follows the same design pattern as create-club page
+  - Applies consistent styling for form elements and image uploader
+  - Optimized for event creation with datetime pickers
+*/
+
+// --- Import Asphalt UI Color Palette ---
+// Note: In a real app, these variables would live in a global file like variables.scss
+:host {
+  --asphalt-primary: #2D3748;
+  --asphalt-secondary: #4A5568;
+  --asphalt-accent: #F59E0B;
+  --asphalt-danger: #EF4444;
+  --asphalt-text: #F7FAFC;
+  --asphalt-text-muted: #A0AEC0;
+}
+
+// --- Global Page & Header Styles ---
+.asphalt-background {
+  --background: #2d3849;
+}
+
+.asphalt-header ion-toolbar {
+  --background: var(--asphalt-secondary);
+  --color: var(--asphalt-text);
+}
+
+.asphalt-header ion-title {
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+// --- Image Uploader ---
+.image-uploader {
+  background-color: var(--asphalt-secondary);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 16 / 9; // Different from club (which is 1:1) for event images
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed var(--asphalt-text-muted);
+  cursor: pointer;
+  overflow: hidden;
+
+  .event-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    aspect-ratio: 16 / 9;
+  }
+
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--asphalt-text-muted);
+  }
+
+  .placeholder-icon {
+    font-size: 3rem;
+  }
+}
+
+.cropper-container {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  z-index: 1000;
+
+  image-cropper {
+    width: 100%;
+    max-width: 480px;
+    background: #222;
+    border-radius: 8px;
+  }
+
+  .cropper-actions {
+    margin-top: 12px;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 8px;
+  }
+}
+
+// --- Form Items ---
+.asphalt-input-item,
+.asphalt-textarea-item,
+.asphalt-select-item,
+.asphalt-datetime-item {
+  --background: var(--asphalt-secondary);
+  --padding-start: 16px;
+  --highlight-height: 0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: var(--asphalt-text);
+}
+
+.asphalt-textarea-item {
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+}
+
+.asphalt-datetime-item {
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  
+  ion-datetime-button {
+    --color: var(--asphalt-text);
+    width: 100%;
+    
+    ion-label {
+      color: var(--asphalt-text-muted);
+      font-size: 0.9rem;
+    }
+  }
+}
+
+.asphalt-select-item {
+  ion-select {
+    --color: var(--asphalt-text);
+    --placeholder-color: var(--asphalt-text-muted);
+  }
+}
+
+.asphalt-icon {
+  color: var(--asphalt-accent);
+  margin-right: 8px;
+}
+
+// --- DateTime Modal Styling ---
+ion-modal {
+  --background: var(--asphalt-primary);
+  
+  ion-datetime {
+    --background: var(--asphalt-primary);
+    --background-rgb: 45, 55, 72;
+    --color: var(--asphalt-text);
+    --ion-color-base: var(--asphalt-text);
+    --ion-color-contrast: var(--asphalt-primary);
+  }
+}
+
+// --- Select Popover Styling ---
+.select-interface-popover {
+  --background: var(--asphalt-secondary);
+  --color: var(--asphalt-text);
+  
+  .select-interface-option {
+    --color: var(--asphalt-text);
+    --color-selected: var(--asphalt-accent);
+  }
+}
+
+// --- Footer & Button ---
+.asphalt-footer ion-toolbar {
+  --background: var(--asphalt-primary);
+  padding: 8px 16px;
+}
+
+.asphalt-button-primary {
+  --background: var(--asphalt-accent);
+  --background-activated: #d3860a;
+  --background-focused: #d3860a;
+  --color: var(--asphalt-primary);
+  --border-radius: 8px;
+  --box-shadow: none;
+  height: 48px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  margin: 0;
+  
+  &:disabled {
+    --background: var(--asphalt-text-muted);
+    --color: var(--asphalt-secondary);
+  }
+}
+
+// --- Places Autocomplete Integration ---
+app-places-autocomplete {
+  display: block;
+  margin-bottom: 16px;
+  
+  // Make sure the autocomplete input follows the same styling
+  ::ng-deep .autocomplete-input-item {
+    --background: var(--asphalt-secondary);
+    --color: var(--asphalt-text);
+    
+    ion-input {
+      --color: var(--asphalt-text);
+      --placeholder-color: var(--asphalt-text-muted);
+    }
+  }
+  
+  ::ng-deep .current-location-button {
+    --background: transparent;
+    --color: var(--asphalt-accent);
+    --border-color: var(--asphalt-accent);
+    
+    &:hover {
+      --background: rgba(245, 158, 11, 0.1);
+    }
+  }
+  
+  ::ng-deep .api-warning {
+    --color: var(--asphalt-accent);
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 4px;
+    padding: 8px 12px;
+  }
+}
+
+// Style the places popover to match theme
+::ng-deep .places-popover {
+  --background: var(--asphalt-secondary);
+  
+  .places-suggestions {
+    --background: var(--asphalt-secondary);
+    
+    .suggestion-item {
+      --background: var(--asphalt-secondary);
+      --color: var(--asphalt-text);
+      
+      &:hover {
+        --background: var(--asphalt-primary);
+      }
+      
+      .suggestion-icon {
+        color: var(--asphalt-accent);
+      }
+      
+      .suggestion-main {
+        color: var(--asphalt-text);
+      }
+      
+      .suggestion-secondary {
+        color: var(--asphalt-text-muted);
+      }
+    }
+    
+    .no-results,
+    .loading-suggestions {
+      color: var(--asphalt-text-muted);
+      
+      ion-icon,
+      ion-spinner {
+        color: var(--asphalt-accent);
+      }
+    }
+  }
+}
+
+// --- Responsive adjustments ---
+@media (max-width: 576px) {
+  .image-uploader {
+    max-width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .cropper-container {
+    padding: 8px;
+    
+    image-cropper {
+      max-width: 100%;
+    }
+  }
+}

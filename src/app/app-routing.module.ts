@@ -23,8 +23,8 @@ const routes: Routes = [
     loadChildren: () => import('./pages/clubs/create-club/create-club.module').then( m => m.CreateClubPageModule)
   },
   {
-    path: 'create-event',
-    loadChildren: () => import('./create-event/create-event.module').then( m => m.CreateEventPageModule)
+    path: 'create-event/:clubId',
+    loadChildren: () => import('./pages/events/create-event/create-event.module').then( m => m.CreateEventPageModule)
   },
   {
     path: 'club-details/:id',

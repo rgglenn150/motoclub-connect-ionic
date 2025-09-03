@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ClubService, Club as ServiceClub, JoinRequest, ClubMember } from '../../../service/club.service';
 import { ToastController, LoadingController, AlertController, ActionSheetController } from '@ionic/angular';
 import { NetworkService, NetworkStatus, ConnectionQuality } from '../../../service/network.service';
@@ -197,6 +197,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private clubService: ClubService,
     private toastController: ToastController,
     private loadingController: LoadingController,
@@ -209,6 +210,12 @@ export class ClubHomePage implements OnInit, OnDestroy {
   ngOnInit() {
     // Get the club ID from the route parameter
     this.clubId = this.route.snapshot.paramMap.get('id');
+    
+    // Check for tab query parameter
+    const tabParam = this.route.snapshot.queryParamMap.get('tab');
+    if (tabParam && ['feed', 'members', 'events', 'manage'].includes(tabParam)) {
+      this.selectedTab = tabParam as 'feed' | 'members' | 'events' | 'manage';
+    }
     
     // Subscribe to network status changes
     this.setupNetworkMonitoring();
@@ -1745,6 +1752,28 @@ export class ClubHomePage implements OnInit, OnDestroy {
     // Create initials-based placeholder
     const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '??';
     return `https://placehold.co/80x80/718096/FFFFFF?text=${initials}`;
+  }
+
+  /**
+   * Navigate to create event page with current club ID
+   */
+  async navigateToCreateEvent() {
+    if (!this.clubId) {
+      this.presentToast('Unable to create event: Club ID not available', 'danger');
+      return;
+    }
+
+    try {
+      console.log('Navigating to create event with clubId:', this.clubId);
+      const success = await this.router.navigate(['/create-event', this.clubId]);
+      if (!success) {
+        console.error('Navigation failed');
+        this.presentToast('Unable to navigate to create event page', 'danger');
+      }
+    } catch (error) {
+      console.error('Error navigating to create event:', error);
+      this.presentToast('Unable to navigate to create event page', 'danger');
+    }
   }
   
   // --- ERROR DISPLAY HELPERS ---

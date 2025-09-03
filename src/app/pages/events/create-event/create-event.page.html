@@ -1,0 +1,134 @@
+<!-- 
+  Create Event Page
+  - Applies the "Asphalt UI" theme for a consistent look and feel.
+  - Event creation form with all necessary fields for motorcycle club events
+  - Uses reactive forms for proper validation
+-->
+<ion-header class="asphalt-header">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button [defaultHref]="'/clubs/' + clubId"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Create Event</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="asphalt-background">
+  <!-- Loading Spinner Overlay -->
+  <app-loading-spinner [isLoading]="isLoading"></app-loading-spinner>
+  
+  <form [formGroup]="createEventForm" (ngSubmit)="createEvent()">
+    <div class="ion-padding">
+
+      <!-- Event Image Uploader -->
+      <div class="image-uploader ion-text-center" (click)="fileInput.click()">
+        <img *ngIf="eventImagePreview" [src]="eventImagePreview" class="event-image-preview" />
+        <div *ngIf="!eventImagePreview" class="placeholder">
+          <ion-icon name="camera-outline" class="placeholder-icon"></ion-icon>
+          <ion-label>Upload Event Image</ion-label>
+        </div>
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="ion-hide" />
+      </div>
+
+      <!-- Cropper Modal-like Section -->
+      <div *ngIf="cropperVisible" class="cropper-container">
+        <image-cropper
+          [imageChangedEvent]="imageChangedEvent"
+          [maintainAspectRatio]="true"
+          [aspectRatio]="16 / 9"
+          [resizeToWidth]="800"
+          [imageQuality]="0.92"
+          format="png"
+          (imageCropped)="onImageCropped($event)"
+          (cropperReady)="onCropperReady()"
+          (loadImageFailed)="onCropperLoadImageFailed()"
+        ></image-cropper>
+        <div class="cropper-actions">
+          <ion-button fill="clear" color="medium" (click)="cancelCrop()">Cancel</ion-button>
+          <ion-button class="asphalt-button-primary" (click)="applyCrop()">Apply</ion-button>
+        </div>
+      </div>
+
+      <!-- Event Name -->
+      <ion-item class="asphalt-input-item" lines="none">
+        <ion-icon name="calendar-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-input formControlName="name" type="text" placeholder="Event Name"></ion-input>
+      </ion-item>
+
+      <!-- Event Description -->
+      <ion-item class="asphalt-textarea-item" lines="none">
+        <ion-textarea formControlName="description" placeholder="Event description, meeting points, what to bring..." [autoGrow]="true"></ion-textarea>
+      </ion-item>
+
+      <!-- Event Type -->
+      <ion-item class="asphalt-select-item" lines="none">
+        <ion-icon name="options-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-select formControlName="eventType" placeholder="Select Event Type" interface="popover">
+          <ion-select-option value="ride">🏍️ Ride</ion-select-option>
+          <ion-select-option value="meeting">📋 Meeting</ion-select-option>
+          <ion-select-option value="meetup">☕ Meetup</ion-select-option>
+          <ion-select-option value="event">🎉 Event</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <!-- Start Date & Time -->
+      <ion-item class="asphalt-datetime-item" lines="none">
+        <ion-icon name="time-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-datetime-button datetime="start-datetime">
+          <ion-label>Start Date & Time</ion-label>
+        </ion-datetime-button>
+      </ion-item>
+      <ion-modal [keepContentsMounted]="true">
+        <ng-template>
+          <ion-datetime
+            id="start-datetime"
+            presentation="date-time"
+            [min]="minDate"
+            (ionChange)="onStartDateChange($event)"
+          ></ion-datetime>
+        </ng-template>
+      </ion-modal>
+
+      <!-- End Date & Time -->
+      <ion-item class="asphalt-datetime-item" lines="none">
+        <ion-icon name="time-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-datetime-button datetime="end-datetime">
+          <ion-label>End Date & Time</ion-label>
+        </ion-datetime-button>
+      </ion-item>
+      <ion-modal [keepContentsMounted]="true">
+        <ng-template>
+          <ion-datetime
+            id="end-datetime"
+            presentation="date-time"
+            [min]="minEndDate"
+            (ionChange)="onEndDateChange($event)"
+          ></ion-datetime>
+        </ng-template>
+      </ion-modal>
+
+      <!-- Location with Places Autocomplete -->
+      <app-places-autocomplete
+        [formControl]="locationFormControl"
+        placeholder="Meeting location or ride destination"
+        icon="location-outline"
+        [showCurrentLocationButton]="true"
+        (placeSelected)="onLocationSelected($event)"
+        (locationCleared)="onLocationCleared()">
+      </app-places-autocomplete>
+
+    </div>
+  </form>
+</ion-content>
+
+<ion-footer class="asphalt-footer">
+  <ion-toolbar>
+    <ion-button 
+      expand="block" 
+      class="asphalt-button-primary" 
+      (click)="createEvent()" 
+      [disabled]="createEventForm.invalid || isLoading">
+      Create Event
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>
