@@ -5,6 +5,11 @@
   .autocomplete-input-item {
     margin-bottom: 8px;
     
+    // Ensure asphalt-icon styling takes precedence
+    .asphalt-icon {
+      color: #F59E0B !important; // Amber color to match other icons
+    }
+    
     .search-spinner {
       --color: var(--ion-color-medium);
       width: 20px;

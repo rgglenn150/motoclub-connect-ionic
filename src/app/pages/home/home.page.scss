@@ -1,5 +1,11 @@
 /* Asphalt UI Color Palette & Base Styles */
 
+/* Home Page Dark Theme Variables */
+:host {
+  --ion-background-color: #2D3748;
+  --ion-text-color: #F7FAFC;
+}
+
 .font-condensed {
     font-family: 'Roboto Condensed', sans-serif;
 }
