@@ -107,15 +107,11 @@
         </ng-template>
       </ion-modal>
 
-      <!-- Location with Places Autocomplete -->
-      <app-places-autocomplete
-        [formControl]="locationFormControl"
-        placeholder="Meeting location or ride destination"
-        icon="location-outline"
-        [showCurrentLocationButton]="true"
-        (placeSelected)="onLocationSelected($event)"
-        (locationCleared)="onLocationCleared()">
-      </app-places-autocomplete>
+      <!-- Location -->
+      <ion-item class="asphalt-input-item" lines="none">
+        <ion-icon name="location-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-input formControlName="location" type="text" placeholder="Meeting location or ride destination"></ion-input>
+      </ion-item>
 
     </div>
   </form>

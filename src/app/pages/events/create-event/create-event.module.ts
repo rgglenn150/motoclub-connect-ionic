@@ -8,7 +8,6 @@ import { ImageCropperModule } from 'ngx-image-cropper';
 import { CreateEventPage } from './create-event.page';
 import { CreateEventPageRoutingModule } from './create-event-routing.module';
 import { LoadingSpinnerModule } from 'src/app/components/utils/loading-spinner/loading-spinner.module';
-import { PlacesAutocompleteModule } from 'src/app/components/places-autocomplete/places-autocomplete.module';
 
 @NgModule({
   imports: [
@@ -18,8 +17,7 @@ import { PlacesAutocompleteModule } from 'src/app/components/places-autocomplete
     CreateEventPageRoutingModule,
     ReactiveFormsModule,
     ImageCropperModule,
-    LoadingSpinnerModule,
-    PlacesAutocompleteModule
+    LoadingSpinnerModule
   ],
   declarations: [CreateEventPage],
   exports: [CreateEventPage],

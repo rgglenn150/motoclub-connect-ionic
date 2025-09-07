@@ -5,7 +5,6 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { ToastService } from 'src/app/service/utils/toast.service';
 import { EventService, Event as ClubEvent, CreateEventData } from 'src/app/service/event.service';
-import { PlaceResult } from 'src/app/service/places.service';
 
 @Component({
   selector: 'app-create-event',
@@ -28,8 +27,6 @@ export class CreateEventPage implements OnInit {
   startDateTime: string = '';
   endDateTime: string = '';
 
-  // Location handling
-  selectedLocationDetails: PlaceResult | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -63,7 +60,6 @@ export class CreateEventPage implements OnInit {
     });
 
     console.log('Form created successfully:', this.createEventForm);
-    console.log('Location FormControl:', this.locationFormControl);
   }
 
   onFileSelected(event: Event): void {
@@ -144,29 +140,6 @@ export class CreateEventPage implements OnInit {
     this.createEventForm.patchValue({ endDate: this.endDateTime });
   }
 
-  /**
-   * Handle location selection from Places Autocomplete
-   */
-  onLocationSelected(place: PlaceResult) {
-    console.log('Location selected:', place);
-    this.selectedLocationDetails = place;
-    
-    // Display feedback to user
-    this.toastService.presentToast('Location selected: ' + place.description, 'top', 2000);
-    
-    // Optional: Log coordinates if available
-    if (place.geometry?.location) {
-      console.log('Selected location coordinates:', place.geometry.location);
-    }
-  }
-
-  /**
-   * Handle location clearing
-   */
-  onLocationCleared() {
-    console.log('Location cleared');
-    this.selectedLocationDetails = null;
-  }
 
   /**
    * Validates the form and uses the EventService to create a new event.
@@ -313,12 +286,6 @@ export class CreateEventPage implements OnInit {
     this.toastService.presentToast(errorMessage, 'top', 4000);
   }
 
-  /**
-   * Getter for location FormControl
-   */
-  get locationFormControl(): FormControl {
-    return this.createEventForm.get('location') as FormControl;
-  }
 
   /**
    * Navigates back to the club home page with the events tab selected
