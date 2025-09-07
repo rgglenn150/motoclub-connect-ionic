@@ -740,6 +740,12 @@ ion-fab {
                         font-size: 0.8rem;
                     }
                     
+                    &.member-username {
+                        color: #F59E0B; /* Brand amber color for @username */
+                        font-size: 0.85rem;
+                        font-weight: 500;
+                    }
+                    
                     &.join-date {
                         color: #718096;
                         font-size: 0.8rem;

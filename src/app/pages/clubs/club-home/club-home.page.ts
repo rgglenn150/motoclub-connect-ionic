@@ -4,6 +4,7 @@ import { ClubService, Club as ServiceClub, JoinRequest, ClubMember } from '../..
 import { ToastController, LoadingController, AlertController, ActionSheetController } from '@ionic/angular';
 import { NetworkService, NetworkStatus, ConnectionQuality } from '../../../service/network.service';
 import { ErrorService, ErrorInfo } from '../../../service/error.service';
+import { UserStateService } from '../../../service/user-state.service';
 import { Subscription } from 'rxjs';
 import { switchMap, tap, finalize } from 'rxjs/operators';
 
@@ -204,7 +205,8 @@ export class ClubHomePage implements OnInit, OnDestroy {
     private alertController: AlertController,
     private actionSheetController: ActionSheetController,
     private networkService: NetworkService,
-    private errorService: ErrorService
+    private errorService: ErrorService,
+    private userStateService: UserStateService
   ) { }
 
   ngOnInit() {
@@ -219,6 +221,9 @@ export class ClubHomePage implements OnInit, OnDestroy {
     
     // Subscribe to network status changes
     this.setupNetworkMonitoring();
+    
+    // Subscribe to user changes for global profile updates
+    this.setupUserStateMonitoring();
     
     if (this.clubId) {
       this.fetchClubData(this.clubId);
@@ -481,6 +486,21 @@ export class ClubHomePage implements OnInit, OnDestroy {
     );
     
     this.subscriptions.push(networkSub, qualitySub);
+  }
+
+  // --- USER STATE MONITORING ---
+  private setupUserStateMonitoring() {
+    // Subscribe to user state changes
+    const userSub = this.userStateService.user$.subscribe(
+      user => {
+        if (user && this.selectedTab === 'members') {
+          // Refresh members list when user data changes and members tab is active
+          this.refreshMembersData();
+        }
+      }
+    );
+    
+    this.subscriptions.push(userSub);
   }
 
   // --- API METHODS WITH ENHANCED ERROR HANDLING ---
@@ -1740,6 +1760,22 @@ export class ClubHomePage implements OnInit, OnDestroy {
    */
   isMemberProcessing(memberId: string): boolean {
     return this.processingMembers.has(memberId);
+  }
+
+  /**
+   * Get display name (firstName + lastName or fallback to username/name)
+   */
+  getDisplayName(user: any): string {
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`.trim();
+    } else if (user.firstName) {
+      return user.firstName;
+    } else if (user.lastName) {
+      return user.lastName;
+    } else if (user.name) {
+      return user.name;
+    }
+    return 'Unknown User';
   }
 
   /**
