@@ -8,6 +8,7 @@ import { ImageCropperModule } from 'ngx-image-cropper';
 import { CreateClubPage } from './create-club.page';
 import { CreateClubPageRoutingModule } from './create-club-routing.module';
 import { LoadingSpinnerModule } from 'src/app/components/utils/loading-spinner/loading-spinner.module';
+import { MapboxAutocompleteModule } from 'src/app/components/mapbox-autocomplete/mapbox-autocomplete.module';
 
 @NgModule({
   imports: [
@@ -17,7 +18,8 @@ import { LoadingSpinnerModule } from 'src/app/components/utils/loading-spinner/l
     CreateClubPageRoutingModule,
     ReactiveFormsModule,
     ImageCropperModule,
-    LoadingSpinnerModule
+    LoadingSpinnerModule,
+    MapboxAutocompleteModule
   ],
   declarations: [CreateClubPage],
   exports: [CreateClubPage],
