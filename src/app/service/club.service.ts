@@ -30,6 +30,9 @@ export interface JoinRequest {
     _id: string;
     name: string;
     email: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
     profilePicture?: string;
   };
   club: string;
