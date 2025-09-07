@@ -5,8 +5,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { ImageCropperModule } from 'ngx-image-cropper';
 
-import { CreateClubPage } from './create-club.page';
-import { CreateClubPageRoutingModule } from './create-club-routing.module';
+import { CreateEventPage } from './create-event.page';
+import { CreateEventPageRoutingModule } from './create-event-routing.module';
 import { LoadingSpinnerModule } from 'src/app/components/utils/loading-spinner/loading-spinner.module';
 import { MapboxAutocompleteModule } from 'src/app/components/mapbox-autocomplete/mapbox-autocomplete.module';
 
@@ -15,14 +15,14 @@ import { MapboxAutocompleteModule } from 'src/app/components/mapbox-autocomplete
     CommonModule,
     FormsModule,
     IonicModule,
-    CreateClubPageRoutingModule,
+    CreateEventPageRoutingModule,
     ReactiveFormsModule,
     ImageCropperModule,
     LoadingSpinnerModule,
     MapboxAutocompleteModule
   ],
-  declarations: [CreateClubPage],
-  exports: [CreateClubPage],
+  declarations: [CreateEventPage],
+  exports: [CreateEventPage],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class CreateClubPageModule {}
+export class CreateEventPageModule {}

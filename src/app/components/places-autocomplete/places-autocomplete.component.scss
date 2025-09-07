@@ -1,0 +1,163 @@
+.places-autocomplete-container {
+  position: relative;
+  width: 100%;
+
+  .autocomplete-input-item {
+    margin-bottom: 8px;
+    
+    // Ensure asphalt-icon styling takes precedence
+    .asphalt-icon {
+      color: #F59E0B !important; // Amber color to match other icons
+    }
+    
+    .search-spinner {
+      --color: var(--ion-color-medium);
+      width: 20px;
+      height: 20px;
+    }
+    
+    .clear-icon {
+      color: var(--ion-color-medium);
+      font-size: 20px;
+    }
+  }
+
+  .current-location-button {
+    --color: var(--ion-color-primary);
+    --border-color: var(--ion-color-primary);
+    margin-top: 8px;
+    margin-bottom: 16px;
+    width: 100%;
+    height: 36px;
+    font-size: 14px;
+    
+    ion-icon {
+      margin-right: 8px;
+    }
+  }
+
+  .api-warning {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    color: var(--ion-color-warning);
+    font-size: 12px;
+    
+    ion-icon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
+  }
+}
+
+// Popover styling
+.places-popover {
+  --width: calc(100vw - 32px);
+  --max-width: 400px;
+  --max-height: 300px;
+  
+  .places-suggestions {
+    --padding-start: 0;
+    --padding-end: 0;
+    
+    ion-list {
+      padding: 0;
+    }
+    
+    .suggestion-item {
+      --padding-start: 16px;
+      --padding-end: 16px;
+      --min-height: 48px;
+      border-bottom: 1px solid var(--ion-color-light-shade);
+      
+      &:hover {
+        background-color: var(--ion-color-light);
+      }
+      
+      .suggestion-icon {
+        color: var(--ion-color-medium);
+        font-size: 18px;
+        margin-right: 12px;
+      }
+      
+      ion-label {
+        .suggestion-main {
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--ion-color-dark);
+          margin: 0 0 2px 0;
+        }
+        
+        .suggestion-secondary {
+          font-size: 12px;
+          color: var(--ion-color-medium);
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+    
+    .no-results,
+    .loading-suggestions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--ion-color-medium);
+      
+      ion-icon,
+      ion-spinner {
+        margin-bottom: 8px;
+      }
+      
+      ion-icon {
+        font-size: 32px;
+      }
+      
+      p {
+        margin: 0;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .places-autocomplete-container {
+    .current-location-button {
+      --color: var(--ion-color-primary-tint);
+      --border-color: var(--ion-color-primary-tint);
+    }
+  }
+  
+  .places-popover {
+    .places-suggestions {
+      .suggestion-item {
+        border-bottom-color: var(--ion-color-dark-shade);
+        
+        &:hover {
+          background-color: var(--ion-color-dark-tint);
+        }
+        
+        ion-label {
+          .suggestion-main {
+            color: var(--ion-color-light);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Mobile-specific adjustments
+@media (max-width: 768px) {
+  .places-popover {
+    --width: calc(100vw - 16px);
+    --max-height: 250px;
+  }
+}

@@ -60,10 +60,14 @@
       </ion-item>
 
       <!-- Club Location -->
-      <ion-item class="asphalt-input-item" lines="none">
-        <ion-icon name="location-outline" slot="start" class="asphalt-icon"></ion-icon>
-        <ion-input formControlName="location" type="text" placeholder="Home Base (e.g., City, State)"></ion-input>
-      </ion-item>
+      <div class="location-field-container">
+        <ion-icon name="location-outline" class="asphalt-icon location-icon"></ion-icon>
+        <app-mapbox-autocomplete 
+          formControlName="location" 
+          placeholder="Home Base (e.g., City, State)"
+          (locationSelected)="onLocationSelected($event)">
+        </app-mapbox-autocomplete>
+      </div>
 
       <!-- Club Privacy Toggle -->
       <ion-item class="asphalt-toggle-item" lines="none">

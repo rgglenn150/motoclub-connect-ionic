@@ -4,7 +4,7 @@
   "author": "Ionic Framework",
   "homepage": "https://ionicframework.com/",
   "engines": {
-    "node": ">=18.13.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "ng": "ng",
@@ -38,6 +38,7 @@
     "@ionic/angular": "7",
     "@ionic/angular-server": "7",
     "@ionic/core": "7",
+    "@mapbox/mapbox-gl-geocoder": "^5.1.2",
     "ngx-image-cropper": "^6.3.4",
     "rxjs": "7.5.0",
     "tslib": "^2.2.0",
@@ -52,9 +53,11 @@
     "@angular/cli": "^18.1.0",
     "@angular/compiler-cli": "^18.1.0",
     "@angular/language-service": "~18.1.0",
+    "@babel/core": "^7.28.4",
     "@capacitor/cli": "6.1.2",
     "@ionic/angular-toolkit": "^11.0.1",
     "@playwright/test": "^1.55.0",
+    "@types/google.maps": "^3.58.1",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.13.0",
     "@typescript-eslint/eslint-plugin": "^7.15.0",

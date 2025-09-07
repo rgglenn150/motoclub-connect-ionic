@@ -28,10 +28,7 @@
 @import "~@ionic/angular/css/text-transformation.css";
 @import "~@ionic/angular/css/flex-utils.css";
 
-:root {
-    --ion-background-color: #2D3748;
-    --ion-text-color: #F7FAFC;
-}
+
 
 .flex-center {
   display: flex;
@@ -55,7 +52,7 @@ ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-gro
 .action-sheet-ios .action-sheet-wrapper .action-sheet-group .action-sheet-button {
   color: #F7FAFC !important;
   background: transparent !important;
-  
+
   /* Text content and spans inside buttons */
   * {
     color: #F7FAFC !important;
@@ -68,7 +65,7 @@ ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-gro
 .action-sheet-md .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive,
 .action-sheet-ios .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive {
   color: #F56565 !important;
-  
+
   * {
     color: #F56565 !important;
   }
@@ -80,7 +77,7 @@ ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-gro
 .action-sheet-md .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel,
 .action-sheet-ios .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel {
   color: #A0AEC0 !important;
-  
+
   * {
     color: #A0AEC0 !important;
   }
@@ -100,4 +97,38 @@ ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-tit
 .action-sheet-md .action-sheet-wrapper .action-sheet-title,
 .action-sheet-ios .action-sheet-wrapper .action-sheet-title {
   color: #F7FAFC !important;
+}
+
+/* Global DateTime Modal Styling - White Background Theme */
+ion-modal.datetime-modal,
+ion-modal ion-datetime {
+  --background: #ffffff !important;
+  --background-rgb: 255, 255, 255 !important;
+  --color: #2D3748 !important;
+  --ion-color-base: #2D3748 !important;
+  --ion-color-contrast: #ffffff !important;
+}
+
+/* DateTime picker specific elements */
+ion-datetime {
+  --ion-color-primary: #F59E0B !important;
+  --ion-color-primary-rgb: 245, 158, 11 !important;
+  --ion-color-primary-contrast: #ffffff !important;
+  --ion-color-primary-contrast-rgb: 255, 255, 255 !important;
+  --ion-toolbar-background: #ffffff !important;
+  --ion-toolbar-color: #2D3748 !important;
+  --ion-item-background: #ffffff !important;
+  --ion-item-color: #2D3748 !important;
+}
+
+/* DateTime calendar and picker elements */
+.datetime-calendar .calendar-day[aria-selected="true"],
+.datetime-time .time-button[aria-selected="true"] {
+  --background: #F59E0B !important;
+  --color: #ffffff !important;
+}
+
+.datetime-calendar .calendar-day.calendar-day-today,
+.datetime-time .time-button.time-button-today {
+  --color: #F59E0B !important;
 }

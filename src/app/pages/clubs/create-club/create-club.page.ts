@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastService } from 'src/app/service/utils/toast.service';
 import { ClubService, Club } from 'src/app/service/club.service'; // Import the service and interface
+import { LocationData } from 'src/app/components/mapbox-autocomplete/mapbox-autocomplete.component';
 
 @Component({
   selector: 'app-create-club',
@@ -18,6 +19,7 @@ export class CreateClubPage implements OnInit {
   croppedImageBase64: string | null = null;
   private selectedLogoFile: File | null = null;
   isLoading = false;
+  selectedLocation: LocationData | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -83,6 +85,11 @@ export class CreateClubPage implements OnInit {
     this.croppedImageBase64 = null;
   }
 
+  onLocationSelected(locationData: LocationData) {
+    this.selectedLocation = locationData;
+    console.log('Location selected:', locationData);
+  }
+
   /**
    * Validates the form and uses the ClubService to create a new club.
    */
@@ -97,6 +104,15 @@ export class CreateClubPage implements OnInit {
 
     // Use the Club interface for type safety
     const clubData: Club = this.createClubForm.value;
+
+    // Add geolocation data if available from Mapbox selection
+    if (this.selectedLocation) {
+      clubData.geolocation = {
+        latitude: this.selectedLocation.latitude,
+        longitude: this.selectedLocation.longitude,
+        placeName: this.selectedLocation.placeName
+      };
+    }
 
     console.log('Submitting Club Data:', clubData);
 

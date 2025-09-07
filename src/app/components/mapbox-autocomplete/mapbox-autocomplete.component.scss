@@ -1,0 +1,96 @@
+:host {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: visible;
+
+  // Ensure white text for the input
+  ion-input {
+    --color: #ffffff;
+    --placeholder-color: #ffffff;
+  }
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: -16px; // Align with parent container padding
+  right: -16px; // Align with parent container padding
+  background: var(--ion-background-color, #ffffff);
+  border: 1px solid var(--ion-color-medium-tint);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 10000; // High z-index to appear above all content
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 8px;
+  
+  ion-list {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+  }
+  
+  .suggestion-item {
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --min-height: 48px;
+    border-bottom: 1px solid var(--ion-color-light-shade);
+    cursor: pointer;
+    
+    &:hover {
+      --background: var(--ion-color-light-tint);
+    }
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    ion-icon {
+      color: var(--ion-color-medium);
+      margin-right: 8px;
+    }
+    
+    ion-label h3 {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--ion-color-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+// Ensure white text in Asphalt theme context
+:host-context(.asphalt-background) {
+  ion-input {
+    --color: #F7FAFC !important; // --asphalt-text
+    --placeholder-color: #F7FAFC !important; // --asphalt-text
+  }
+}
+
+// Theme integration for Asphalt UI
+:host-context(.asphalt-background) .suggestions-dropdown {
+  background: #4A5568; // --asphalt-secondary
+  border: 1px solid #2D3748; // --asphalt-primary
+  color: #F7FAFC; // --asphalt-text
+  
+  .suggestion-item {
+    --background: #4A5568;
+    --color: #F7FAFC;
+    border-bottom-color: #2D3748;
+    
+    &:hover {
+      --background: #2D3748;
+    }
+    
+    ion-icon {
+      color: #F59E0B; // --asphalt-accent
+    }
+    
+    ion-label h3 {
+      color: #F7FAFC; // --asphalt-text
+    }
+  }
+}

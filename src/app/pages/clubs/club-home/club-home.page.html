@@ -32,9 +32,9 @@
     </ion-avatar>
     <div class="header-actions">
       <!-- Admin settings button (separate from join button for better UX) -->
-      <ion-button *ngIf="isUserAdmin" fill="clear" color="light">
+     <!--  <ion-button *ngIf="isUserAdmin" fill="clear" color="light">
         <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
-      </ion-button>
+      </ion-button> -->
       <!-- Smart Join Button - Always visible with dynamic content -->
       <ion-button 
         [color]="getJoinButtonColor()" 
@@ -290,6 +290,18 @@
       </div>
 
       <div *ngSwitchCase="'events'">
+        <!-- Create Event Button Section -->
+        <div *ngIf="isUserAdmin" class="create-event-section">
+          <ion-button 
+            expand="block" 
+            color="brand-amber" 
+            (click)="navigateToCreateEvent()"
+            class="create-event-button">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            Create Event
+          </ion-button>
+        </div>
+
         <div class="events-section">
           <ion-card class="asphalt-card" *ngFor="let event of events">
             <div class="card-header-row">
@@ -551,8 +563,3 @@
     </ng-template>
 </ion-content>
 
-<ion-fab *ngIf="isUserAdmin" vertical="bottom" horizontal="end" slot="fixed">
-  <ion-fab-button color="brand-amber">
-    <ion-icon name="add-outline"></ion-icon>
-  </ion-fab-button>
-</ion-fab>

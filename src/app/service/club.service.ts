@@ -4,12 +4,19 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { map } from 'rxjs/operators'; // Import the map operator
 
+export interface Geolocation {
+  latitude: number;
+  longitude: number;
+  placeName: string;
+}
+
 export interface Club {
   _id?: string;
   id?: string; // For compatibility with frontend routing
   clubName: string;
   description: string;
   location?: string;
+  geolocation?: Geolocation;
   isPrivate: boolean;
   members?: any[]; // You can create a more specific interface for members
   createdBy?: string;
