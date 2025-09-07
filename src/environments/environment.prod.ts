@@ -2,6 +2,7 @@ export const environment = {
   production: true,
   apiUrl: 'https://motoclub-connect-backend.onrender.com/api', // Your deployed backend URL
   facebookAppId: '1515940283108537', // Facebook App ID (matches capacitor.config.ts)
-  googleMapsApiKey: 'YOUR_GOOGLE_MAPS_API_KEY_HERE' // Google Maps Places API key - Replace with actual key
+  mapboxAccessToken:
+    'pk.eyJ1IjoicmdnbGVubjE1MCIsImEiOiJjbWY5YTkwaGgwcHY5MmpvbTFqc3V1N2JyIn0.CR4_cOq7q4Gsft8HDVs5gw',
 };
- //test2
+//test2

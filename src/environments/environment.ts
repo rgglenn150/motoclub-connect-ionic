@@ -1,14 +1,10 @@
-// This file can be replaced during build by using the `fileReplacements` array.
-// `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
-// The list of file replacements can be found in `angular.json`.
-
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:4201/api', // Backend server URL
   facebookAppId: '1515940283108537', // Facebook App ID (matches capacitor.config.ts)
-  googleMapsApiKey: 'YOUR_GOOGLE_MAPS_API_KEY_HERE' // Google Maps Places API key - Replace with actual key
+  mapboxAccessToken:
+    'pk.eyJ1IjoicmdnbGVubjE1MCIsImEiOiJjbWY5YTkwaGgwcHY5MmpvbTFqc3V1N2JyIn0.CR4_cOq7q4Gsft8HDVs5gw',
 };
-
 
 /*
  * For easier debugging in development mode, you can import the following file

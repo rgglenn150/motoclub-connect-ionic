@@ -108,10 +108,14 @@
       </ion-modal>
 
       <!-- Location -->
-      <ion-item class="asphalt-input-item" lines="none">
-        <ion-icon name="location-outline" slot="start" class="asphalt-icon"></ion-icon>
-        <ion-input formControlName="location" type="text" placeholder="Meeting location or ride destination"></ion-input>
-      </ion-item>
+      <div class="location-field-container">
+        <ion-icon name="location-outline" class="asphalt-icon location-icon"></ion-icon>
+        <app-mapbox-autocomplete 
+          formControlName="location" 
+          placeholder="Meeting location or ride destination"
+          (locationSelected)="onLocationSelected($event)">
+        </app-mapbox-autocomplete>
+      </div>
 
     </div>
   </form>

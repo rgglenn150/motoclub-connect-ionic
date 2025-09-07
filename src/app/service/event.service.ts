@@ -5,6 +5,13 @@ import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
+// Geolocation interface
+export interface Geolocation {
+  latitude: number;
+  longitude: number;
+  placeName: string;
+}
+
 // Event interface matching the backend EventModel structure
 export interface Event {
   _id?: string;
@@ -13,6 +20,7 @@ export interface Event {
   startTime: Date | string;
   endTime: Date | string;
   location?: string;
+  geolocation?: Geolocation;
   eventType: 'ride' | 'meeting' | 'meetup' | 'event';
   club: string; // ObjectId as string
   createdBy?: string; // ObjectId as string
@@ -29,6 +37,7 @@ export interface CreateEventData {
   startTime: Date | string;
   endTime: Date | string;
   location?: string;
+  geolocation?: Geolocation;
   eventType: 'ride' | 'meeting' | 'meetup' | 'event';
   club: string;
 }

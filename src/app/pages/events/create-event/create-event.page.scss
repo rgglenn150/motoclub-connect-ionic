@@ -190,6 +190,41 @@ ion-modal {
   }
 }
 
+// --- Location Field Container ---
+.location-field-container {
+  position: relative;
+  background: var(--asphalt-secondary);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  overflow: visible; // Ensure dropdown can overflow the container
+  z-index: 100; // Ensure the container has proper stacking
+  
+  .location-icon {
+    color: var(--asphalt-accent);
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  
+  app-mapbox-autocomplete {
+    flex: 1;
+    position: relative;
+    overflow: visible; // Allow dropdown to overflow
+    
+    ion-input {
+      --color: #ffffff !important; // Force white text
+      --placeholder-color: #ffffff !important; // Force white placeholder
+      --background: transparent;
+      --padding-start: 0;
+      --padding-end: 0;
+      --padding-top: 0;
+      --padding-bottom: 0;
+    }
+  }
+}
+
 // --- Places Autocomplete Integration ---
 app-places-autocomplete {
   display: block;

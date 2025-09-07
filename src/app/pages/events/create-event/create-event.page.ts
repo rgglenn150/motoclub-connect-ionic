@@ -4,7 +4,8 @@ import { FormBuilder, FormGroup, FormControl, Validators } from '@angular/forms'
 import { Router, ActivatedRoute } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { ToastService } from 'src/app/service/utils/toast.service';
-import { EventService, Event as ClubEvent, CreateEventData } from 'src/app/service/event.service';
+import { EventService, Event as ClubEvent, CreateEventData, Geolocation } from 'src/app/service/event.service';
+import { LocationData } from 'src/app/components/mapbox-autocomplete/mapbox-autocomplete.component';
 
 @Component({
   selector: 'app-create-event',
@@ -20,6 +21,7 @@ export class CreateEventPage implements OnInit {
   private selectedImageFile: File | null = null;
   isLoading = false;
   clubId: string = '';
+  selectedLocation: LocationData | null = null;
   
   // Date handling
   minDate = new Date().toISOString();
@@ -140,6 +142,13 @@ export class CreateEventPage implements OnInit {
     this.createEventForm.patchValue({ endDate: this.endDateTime });
   }
 
+  /**
+   * Handles the location selection from Mapbox autocomplete
+   */
+  onLocationSelected(locationData: LocationData) {
+    this.selectedLocation = locationData;
+    console.log('Location selected:', locationData);
+  }
 
   /**
    * Validates the form and uses the EventService to create a new event.
@@ -185,6 +194,15 @@ export class CreateEventPage implements OnInit {
       eventType: this.createEventForm.get('eventType')?.value,
       club: this.clubId
     };
+
+    // Add geolocation data if available from Mapbox selection
+    if (this.selectedLocation) {
+      eventData.geolocation = {
+        latitude: this.selectedLocation.latitude,
+        longitude: this.selectedLocation.longitude,
+        placeName: this.selectedLocation.placeName
+      };
+    }
 
     console.log('Submitting Event Data:', eventData);
 
