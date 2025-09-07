@@ -142,14 +142,44 @@
 
 // --- DateTime Modal Styling ---
 ion-modal {
-  --background: var(--asphalt-primary);
+  --background: #ffffff;
   
   ion-datetime {
-    --background: var(--asphalt-primary);
-    --background-rgb: 45, 55, 72;
-    --color: var(--asphalt-text);
-    --ion-color-base: var(--asphalt-text);
-    --ion-color-contrast: var(--asphalt-primary);
+    --background: #ffffff;
+    --background-rgb: 255, 255, 255;
+    --color: #2D3748;
+    --ion-color-base: #2D3748;
+    --ion-color-contrast: #ffffff;
+    
+    // Ensure proper contrast for datetime picker elements
+    --ion-color-primary: var(--asphalt-accent);
+    --ion-color-primary-rgb: 245, 158, 11;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-contrast-rgb: 255, 255, 255;
+    
+    // Style the header and navigation elements
+    --ion-toolbar-background: #ffffff;
+    --ion-toolbar-color: #2D3748;
+    
+    // Style the calendar grid and time picker
+    --ion-item-background: #ffffff;
+    --ion-item-color: #2D3748;
+    
+    // Ensure buttons are visible
+    .datetime-button {
+      --color: #2D3748;
+    }
+    
+    // Style selected dates/times with accent color
+    .calendar-day[aria-selected="true"] {
+      --background: var(--asphalt-accent);
+      --color: #ffffff;
+    }
+    
+    // Style today's date
+    .calendar-day.calendar-day-today {
+      --color: var(--asphalt-accent);
+    }
   }
 }
 
