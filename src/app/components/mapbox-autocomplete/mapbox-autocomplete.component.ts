@@ -139,7 +139,7 @@ export class MapboxAutocompleteComponent implements OnInit, OnDestroy, ControlVa
     }, 200);
   }
 
-  private resetJustSelectedFlag() {
+  resetJustSelectedFlag() {
     // Reset the flag when user starts typing again
     if (this.justSelected) {
       this.justSelected = false;
