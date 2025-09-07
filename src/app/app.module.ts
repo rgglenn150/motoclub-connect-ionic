@@ -12,9 +12,10 @@ import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 
-// Import HttpClientModule and the interceptor provider
+// Import HttpClientModule and the interceptor providers
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { TokenInterceptor } from './service/token.interceptor';
+import { ErrorInterceptor } from './interceptor/error.interceptor';
 
 import { MePageModule } from './pages/me/me.module';
 import { HomePageModule } from './pages/home/home.module';
@@ -52,10 +53,15 @@ import { ServiceWorkerModule } from '@angular/service-worker';
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    // Add the HTTP_INTERCEPTORS provider here
+    // Add the HTTP_INTERCEPTORS providers here
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TokenInterceptor,
+      multi: true,
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptor,
       multi: true,
     },
   ],

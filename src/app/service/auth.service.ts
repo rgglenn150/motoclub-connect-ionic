@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { FacebookLogin } from '@capacitor-community/facebook-login';
+import { UserStateService } from './user-state.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +13,11 @@ import { FacebookLogin } from '@capacitor-community/facebook-login';
 export class AuthService {
   private baseUrl = `${environment.apiUrl}/auth`;
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(
+    private http: HttpClient, 
+    private router: Router,
+    private userStateService: UserStateService
+  ) {
     // Only initialize Facebook login if not in test environment
     if (!this.isTestEnvironment()) {
       this.initializeFacebookLogin();
@@ -48,18 +53,36 @@ export class AuthService {
         next: () => {
           console.log('logout');
           this.facebookLogout(); // Also logout from Facebook
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
+          this.clearAuthData();
           this.router.navigate(['/login']);
         },
         error: (error) => {
           console.log('something went wrong on logout', error);
           this.facebookLogout(); // Also logout from Facebook
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
+          this.clearAuthData();
           this.router.navigate(['/login']);
         },
       });
+  }
+
+  /**
+   * Clear all authentication data
+   */
+  clearAuthData() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('redirectUrl');
+    // Clear user state
+    this.userStateService.clearUser();
+  }
+
+  /**
+   * Handle successful login and redirect to intended page
+   */
+  handleLoginSuccess() {
+    const redirectUrl = localStorage.getItem('redirectUrl') || '/tabs/home';
+    localStorage.removeItem('redirectUrl');
+    this.router.navigate([redirectUrl]);
   }
 
   getLoggedInUser() {

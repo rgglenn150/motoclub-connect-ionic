@@ -48,7 +48,7 @@ export class LoginPage {
       (data: any) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        this.router.navigate(['/home']);
+        this.authService.handleLoginSuccess(); // Use new method for proper redirect
         this.toastService.presentToast('Login successful !', 'top', 3000);
         this.isLoading = false; // Hide the loading spinner
       },
@@ -92,7 +92,7 @@ export class LoginPage {
         (data: any) => {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
-          this.router.navigate(['/home']);
+          this.authService.handleLoginSuccess(); // Use new method for proper redirect
           this.toastService.presentToast('Facebook login successful!', 'top', 3000);
           this.isFacebookLoading = false;
         },

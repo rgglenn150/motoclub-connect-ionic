@@ -4,6 +4,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
 import { UserService } from '../../service/user.service';
+import { UserStateService } from '../../service/user-state.service';
 
 @Component({
   selector: 'app-me',
@@ -33,7 +34,8 @@ export class MePage implements OnInit {
   constructor(
     private router: Router,
     private userService: UserService,
-    private authService: AuthService
+    private authService: AuthService,
+    private userStateService: UserStateService
   ) {}
 
   ngOnInit() {
@@ -102,6 +104,8 @@ export class MePage implements OnInit {
     this.userService.uploadProfilePhoto(formData).subscribe(
       (res: any) => {
         this.user.profilePhoto = res.imageUrl;
+        // Update global user state - this will notify all subscribers
+        this.userStateService.updateUserProperty('profilePhoto', res.imageUrl);
         this.imageChangedEvent = null;
         this.isCropperOpen = false;
         this.isLoading = false;

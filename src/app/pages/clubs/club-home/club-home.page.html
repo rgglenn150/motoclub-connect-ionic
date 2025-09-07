@@ -266,18 +266,18 @@
               <div *ngIf="!membersDataLoading && !memberError && membersForPublicView.length > 0">
                 <ion-item *ngFor="let member of membersForPublicView" class="member-item">
                   <ion-avatar slot="start">
-                    <img [src]="getAvatarUrl(member.user.profilePicture, member.user.name)" [alt]="member.user.name">
+                    <img [src]="getAvatarUrl(member.user.profilePicture, getDisplayName(member.user))" [alt]="getDisplayName(member.user)">
                   </ion-avatar>
                   <ion-label>
                     <h3>
-                      {{ member.user.name }}
+                      {{ getDisplayName(member.user) }}
                       <ion-badge 
                         [color]="member.role === 'admin' ? 'success' : 'medium'" 
                         class="role-badge">
                         {{ member.role | titlecase }}
                       </ion-badge>
                     </h3>
-                    <p class="member-email">{{ member.user.email }}</p>
+                    <p class="member-username">{{ '@' + (member.user.username || 'username') }}</p>
                     <p class="join-date">Member since {{ member.joinedAt | date:'MMM d, y' }}</p>
                   </ion-label>
                 </ion-item>
@@ -425,11 +425,11 @@
               <div *ngIf="!joinRequestsLoading && joinRequests.length > 0">
                 <ion-item *ngFor="let request of joinRequests" class="request-item">
                   <ion-avatar slot="start">
-                    <img [src]="getAvatarUrl(request.user.profilePicture, request.user.name)" [alt]="request.user.name">
+                    <img [src]="getAvatarUrl(request.user.profilePicture, getDisplayName(request.user))" [alt]="getDisplayName(request.user)">
                   </ion-avatar>
                   <ion-label>
-                    <h3>{{ request.user.name }}</h3>
-                    <p>{{ request.user.email }}</p>
+                    <h3>{{ getDisplayName(request.user) }}</h3>
+                    <p class="member-username">{{ '@' + (request.user.username || 'username') }}</p>
                     <p class="request-date">Requested {{ request.createdAt | date:'MMM d, y' }}</p>
                   </ion-label>
                   
@@ -442,7 +442,7 @@
                       [disabled]="isRequestProcessing(request._id) || !networkStatus.online"
                       [class.loading-button]="isRequestProcessing(request._id)"
                       (click)="approveRequest(request)"
-                      [attr.aria-label]="'Approve join request from ' + request.user.name">
+                      [attr.aria-label]="'Approve join request from ' + getDisplayName(request.user)">
                       <ion-spinner *ngIf="isRequestProcessing(request._id)" name="crescent" size="small"></ion-spinner>
                       <ion-icon *ngIf="!isRequestProcessing(request._id)" name="checkmark-outline"></ion-icon>
                       <span *ngIf="!isRequestProcessing(request._id)">Approve</span>
@@ -455,7 +455,7 @@
                       [disabled]="isRequestProcessing(request._id) || !networkStatus.online"
                       [class.loading-button]="isRequestProcessing(request._id)"
                       (click)="rejectRequest(request)"
-                      [attr.aria-label]="'Reject join request from ' + request.user.name">
+                      [attr.aria-label]="'Reject join request from ' + getDisplayName(request.user)">
                       <ion-spinner *ngIf="isRequestProcessing(request._id)" name="crescent" size="small"></ion-spinner>
                       <ion-icon *ngIf="!isRequestProcessing(request._id)" name="close-outline"></ion-icon>
                       <span *ngIf="!isRequestProcessing(request._id)">Reject</span>
@@ -515,18 +515,18 @@
               <div *ngIf="!membersLoading && clubMembers.length > 0">
                 <ion-item *ngFor="let member of clubMembers" class="member-item">
                   <ion-avatar slot="start">
-                    <img [src]="getAvatarUrl(member.user.profilePicture, member.user.name)" [alt]="member.user.name">
+                    <img [src]="getAvatarUrl(member.user.profilePicture, getDisplayName(member.user))" [alt]="getDisplayName(member.user)">
                   </ion-avatar>
                   <ion-label>
                     <h3>
-                      {{ member.user.name }}
+                      {{ getDisplayName(member.user) }}
                       <ion-badge 
                         [color]="member.role === 'admin' ? 'success' : 'medium'" 
                         class="role-badge">
                         {{ member.role | titlecase }}
                       </ion-badge>
                     </h3>
-                    <p>{{ member.user.email }}</p>
+                    <p class="member-username">{{ '@' + (member.user.username || 'username') }}</p>
                     <p class="join-date">Member since {{ member.joinedAt | date:'MMM d, y' }}</p>
                   </ion-label>
                   
@@ -539,7 +539,7 @@
                       [disabled]="isMemberProcessing(member._id) || !networkStatus.online"
                       [class.loading-button]="isMemberProcessing(member._id)"
                       (click)="presentMemberActions(member)"
-                      [attr.aria-label]="'Manage ' + member.user.name">
+                      [attr.aria-label]="'Manage ' + getDisplayName(member.user)">
                       <ion-spinner *ngIf="isMemberProcessing(member._id)" name="crescent" size="small"></ion-spinner>
                       <ion-icon *ngIf="!isMemberProcessing(member._id)" name="ellipsis-vertical"></ion-icon>
                     </ion-button>
