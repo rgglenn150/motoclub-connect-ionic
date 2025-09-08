@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/service/auth.service';
+import { UserStateService } from 'src/app/service/user-state.service';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -15,13 +16,13 @@ export class RegisterPage {
   registerForm: FormGroup;
   errorMessage: string;
   isLoading: boolean = false; // To control the loading spinner visibility
-  isFacebookLoading: boolean = false;
 
   constructor(
     private formBuilder: FormBuilder,
     private http: HttpClient,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private userStateService: UserStateService
   ) {
     this.registerForm = this.formBuilder.group({
       username: ['', Validators.required],
@@ -39,7 +40,9 @@ export class RegisterPage {
       .subscribe(
         (data: any) => {
           localStorage.setItem('token', data.token);
-           localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('user', JSON.stringify(data.user));
+          // Update user state service to notify all subscribers
+          this.userStateService.updateUser(data.user);
           this.router.navigate(['/home']);
           this.isLoading = false; // Hide the loading spinner
         },
@@ -55,26 +58,4 @@ export class RegisterPage {
     this.router.navigate(['/login']);
   }
 
-  async registerWithFacebook() {
-    this.isLoading = true;
-    try {
-      const response = await this.authService.facebookRegister();
-      
-      response.pipe(takeUntil(this.destroySubject$)).subscribe(
-        (data: any) => {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          this.router.navigate(['/home']);
-          this.isLoading = false;
-        },
-        (error) => {
-          this.errorMessage = error.error?.message || 'Facebook registration failed';
-          this.isLoading = false;
-        }
-      );
-    } catch (error: any) {
-      this.errorMessage = error.message || 'Facebook registration failed';
-      this.isLoading = false;
-    }
-  }
 }
