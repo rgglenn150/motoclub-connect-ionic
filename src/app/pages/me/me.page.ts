@@ -79,7 +79,11 @@ export class MePage implements OnInit, OnDestroy {
   }
 
   goTo(page: string) {
-    this.router.navigate([`/tabs/me/${page}`]);
+    if (page === 'edit-profile') {
+      this.router.navigate(['/user/edit-profile']);
+    } else {
+      this.router.navigate([`/tabs/me/${page}`]);
+    }
   }
 
   onProfilePhotoClick() {
