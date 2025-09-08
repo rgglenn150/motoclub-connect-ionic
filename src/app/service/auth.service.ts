@@ -85,6 +85,16 @@ export class AuthService {
     this.router.navigate([redirectUrl]);
   }
 
+  /**
+   * Initialize user state from localStorage at app startup
+   */
+  initializeUserState() {
+    const storedUser = this.getLoggedInUser();
+    if (storedUser) {
+      this.userStateService.updateUser(storedUser);
+    }
+  }
+
   getLoggedInUser() {
     const user = localStorage.getItem('user');
     console.log('getLoggedInUser', user);
@@ -107,26 +117,6 @@ export class AuthService {
       }
     } catch (error) {
       console.error('Facebook login error:', error);
-      throw error;
-    }
-  }
-
-  async facebookRegister() {
-    try {
-      const result = await FacebookLogin.login({
-        permissions: ['email', 'public_profile']
-      });
-
-      if (result.accessToken) {
-        // Send the access token to the backend for registration
-        return this.http.post(`${this.baseUrl}/facebook/register`, {
-          accessToken: result.accessToken.token
-        });
-      } else {
-        throw new Error('Facebook registration failed - no access token received');
-      }
-    } catch (error) {
-      console.error('Facebook registration error:', error);
       throw error;
     }
   }

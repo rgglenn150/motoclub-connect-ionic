@@ -1,18 +1,21 @@
 import { AuthService } from '../../service/auth.service';
 import { HttpClient } from '@angular/common/http';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
 import { UserService } from '../../service/user.service';
 import { UserStateService } from '../../service/user-state.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-me',
   templateUrl: './me.page.html',
   styleUrls: ['./me.page.scss'],
 })
-export class MePage implements OnInit {
+export class MePage implements OnInit, OnDestroy {
   @ViewChild('fileInput') fileInput: ElementRef;
+  
+  private destroy$ = new Subject<void>();
 
   // Placeholder for user data
   user: any = {
@@ -39,18 +42,36 @@ export class MePage implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.fetchUserData();
+    this.subscribeToUserState();
   }
 
-  fetchUserData() {
-    const user = this.authService.getLoggedInUser();
-    if (user) {
-      this.user = user;
-      console.log('User data fetched:', this.user);
-    } else {
-      console.error('User not found, redirecting to login');
-      this.router.navigate(['/login']);
-    }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  subscribeToUserState() {
+    // Subscribe to user state changes for reactive updates
+    this.userStateService.user$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        if (user) {
+          this.user = user;
+          console.log('User data updated from state service:', this.user);
+        } else {
+          // No user in state, try to get from localStorage as fallback
+          const storedUser = this.authService.getLoggedInUser();
+          if (storedUser) {
+            this.user = storedUser;
+            // Update the state service with the stored user data
+            this.userStateService.updateUser(storedUser);
+            console.log('User data loaded from localStorage:', this.user);
+          } else {
+            console.error('User not found, redirecting to login');
+            this.router.navigate(['/login']);
+          }
+        }
+      });
   }
 
   logout() {

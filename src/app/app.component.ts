@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Platform } from '@ionic/angular';
 import { environment } from 'src/environments/environment';
 import { NotificationService } from './service/notification.service';
+import { AuthService } from './service/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -15,12 +16,17 @@ export class AppComponent implements OnInit, OnDestroy {
     private router: Router, 
     private http: HttpClient,
     private platform: Platform,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
     const token = localStorage.getItem('token');
     this.wakeupServer();
+    
+    // Initialize user state from localStorage
+    this.authService.initializeUserState();
+    
     if (!token || token === 'undefined') {
       this.router.navigate(['/login']);
     } else {

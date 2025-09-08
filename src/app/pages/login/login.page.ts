@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/service/auth.service';
 import { ToastService } from 'src/app/service/utils/toast.service';
+import { UserStateService } from 'src/app/service/user-state.service';
 
 @Component({
   selector: 'app-login',
@@ -24,7 +25,8 @@ export class LoginPage {
     private formBuilder: FormBuilder,
     private http: HttpClient,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private userStateService: UserStateService
   ) {
     this.loginForm = this.formBuilder.group({
       email: ['', Validators.compose([Validators.required, Validators.email])],
@@ -49,6 +51,8 @@ export class LoginPage {
         console.log('RGDB Login response:', data); // Debugging line
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        // Update user state service to notify all subscribers
+        this.userStateService.updateUser(data.user);
         this.authService.handleLoginSuccess(); // Use new method for proper redirect
         this.toastService.presentToast('Login successful !', 'top', 3000);
         this.isLoading = false; // Hide the loading spinner
@@ -94,8 +98,16 @@ export class LoginPage {
         (data: any) => {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
+          // Update user state service to notify all subscribers
+          this.userStateService.updateUser(data.user);
           this.authService.handleLoginSuccess(); // Use new method for proper redirect
-          this.toastService.presentToast('Facebook login successful!', 'top', 3000);
+          
+          // Show differentiated welcome messages based on isNewUser flag
+          const welcomeMessage = data.isNewUser 
+            ? 'Welcome to MotoClub Connect!' 
+            : 'Welcome back!';
+          
+          this.toastService.presentToast(welcomeMessage, 'top', 3000);
           this.isFacebookLoading = false;
         },
         (error) => {
