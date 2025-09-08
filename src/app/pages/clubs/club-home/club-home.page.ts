@@ -1766,6 +1766,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
    * Get display name (firstName + lastName or fallback to username/name)
    */
   getDisplayName(user: any): string {
+    console.log('rgdb user ', user)
     if (user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`.trim();
     } else if (user.firstName) {

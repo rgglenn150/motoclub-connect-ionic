@@ -46,6 +46,7 @@ export class LoginPage {
     this.isLoading = true; // Show the loading spinner
     this.authService.login(this.loginForm.value).subscribe(
       (data: any) => {
+        console.log('RGDB Login response:', data); // Debugging line
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         this.authService.handleLoginSuccess(); // Use new method for proper redirect
@@ -53,6 +54,7 @@ export class LoginPage {
         this.isLoading = false; // Hide the loading spinner
       },
       (error) => {
+        console.error('RGDB Login error:', error); // Debugging line
         this.errorMessage = error.error.message;
         this.toastService.presentToast(
           'Login failed ! ' + error.message,
