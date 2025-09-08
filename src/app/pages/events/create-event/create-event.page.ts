@@ -58,7 +58,7 @@ export class CreateEventPage implements OnInit {
       eventType: ['ride', Validators.required], // Set default to 'ride' for motorcycle clubs
       location: ['', [Validators.required, Validators.maxLength(200)]], // Direct FormControl
       startDate: ['', Validators.required],
-      endDate: ['', Validators.required],
+      endDate: [''], // Made optional - no validators
     });
 
     console.log('Form created successfully:', this.createEventForm);
@@ -130,10 +130,11 @@ export class CreateEventPage implements OnInit {
     startDate.setHours(startDate.getHours() + 1);
     this.minEndDate = startDate.toISOString();
     
-    // If end date is before new minimum, update it
+    // If end date is provided and is before new minimum, clear it so user can reselect
     if (this.endDateTime && new Date(this.endDateTime) < startDate) {
-      this.endDateTime = startDate.toISOString();
-      this.createEventForm.patchValue({ endDate: this.endDateTime });
+      this.endDateTime = '';
+      this.createEventForm.patchValue({ endDate: '' });
+      this.toastService.presentToast('End date cleared because it was before the new start date. Please reselect if needed.', 'top', 3000);
     }
   }
 
@@ -160,14 +161,13 @@ export class CreateEventPage implements OnInit {
       return;
     }
 
-    if (!this.startDateTime || !this.endDateTime) {
-      this.toastService.presentToast('Please select start and end dates for the event.', 'top', 3000);
+    if (!this.startDateTime) {
+      this.toastService.presentToast('Please select a start date for the event.', 'top', 3000);
       return;
     }
 
-    // Validate that dates are in the future
+    // Validate that start date is in the future
     const startDate = new Date(this.startDateTime);
-    const endDate = new Date(this.endDateTime);
     const now = new Date();
 
     if (startDate <= now) {
@@ -175,10 +175,15 @@ export class CreateEventPage implements OnInit {
       return;
     }
 
-    // Validate that end date is after start date
-    if (endDate <= startDate) {
-      this.toastService.presentToast('End date must be after start date.', 'top', 3000);
-      return;
+    // Validate end date if provided
+    if (this.endDateTime) {
+      const endDate = new Date(this.endDateTime);
+      
+      // Validate that end date is after start date
+      if (endDate <= startDate) {
+        this.toastService.presentToast('End date must be after start date.', 'top', 3000);
+        return;
+      }
     }
 
     // Show loading spinner
@@ -189,7 +194,7 @@ export class CreateEventPage implements OnInit {
       name: this.createEventForm.get('name')?.value,
       description: this.createEventForm.get('description')?.value,
       startTime: this.startDateTime,
-      endTime: this.endDateTime,
+      endTime: this.endDateTime || undefined, // Only include endTime if provided
       location: this.createEventForm.get('location')?.value,
       eventType: this.createEventForm.get('eventType')?.value,
       club: this.clubId
