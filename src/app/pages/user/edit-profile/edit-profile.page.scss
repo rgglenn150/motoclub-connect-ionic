@@ -1,0 +1,334 @@
+/* Asphalt UI Color Palette & Base Styles */
+:host {
+  --background: #2D3748; // Charcoal
+  --color: #F7FAFC; // Off-White
+  font-family: 'Inter', sans-serif;
+  --ion-background-color: #2D3748;
+  --ion-text-color: #F7FAFC;
+}
+
+.asphalt-secondary {
+  background-color: #4A5568; // Slate Gray
+}
+
+.asphalt-accent {
+  color: #F59E0B; // Amber
+}
+
+.asphalt-danger {
+  color: #EF4444; // Red
+}
+
+.asphalt-muted {
+  color: #A0AEC0; // Muted Gray
+}
+
+.asphalt-list-item {
+  --background: #4A5568;
+  --border-color: #3a4555; // For item bottom border
+  --inner-border-width: 0 0 1px 0;
+}
+
+.asphalt-list-item:last-child {
+  --inner-border-width: 0;
+}
+
+ion-card {
+  --background: #4A5568; // Slate Gray for cards
+  --color: #F7FAFC;
+}
+
+ion-item {
+  --background: #4A5568;
+  --color: #F7FAFC;
+}
+
+ion-toolbar {
+  --background: #2D3748;
+  --color: #F7FAFC;
+}
+
+/* Profile Photo Section */
+.profile-photo-section {
+  margin: 16px;
+  
+  .photo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+  }
+  
+  .profile-photo-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+      
+      .photo-overlay {
+        opacity: 1;
+      }
+    }
+    
+    .profile-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    
+    .photo-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 50%;
+      
+      ion-icon {
+        font-size: 24px;
+        color: white;
+        margin-bottom: 4px;
+      }
+      
+      p {
+        color: white;
+        font-size: 12px;
+        margin: 0;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+/* Form Sections */
+ion-card {
+  margin: 16px;
+  --background: #4A5568; // Ensure Slate Gray background
+  --color: #F7FAFC; // Ensure Off-White text
+  
+  ion-card-header {
+    ion-card-title {
+      color: #F59E0B; // Use Asphalt accent color (Amber)
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    ion-card-subtitle {
+      font-size: 14px;
+      margin-top: 4px;
+      color: #A0AEC0; // Use muted gray for subtitles
+    }
+  }
+  
+  ion-card-content {
+    padding-top: 0;
+  }
+}
+
+/* Form Fields */
+ion-item {
+  margin-bottom: 12px;
+  --background: #4A5568; // Ensure Slate Gray background
+  --color: #F7FAFC; // Ensure Off-White text
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  ion-input {
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --color: #F7FAFC; // Off-White input text
+    --placeholder-color: #A0AEC0; // Muted Gray placeholders
+    
+    &.has-focus {
+      --highlight-color: #F59E0B; // Amber focus color
+    }
+  }
+  
+  ion-label {
+    color: #F7FAFC; // Off-White labels
+  }
+  
+  ion-note {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    margin-top: 4px;
+    color: #A0AEC0; // Muted Gray for notes
+    
+    ion-icon {
+      font-size: 14px;
+    }
+    
+    ion-spinner {
+      margin-right: 4px;
+    }
+  }
+}
+
+/* Buttons */
+.update-sensitive-button {
+  margin-top: 16px;
+  --border-color: #F59E0B; // Amber border
+  --color: #F59E0B; // Amber text
+  --background: transparent;
+  
+  &:disabled {
+    opacity: 0.5;
+    --color: #A0AEC0; // Muted when disabled
+    --border-color: #A0AEC0;
+  }
+}
+
+/* Image Cropper Modal */
+.cropper-container {
+  padding: 16px;
+  height: 400px;
+  
+  image-cropper {
+    height: 100%;
+    width: 100%;
+  }
+}
+
+.apply-crop-button {
+  margin: 16px;
+  margin-top: 0;
+}
+
+/* Password Modal */
+.changes-summary {
+  background: #4A5568; // Slate Gray background
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  
+  h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #F7FAFC; // Off-White text
+  }
+  
+  ion-item {
+    --background: transparent;
+    --padding-start: 0;
+    --color: #F7FAFC; // Off-White text
+    margin-bottom: 8px;
+    
+    ion-label {
+      h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 4px 0;
+        text-transform: capitalize;
+        color: #F7FAFC; // Off-White text
+      }
+      
+      p {
+        font-size: 12px;
+        margin: 0;
+        color: #A0AEC0; // Muted Gray
+        
+        &::before {
+          content: 'From: ';
+          font-weight: 500;
+        }
+        
+        &::after {
+          content: ' To: ' attr(data-to);
+        }
+      }
+    }
+  }
+}
+
+/* Loading States */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(45, 55, 72, 0.8); // Charcoal with transparency
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  
+  ion-spinner {
+    color: #F59E0B; // Amber spinner
+  }
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  ion-card {
+    margin: 20px auto;
+    max-width: 600px;
+  }
+  
+  .profile-photo-section {
+    .profile-photo-wrapper {
+      width: 140px;
+      height: 140px;
+    }
+  }
+}
+
+/* Dark mode support - Asphalt UI is already dark themed */
+@media (prefers-color-scheme: dark) {
+  .photo-overlay {
+    background: rgba(0, 0, 0, 0.8) !important;
+  }
+  
+  /* Changes summary already uses Asphalt UI colors, no override needed */
+}
+
+/* Accessibility */
+.profile-photo-wrapper {
+  &:focus {
+    outline: 2px solid #F59E0B; // Amber focus outline
+    outline-offset: 2px;
+  }
+}
+
+ion-button {
+  &:focus {
+    outline: 2px solid #F59E0B; // Amber focus outline
+    outline-offset: 2px;
+  }
+}
+
+/* Animation for status indicators */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+ion-note[color="success"], 
+ion-note[color="danger"] {
+  animation: fadeIn 0.3s ease-out;
+}

@@ -45,6 +45,11 @@ const routes: Routes = [
     path: 'notifications',
     loadChildren: () => import('./pages/notifications/notifications.module').then( m => m.NotificationsPageModule),
     canActivate: [AuthGuard]
+  },
+  {
+    path: 'user/edit-profile',
+    loadChildren: () => import('./pages/user/edit-profile/edit-profile.module').then( m => m.EditProfilePageModule),
+    canActivate: [AuthGuard]
   }
 ];
 @NgModule({

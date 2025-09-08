@@ -1,0 +1,263 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/me"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Edit Profile</ion-title>
+    <ion-buttons slot="end">
+      <ion-button 
+        fill="clear" 
+        [disabled]="!hasChanges || isLoading"
+        (click)="saveChanges()"
+      >
+        <ion-spinner name="crescent" size="small" *ngIf="isLoading"></ion-spinner>
+        <span *ngIf="!isLoading">Save</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Edit Profile</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <!-- Profile Photo Section -->
+  <ion-card class="profile-photo-section">
+    <ion-card-content>
+      <div class="photo-container">
+        <div class="profile-photo-wrapper" (click)="onProfilePhotoClick()">
+          <img 
+            [src]="userProfile?.profilePhoto || 'https://placehold.co/120x120/F59E0B/2D3748?text=' + getInitials()"
+            alt="Profile Photo"
+            class="profile-photo"
+          />
+          <div class="photo-overlay">
+            <ion-icon name="camera"></ion-icon>
+            <p>Change Photo</p>
+          </div>
+        </div>
+        <input 
+          #fileInput 
+          type="file" 
+          accept="image/*" 
+          style="display: none" 
+          (change)="fileChangeEvent($event)"
+        />
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Image Cropper Modal -->
+  <ion-modal [isOpen]="isCropperOpen" (willDismiss)="cancelCrop()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Crop Profile Photo</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="cancelCrop()">
+              Cancel
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <div class="cropper-container">
+          <image-cropper
+            [imageChangedEvent]="imageChangedEvent"
+            [maintainAspectRatio]="true"
+            [aspectRatio]="1"
+            [resizeToWidth]="300"
+            [cropperMinWidth]="100"
+            format="png"
+            (imageCropped)="imageCropped($event)"
+            (imageLoaded)="imageLoaded()"
+            (cropperReady)="cropperReady()"
+            (loadImageFailed)="loadImageFailed()"
+          ></image-cropper>
+        </div>
+        <ion-button 
+          expand="block" 
+          class="apply-crop-button"
+          (click)="applyCrop()"
+          [disabled]="!croppedImage"
+        >
+          Apply Crop
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Form Sections -->
+  <form [formGroup]="editProfileForm">
+    
+    <!-- Basic Information Section -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Basic Information</ion-card-title>
+        <ion-card-subtitle>These changes are saved automatically</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-input 
+            label="First Name" 
+            labelPlacement="stacked"
+            formControlName="firstName"
+            placeholder="Enter your first name"
+            (ionBlur)="onBasicFieldChange('firstName')"
+          ></ion-input>
+        </ion-item>
+        
+        <ion-item>
+          <ion-input 
+            label="Last Name" 
+            labelPlacement="stacked"
+            formControlName="lastName"
+            placeholder="Enter your last name"
+            (ionBlur)="onBasicFieldChange('lastName')"
+          ></ion-input>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Sensitive Information Section -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Account Settings</ion-card-title>
+        <ion-card-subtitle>Password confirmation required for changes</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        
+        <!-- Username Field -->
+        <ion-item>
+          <ion-input 
+            label="Username" 
+            labelPlacement="stacked"
+            formControlName="username"
+            placeholder="Enter your username"
+            (ionInput)="onUsernameInput()"
+            (ionBlur)="onUsernameBlur()"
+          ></ion-input>
+          <ion-note slot="helper" *ngIf="usernameStatus === 'checking'">
+            <ion-spinner name="crescent" size="small"></ion-spinner>
+            Checking availability...
+          </ion-note>
+          <ion-note slot="helper" *ngIf="usernameStatus === 'available'" color="success">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            Username available
+          </ion-note>
+          <ion-note slot="helper" *ngIf="usernameStatus === 'unavailable'" color="danger">
+            <ion-icon name="close-circle" color="danger"></ion-icon>
+            Username not available
+          </ion-note>
+          <ion-note slot="error" *ngIf="editProfileForm.get('username')?.invalid && editProfileForm.get('username')?.touched">
+            <span *ngIf="editProfileForm.get('username')?.errors?.['required']">Username is required</span>
+            <span *ngIf="editProfileForm.get('username')?.errors?.['minlength']">Username must be at least 3 characters</span>
+          </ion-note>
+        </ion-item>
+
+        <!-- Email Field -->
+        <ion-item>
+          <ion-input 
+            label="Email" 
+            labelPlacement="stacked"
+            formControlName="email"
+            type="email"
+            placeholder="Enter your email"
+            (ionInput)="onEmailInput()"
+            (ionBlur)="onEmailBlur()"
+          ></ion-input>
+          <ion-note slot="helper" *ngIf="emailStatus === 'checking'">
+            <ion-spinner name="crescent" size="small"></ion-spinner>
+            Checking availability...
+          </ion-note>
+          <ion-note slot="helper" *ngIf="emailStatus === 'available'" color="success">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            Email available
+          </ion-note>
+          <ion-note slot="helper" *ngIf="emailStatus === 'unavailable'" color="danger">
+            <ion-icon name="close-circle" color="danger"></ion-icon>
+            Email not available
+          </ion-note>
+          <ion-note slot="error" *ngIf="editProfileForm.get('email')?.invalid && editProfileForm.get('email')?.touched">
+            <span *ngIf="editProfileForm.get('email')?.errors?.['required']">Email is required</span>
+            <span *ngIf="editProfileForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+          </ion-note>
+        </ion-item>
+
+        <ion-button 
+          expand="block" 
+          fill="outline"
+          class="update-sensitive-button"
+          (click)="showPasswordModal()"
+          [disabled]="!hasSensitiveChanges || isLoading"
+        >
+          Update Account Settings
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+  </form>
+
+  <!-- Password Confirmation Modal -->
+  <ion-modal [isOpen]="showPasswordConfirmation" (willDismiss)="cancelPasswordModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Confirm Changes</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="cancelPasswordModal()">
+              Cancel
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Password Required</ion-card-title>
+            <ion-card-subtitle>
+              Please enter your password to confirm these sensitive changes
+            </ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            
+            <!-- Show what will be changed -->
+            <div class="changes-summary" *ngIf="pendingChanges.length > 0">
+              <h4>Changes to be made:</h4>
+              <ion-item *ngFor="let change of pendingChanges" lines="none">
+                <ion-label>
+                  <h3>{{ change.field }}</h3>
+                  <p>{{ change.from }} → {{ change.to }}</p>
+                </ion-label>
+              </ion-item>
+            </div>
+
+            <ion-item>
+              <ion-input 
+                label="Current Password" 
+                labelPlacement="stacked"
+                type="password"
+                [(ngModel)]="confirmationPassword"
+                placeholder="Enter your current password"
+                (keyup.enter)="confirmSensitiveChanges()"
+              ></ion-input>
+            </ion-item>
+
+            <ion-button 
+              expand="block" 
+              (click)="confirmSensitiveChanges()"
+              [disabled]="!confirmationPassword || isLoading"
+            >
+              <ion-spinner name="crescent" size="small" *ngIf="isLoading"></ion-spinner>
+              <span *ngIf="!isLoading">Confirm Changes</span>
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+</ion-content>

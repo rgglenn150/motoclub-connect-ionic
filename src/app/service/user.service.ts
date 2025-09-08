@@ -3,6 +3,38 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
+export interface UserProfile {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  profilePhoto?: string;
+  isEmailVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UpdateProfileData {
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface UpdateUsernameData {
+  username: string;
+  password: string;
+}
+
+export interface UpdateEmailData {
+  email: string;
+  password: string;
+}
+
+export interface AvailabilityCheck {
+  available: boolean;
+  message?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -14,5 +46,29 @@ export class UserService {
 
   uploadProfilePhoto(formData: FormData): Observable<any> {
     return this.http.post(`${this.apiUrl}/profile-photo`, formData);
+  }
+
+  getCurrentUserProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.apiUrl}/me`);
+  }
+
+  updateProfile(data: UpdateProfileData): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.apiUrl}/me/profile`, data);
+  }
+
+  updateUsername(data: UpdateUsernameData): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.apiUrl}/me/username`, data);
+  }
+
+  updateEmail(data: UpdateEmailData): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.apiUrl}/me/email`, data);
+  }
+
+  checkUsernameAvailability(username: string): Observable<AvailabilityCheck> {
+    return this.http.get<AvailabilityCheck>(`${this.apiUrl}/check-username/${username}`);
+  }
+
+  checkEmailAvailability(email: string): Observable<AvailabilityCheck> {
+    return this.http.get<AvailabilityCheck>(`${this.apiUrl}/check-email/${encodeURIComponent(email)}`);
   }
 }
