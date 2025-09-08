@@ -126,6 +126,10 @@
       font-size: 0.9rem;
     }
   }
+  
+  &.optional-field {
+    border-left: 3px solid transparent;
+  }
 }
 
 .asphalt-select-item {
@@ -325,6 +329,47 @@ app-places-autocomplete {
       ion-spinner {
         color: var(--asphalt-accent);
       }
+    }
+  }
+}
+
+// --- Date Field Container ---
+.date-field-container {
+  margin-bottom: 16px;
+  
+  .datetime-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    
+    .datetime-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--asphalt-text);
+      margin-bottom: 4px;
+      
+      .optional-text {
+        color: var(--asphalt-text-muted);
+        font-weight: 400;
+        font-size: 0.8rem;
+      }
+    }
+    
+    .datetime-value {
+      color: var(--asphalt-text-muted);
+      font-size: 0.9rem;
+      text-align: left;
+      display: block;
+      width: 100%;
+    }
+    
+    ion-datetime-button {
+      --color: var(--asphalt-text-muted);
+      width: 100%;
+      text-align: left;
+      padding: 0;
+      margin: 0;
+      display: block;
     }
   }
 }

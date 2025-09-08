@@ -72,12 +72,17 @@
       </ion-item>
 
       <!-- Start Date & Time -->
-      <ion-item class="asphalt-datetime-item" lines="none">
-        <ion-icon name="time-outline" slot="start" class="asphalt-icon"></ion-icon>
-        <ion-datetime-button datetime="start-datetime">
-          <ion-label>Start Date & Time</ion-label>
-        </ion-datetime-button>
-      </ion-item>
+      <div class="date-field-container">
+        <ion-item class="asphalt-datetime-item" lines="none">
+          <ion-icon name="time-outline" slot="start" class="asphalt-icon"></ion-icon>
+          <div class="datetime-content">
+            <ion-label class="datetime-label">Start Date & Time *</ion-label>
+            <ion-datetime-button datetime="start-datetime">
+              <span class="datetime-value">{{ startDateTime ? (startDateTime | date:'medium') : 'Select start date and time' }}</span>
+            </ion-datetime-button>
+          </div>
+        </ion-item>
+      </div>
       <ion-modal [keepContentsMounted]="true">
         <ng-template>
           <ion-datetime
@@ -90,12 +95,17 @@
       </ion-modal>
 
       <!-- End Date & Time -->
-      <ion-item class="asphalt-datetime-item" lines="none">
-        <ion-icon name="time-outline" slot="start" class="asphalt-icon"></ion-icon>
-        <ion-datetime-button datetime="end-datetime">
-          <ion-label>End Date & Time</ion-label>
-        </ion-datetime-button>
-      </ion-item>
+      <div class="date-field-container">
+        <ion-item class="asphalt-datetime-item optional-field" lines="none">
+          <ion-icon name="time-outline" slot="start" class="asphalt-icon"></ion-icon>
+          <div class="datetime-content">
+            <ion-label class="datetime-label">End Date & Time <span class="optional-text">(Optional)</span></ion-label>
+            <ion-datetime-button datetime="end-datetime">
+              <span class="datetime-value">{{ endDateTime ? (endDateTime | date:'medium') : 'Select end date and time' }}</span>
+            </ion-datetime-button>
+          </div>
+        </ion-item>
+      </div>
       <ion-modal [keepContentsMounted]="true">
         <ng-template>
           <ion-datetime
