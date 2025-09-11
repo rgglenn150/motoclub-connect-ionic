@@ -5,8 +5,13 @@
     "module": "commonjs",
     "target": "es2018",
     "types": [
-      "jasmine",
-      "node"
+      "node",
+      "@playwright/test"
     ]
-  }
+  },
+  "include": [
+    "**/*.ts",
+    "test-utils/**/*.ts",
+    "fixtures/**/*.ts"
+  ]
 }

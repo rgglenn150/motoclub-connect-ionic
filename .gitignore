@@ -31,6 +31,11 @@ npm-debug.log*
 /plugins
 /www
 
+# Environment variables
+.env
+.env.local
+.env.*.local
+
 # Playwright
 node_modules/
 /test-results/

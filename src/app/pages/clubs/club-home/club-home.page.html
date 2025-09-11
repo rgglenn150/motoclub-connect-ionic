@@ -159,10 +159,6 @@
       <ion-segment-button value="events">
         <ion-label>Events</ion-label>
       </ion-segment-button>
-      <!-- Admin Only Tab -->
-      <ion-segment-button value="manage" *ngIf="isUserAdmin">
-        <ion-label>Manage</ion-label>
-      </ion-segment-button>
     </ion-segment>
 
     <div [ngSwitch]="selectedTab">
@@ -221,115 +217,8 @@
       </div>
 
       <div *ngSwitchCase="'members'">
-        <!-- Members Section Start-->
-        <div class="members-section">
-          <ion-card class="asphalt-card">
-            <ion-card-header>
-              <ion-card-title>Club Members ({{ club.memberCount }})</ion-card-title>
-            </ion-card-header>
-            <ion-card-content class="members-list">
-              
-              <!-- Loading State -->
-              <div *ngIf="membersDataLoading" class="loading-state">
-                <div class="members-skeleton">
-                  <ion-item class="member-item-skeleton" *ngFor="let i of [1,2,3,4]">
-                    <ion-avatar slot="start">
-                      <ion-skeleton-text animated></ion-skeleton-text>
-                    </ion-avatar>
-                    <ion-label>
-                      <ion-skeleton-text animated style="width: 60%; height: 18px; margin-bottom: 6px;"></ion-skeleton-text>
-                      <ion-skeleton-text animated style="width: 40%; height: 14px;"></ion-skeleton-text>
-                    </ion-label>
-                  </ion-item>
-                </div>
-              </div>
-
-              <!-- Error State -->
-              <div *ngIf="memberError && !membersDataLoading" class="error-container">
-                <ion-icon name="people-outline" color="medium" size="large"></ion-icon>
-                <h4>Unable to Load Members</h4>
-                <p>{{ memberError }}</p>
-                <ion-button color="primary" fill="clear" (click)="loadMembersForDisplay()">
-                  <ion-icon slot="start" name="refresh"></ion-icon>
-                  Try Again
-                </ion-button>
-              </div>
-
-              <!-- Empty State -->
-              <div *ngIf="!membersDataLoading && !memberError && membersForPublicView.length === 0" class="empty-state">
-                <ion-icon name="people-outline" color="medium"></ion-icon>
-                <h4>No Members Found</h4>
-                <p>This club doesn't have any members yet.</p>
-              </div>
-
-              <!-- Members List -->
-              <div *ngIf="!membersDataLoading && !memberError && membersForPublicView.length > 0">
-                <ion-item *ngFor="let member of membersForPublicView" class="member-item">
-                  <ion-avatar slot="start">
-                    <img [src]="getAvatarUrl(member.user.profilePicture, getDisplayName(member.user))" [alt]="getDisplayName(member.user)">
-                  </ion-avatar>
-                  <ion-label>
-                    <h3>
-                      {{ getDisplayName(member.user) }}
-                      <ion-badge 
-                        [color]="member.role === 'admin' ? 'success' : 'medium'" 
-                        class="role-badge">
-                        {{ member.role | titlecase }}
-                      </ion-badge>
-                    </h3>
-                    <p class="member-username">{{ '@' + (member.user.username || 'username') }}</p>
-                    <p class="join-date">Member since {{ member.joinedAt | date:'MMM d, y' }}</p>
-                  </ion-label>
-                </ion-item>
-              </div>
-
-            </ion-card-content>
-          </ion-card>
-        </div>
-         <!-- Members Section End-->
-      </div>
-
-      <div *ngSwitchCase="'events'">
-        <!-- Create Event Button Section -->
-        <div *ngIf="isUserAdmin" class="create-event-section">
-          <ion-button 
-            expand="block" 
-            color="brand-amber" 
-            (click)="navigateToCreateEvent()"
-            class="create-event-button">
-            <ion-icon name="add-outline" slot="start"></ion-icon>
-            Create Event
-          </ion-button>
-        </div>
-
-        <div class="events-section">
-          <ion-card class="asphalt-card" *ngFor="let event of events">
-            <div class="card-header-row">
-              <div class="card-text">
-                <ion-card-subtitle>{{ event.type }} &middot; {{ event.date | date: 'MMM d, y' }}</ion-card-subtitle>
-                <ion-card-title>{{ event.title }}</ion-card-title>
-              </div>
-              <img [src]="event.imageUrl" class="club-thumbnail" [alt]="event.title"/>
-            </div>
-            <div class="card-footer">
-              <div class="footer-item">
-                <ion-icon name="location-sharp"></ion-icon>
-                <span>{{ event.location }}</span>
-              </div>
-              <div class="footer-item">
-                <ion-icon name="people"></ion-icon>
-                <span>{{ event.attendeeCount }} Going</span>
-              </div>
-            </div>
-          </ion-card>
-        </div>
-      </div>
-
-      <!-- Admin Management Tab -->
-      <div *ngSwitchCase="'manage'">
-        <div class="admin-section">
-          
-          <!-- Join Requests Section -->
+        <!-- Join Requests Section (Admin Only) -->
+        <div *ngIf="isUserAdmin" class="admin-section">
           <ion-card class="asphalt-card">
             <ion-card-header>
               <div class="section-header">
@@ -472,7 +361,147 @@
               </div>
             </ion-card-content>
           </ion-card>
+        </div>
 
+        <!-- Members Section Start-->
+        <div class="members-section">
+          <ion-card class="asphalt-card">
+            <ion-card-header>
+              <div class="section-header">
+                <ion-card-title>Club Members ({{ club.memberCount }})</ion-card-title>
+                <ion-button 
+                  *ngIf="isUserAdmin" 
+                  fill="clear" 
+                  color="brand-amber" 
+                  size="small"
+                  (click)="openMembersModal()"
+                  class="manage-members-button">
+                  <ion-icon name="settings-outline" slot="start"></ion-icon>
+                  Manage Members
+                </ion-button>
+              </div>
+            </ion-card-header>
+            <ion-card-content class="members-list">
+              
+              <!-- Loading State -->
+              <div *ngIf="membersDataLoading" class="loading-state">
+                <div class="members-skeleton">
+                  <ion-item class="member-item-skeleton" *ngFor="let i of [1,2,3,4]">
+                    <ion-avatar slot="start">
+                      <ion-skeleton-text animated></ion-skeleton-text>
+                    </ion-avatar>
+                    <ion-label>
+                      <ion-skeleton-text animated style="width: 60%; height: 18px; margin-bottom: 6px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 40%; height: 14px;"></ion-skeleton-text>
+                    </ion-label>
+                  </ion-item>
+                </div>
+              </div>
+
+              <!-- Error State -->
+              <div *ngIf="memberError && !membersDataLoading" class="error-container">
+                <ion-icon name="people-outline" color="medium" size="large"></ion-icon>
+                <h4>Unable to Load Members</h4>
+                <p>{{ memberError }}</p>
+                <ion-button color="primary" fill="clear" (click)="loadMembersForDisplay()">
+                  <ion-icon slot="start" name="refresh"></ion-icon>
+                  Try Again
+                </ion-button>
+              </div>
+
+              <!-- Empty State -->
+              <div *ngIf="!membersDataLoading && !memberError && membersForPublicView.length === 0" class="empty-state">
+                <ion-icon name="people-outline" color="medium"></ion-icon>
+                <h4>No Members Found</h4>
+                <p>This club doesn't have any members yet.</p>
+              </div>
+
+              <!-- Members List -->
+              <div *ngIf="!membersDataLoading && !memberError && membersForPublicView.length > 0">
+                <ion-item *ngFor="let member of membersForPublicView" class="member-item">
+                  <ion-avatar slot="start">
+                    <img [src]="getAvatarUrl(member.user.profilePicture, getDisplayName(member.user))" [alt]="getDisplayName(member.user)">
+                  </ion-avatar>
+                  <ion-label>
+                    <h3>
+                      {{ getDisplayName(member.user) }}
+                      <ion-badge 
+                        [color]="member.role === 'admin' ? 'success' : 'medium'" 
+                        class="role-badge">
+                        {{ member.role | titlecase }}
+                      </ion-badge>
+                    </h3>
+                    <p class="member-username">{{ '@' + (member.user.username || 'username') }}</p>
+                    <p class="join-date">Member since {{ member.joinedAt | date:'MMM d, y' }}</p>
+                  </ion-label>
+                </ion-item>
+              </div>
+
+            </ion-card-content>
+          </ion-card>
+        </div>
+         <!-- Members Section End-->
+      </div>
+
+      <div *ngSwitchCase="'events'">
+        <!-- Create Event Button Section -->
+        <div *ngIf="isUserAdmin" class="create-event-section">
+          <ion-button 
+            expand="block" 
+            color="brand-amber" 
+            (click)="navigateToCreateEvent()"
+            class="create-event-button">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            Create Event
+          </ion-button>
+        </div>
+
+        <div class="events-section">
+          <ion-card class="asphalt-card" *ngFor="let event of events">
+            <div class="card-header-row">
+              <div class="card-text">
+                <ion-card-subtitle>{{ event.type }} &middot; {{ event.date | date: 'MMM d, y' }}</ion-card-subtitle>
+                <ion-card-title>{{ event.title }}</ion-card-title>
+              </div>
+              <img [src]="event.imageUrl" class="club-thumbnail" [alt]="event.title"/>
+            </div>
+            <div class="card-footer">
+              <div class="footer-item">
+                <ion-icon name="location-sharp"></ion-icon>
+                <span>{{ event.location }}</span>
+              </div>
+              <div class="footer-item">
+                <ion-icon name="people"></ion-icon>
+                <span>{{ event.attendeeCount }} Going</span>
+              </div>
+            </div>
+          </ion-card>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <ng-template #privateView>
+    </ng-template>
+
+  <!-- Members Management Modal -->
+  <ion-modal [isOpen]="showMembersModal" (willDismiss)="closeMembersModal()" class="members-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Members Management</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="closeMembersModal()">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <div class="admin-section">
+          
           <!-- Members Management Section -->
           <ion-card class="asphalt-card">
             <ion-card-header>
@@ -555,11 +584,9 @@
           </ion-card>
 
         </div>
-      </div>
-    </div>
-  </ng-container>
-
-  <ng-template #privateView>
+      </ion-content>
     </ng-template>
+  </ion-modal>
+
 </ion-content>
 

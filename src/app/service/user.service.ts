@@ -22,12 +22,12 @@ export interface UpdateProfileData {
 
 export interface UpdateUsernameData {
   username: string;
-  password: string;
+  currentPassword: string;
 }
 
 export interface UpdateEmailData {
   email: string;
-  password: string;
+  currentPassword: string;
 }
 
 export interface AvailabilityCheck {

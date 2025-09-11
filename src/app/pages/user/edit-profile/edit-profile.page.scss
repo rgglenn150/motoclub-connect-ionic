@@ -52,11 +52,16 @@ ion-toolbar {
 .profile-photo-section {
   margin: 16px;
   
+  ion-card-content {
+    text-align: center;
+  }
+  
   .photo-container {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px 0;
+    width: 100%;
   }
   
   .profile-photo-wrapper {
@@ -149,16 +154,7 @@ ion-item {
     margin-bottom: 0;
   }
   
-  ion-input {
-    --padding-start: 12px;
-    --padding-end: 12px;
-    --color: #F7FAFC; // Off-White input text
-    --placeholder-color: #A0AEC0; // Muted Gray placeholders
-    
-    &.has-focus {
-      --highlight-color: #F59E0B; // Amber focus color
-    }
-  }
+  /* ion-input styling removed - using default Ionic styling */
   
   ion-label {
     color: #F7FAFC; // Off-White labels
@@ -246,18 +242,20 @@ ion-item {
         margin: 0;
         color: #A0AEC0; // Muted Gray
         
-        &::before {
+        /* &::before {
           content: 'From: ';
           font-weight: 500;
         }
         
         &::after {
           content: ' To: ' attr(data-to);
-        }
+        } */
       }
     }
   }
 }
+
+/* Password modal input styling removed - using default Ionic styling */
 
 /* Loading States */
 .loading-overlay {
@@ -285,6 +283,17 @@ ion-item {
   }
   
   .profile-photo-section {
+    margin: 20px auto;
+    max-width: 600px;
+    
+    .photo-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 0;
+      width: 100%;
+    }
+    
     .profile-photo-wrapper {
       width: 140px;
       height: 140px;
