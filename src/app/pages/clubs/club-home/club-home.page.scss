@@ -1391,3 +1391,84 @@ ion-action-sheet.dark-theme-action-sheet {
 .events-section {
   padding-top: 0;
 }
+
+/* --- MEMBERS MODAL STYLES --- */
+
+// Enhanced section header styling with manage button
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  ion-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    ion-icon {
+      color: var(--ion-color-brand-amber);
+      font-size: 1.2rem;
+    }
+  }
+  
+  .manage-members-button {
+    --border-radius: 8px;
+    --padding-start: 12px;
+    --padding-end: 12px;
+    min-height: 32px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    
+    ion-icon {
+      font-size: 0.9rem;
+    }
+  }
+  
+  ion-badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+}
+
+// Members management modal styling
+.members-modal {
+  --backdrop-opacity: 0.4;
+  --background: var(--ion-background-color);
+  --color: var(--ion-text-color);
+  
+  ion-header {
+    ion-toolbar {
+      --background: #2D3748;
+      --color: #F7FAFC;
+      --border-color: #4A5568;
+      
+      ion-title {
+        font-family: 'Roboto Condensed', sans-serif;
+        font-weight: 600;
+        color: #F7FAFC;
+      }
+      
+      ion-buttons ion-button {
+        --color: #F7FAFC;
+        
+        &:hover {
+          --color: var(--ion-color-brand-amber);
+        }
+      }
+    }
+  }
+  
+  ion-content {
+    --background: var(--ion-background-color);
+    --color: var(--ion-text-color);
+    
+    .admin-section {
+      padding: 0;
+      margin: 0;
+      
+      .asphalt-card {
+        margin: 16px 0;
+      }
+    }
+  }
+}

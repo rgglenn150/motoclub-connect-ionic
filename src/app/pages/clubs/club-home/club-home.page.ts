@@ -96,7 +96,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   
   // This variable controls which tab is currently active.
-  selectedTab: 'feed' | 'members' | 'events' | 'manage' = 'feed';
+  selectedTab: 'feed' | 'members' | 'events' = 'feed';
   
   // User's membership status in this club - dynamically determined via API
   userStatus: 'admin' | 'member' | 'pending' | 'not-member' = 'not-member';
@@ -122,6 +122,9 @@ export class ClubHomePage implements OnInit, OnDestroy {
   // Operation loading states
   processingRequests: Set<string> = new Set(); // Track which requests are being processed
   processingMembers: Set<string> = new Set(); // Track which members are being processed
+
+  // --- MODAL STATE MANAGEMENT ---
+  showMembersModal: boolean = false;
 
   // --- RACE CONDITION PREVENTION ---
   // Track ongoing operations to prevent race conditions
@@ -215,8 +218,8 @@ export class ClubHomePage implements OnInit, OnDestroy {
     
     // Check for tab query parameter
     const tabParam = this.route.snapshot.queryParamMap.get('tab');
-    if (tabParam && ['feed', 'members', 'events', 'manage'].includes(tabParam)) {
-      this.selectedTab = tabParam as 'feed' | 'members' | 'events' | 'manage';
+    if (tabParam && ['feed', 'members', 'events'].includes(tabParam)) {
+      this.selectedTab = tabParam as 'feed' | 'members' | 'events';
     }
     
     // Subscribe to network status changes
@@ -287,14 +290,14 @@ export class ClubHomePage implements OnInit, OnDestroy {
           this.refreshMembershipStatus()
         ];
 
-        // If user is admin and manage tab is selected, refresh admin data
-        if (this.isUserAdmin && this.selectedTab === 'manage') {
-          refreshPromises.push(this.refreshAdminData());
-        }
-
         // If members tab is selected, refresh member data
         if (this.selectedTab === 'members') {
           refreshPromises.push(this.refreshMembersData());
+          
+          // Also refresh admin data if user is admin (for join requests in members tab)
+          if (this.isUserAdmin) {
+            refreshPromises.push(this.refreshAdminData());
+          }
         }
 
         await Promise.all(refreshPromises);
@@ -739,14 +742,14 @@ export class ClubHomePage implements OnInit, OnDestroy {
   segmentChanged(event: any) {
     this.selectedTab = event.detail.value;
     
-    // Load admin data when manage tab is selected
-    if (this.selectedTab === 'manage' && this.isUserAdmin) {
-      this.loadAdminData();
-    }
-    
     // Load member data when members tab is selected
     if (this.selectedTab === 'members') {
       this.loadMembersForDisplay();
+      
+      // Also load admin data (join requests) if user is admin
+      if (this.isUserAdmin) {
+        this.loadAdminData();
+      }
     }
   }
   
@@ -1811,6 +1814,32 @@ export class ClubHomePage implements OnInit, OnDestroy {
       console.error('Error navigating to create event:', error);
       this.presentToast('Unable to navigate to create event page', 'danger');
     }
+  }
+
+  // --- MODAL MANAGEMENT METHODS ---
+  
+  /**
+   * Open members management modal and load member data
+   */
+  async openMembersModal() {
+    if (!this.isUserAdmin) {
+      this.presentToast('Access denied: Admin privileges required', 'danger');
+      return;
+    }
+
+    this.showMembersModal = true;
+    
+    // Load admin data when modal opens (if not already loaded)
+    if (this.clubMembers.length === 0 && !this.membersLoading) {
+      await this.loadAdminData();
+    }
+  }
+
+  /**
+   * Close members management modal
+   */
+  closeMembersModal() {
+    this.showMembersModal = false;
   }
   
   // --- ERROR DISPLAY HELPERS ---
