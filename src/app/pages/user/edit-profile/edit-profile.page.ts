@@ -396,7 +396,7 @@ export class EditProfilePage implements OnInit, OnDestroy {
 
       const usernameData: UpdateUsernameData = {
         username: currentValues.username,
-        password: this.confirmationPassword
+        currentPassword: this.confirmationPassword
       };
       updates.push(this.userService.updateUsername(usernameData).toPromise());
     }
@@ -411,7 +411,7 @@ export class EditProfilePage implements OnInit, OnDestroy {
 
       const emailData: UpdateEmailData = {
         email: currentValues.email,
-        password: this.confirmationPassword
+        currentPassword: this.confirmationPassword
       };
       updates.push(this.userService.updateEmail(emailData).toPromise());
     }
