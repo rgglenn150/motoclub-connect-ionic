@@ -1,0 +1,241 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Location Preferences</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  
+  <!-- GPS Settings Section -->
+  <div class="preferences-section">
+    <div class="section-header">
+      <h2 class="section-title">Location Mode</h2>
+      <p class="section-subtitle">Choose how weather gets your location</p>
+    </div>
+    
+    <ion-card class="settings-card">
+      <ion-card-content>
+        <!-- GPS Toggle -->
+        <ion-item lines="none">
+          <ion-icon name="navigate-outline" slot="start" color="primary"></ion-icon>
+          <ion-label>
+            <h3>Use GPS Location</h3>
+            <p>Automatically detect your current location</p>
+          </ion-label>
+          <ion-toggle 
+            [checked]="preferences.useGps" 
+            (ionChange)="onGpsToggleChange($event)"
+            slot="end">
+          </ion-toggle>
+        </ion-item>
+        
+        <!-- Current GPS Location -->
+        <div *ngIf="preferences.useGps" class="gps-section">
+          <ion-item lines="none">
+            <ion-icon name="location-outline" slot="start" color="success"></ion-icon>
+            <ion-label>
+              <h3>Current GPS Location</h3>
+              <p *ngIf="!currentGpsLocation && !isLoadingGps">Tap to get current location</p>
+              <p *ngIf="isLoadingGps">Getting location...</p>
+              <p *ngIf="currentGpsLocation && !isLoadingGps">
+                {{ currentGpsLocation.latitude.toFixed(4) }}, {{ currentGpsLocation.longitude.toFixed(4) }}
+              </p>
+            </ion-label>
+            <ion-button 
+              fill="clear" 
+              slot="end" 
+              (click)="getCurrentGpsLocation()"
+              [disabled]="isLoadingGps">
+              <ion-spinner *ngIf="isLoadingGps" name="crescent"></ion-spinner>
+              <ion-icon *ngIf="!isLoadingGps" name="refresh-outline"></ion-icon>
+            </ion-button>
+          </ion-item>
+          
+          <!-- Use Current Location as Preferred -->
+          <ion-item lines="none" *ngIf="currentGpsLocation">
+            <ion-label>
+              <ion-button 
+                expand="block" 
+                fill="outline" 
+                size="small"
+                (click)="useCurrentLocationAsPreferred()">
+                <ion-icon name="star-outline" slot="start"></ion-icon>
+                Set as Preferred Location
+              </ion-button>
+            </ion-label>
+          </ion-item>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Manual Location Section -->
+  <div class="preferences-section" *ngIf="!preferences.useGps">
+    <div class="section-header">
+      <h2 class="section-title">Manual Location</h2>
+      <p class="section-subtitle">Search and set a specific location</p>
+    </div>
+    
+    <ion-card class="settings-card">
+      <ion-card-content>
+        <!-- Current Preferred Location -->
+        <div *ngIf="preferences.preferredLocation" class="preferred-location-display">
+          <ion-item lines="none">
+            <ion-icon name="star" slot="start" color="warning"></ion-icon>
+            <ion-label>
+              <h3>Current Preferred Location</h3>
+              <p>{{ preferences.preferredLocation.name }}</p>
+            </ion-label>
+            <ion-button 
+              fill="clear" 
+              slot="end" 
+              color="danger"
+              (click)="clearPreferredLocation()">
+              <ion-icon name="trash-outline"></ion-icon>
+            </ion-button>
+          </ion-item>
+        </div>
+        
+        <!-- Location Search -->
+        <div class="location-search">
+          <ion-item lines="none">
+            <ion-icon name="search-outline" slot="start"></ion-icon>
+            <ion-label position="stacked">Search for a location</ion-label>
+            <app-mapbox-autocomplete
+              [(ngModel)]="searchQuery"
+              placeholder="Enter location name..."
+              (locationSelected)="onLocationSelected($event)">
+            </app-mapbox-autocomplete>
+          </ion-item>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Favorites Section -->
+  <div class="preferences-section" *ngIf="preferences.favorites.length > 0">
+    <div class="section-header">
+      <h2 class="section-title">Favorite Locations</h2>
+      <p class="section-subtitle">Quick access to your saved places</p>
+      <ion-button 
+        fill="clear" 
+        size="small" 
+        color="danger"
+        (click)="clearAllFavorites()">
+        <ion-icon name="trash-outline" slot="start"></ion-icon>
+        Clear All
+      </ion-button>
+    </div>
+    
+    <ion-card class="settings-card">
+      <ion-card-content>
+        <ion-list>
+          <ion-item 
+            *ngFor="let location of preferences.favorites" 
+            button
+            (click)="selectFromFavorites(location)">
+            <ion-icon [name]="getLocationTypeIcon(location)" slot="start" color="warning"></ion-icon>
+            <ion-label>
+              <h3>{{ getLocationDisplay(location) }}</h3>
+              <p>{{ location.coordinates.latitude.toFixed(4) }}, {{ location.coordinates.longitude.toFixed(4) }}</p>
+            </ion-label>
+            <ion-button 
+              fill="clear" 
+              slot="end" 
+              color="danger"
+              (click)="removeFromFavorites(location); $event.stopPropagation()">
+              <ion-icon name="heart-dislike-outline"></ion-icon>
+            </ion-button>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Recent Locations Section -->
+  <div class="preferences-section" *ngIf="preferences.locationHistory.length > 0">
+    <div class="section-header">
+      <h2 class="section-title">Recent Locations</h2>
+      <p class="section-subtitle">Previously used locations</p>
+      <ion-button 
+        fill="clear" 
+        size="small" 
+        color="danger"
+        (click)="clearAllHistory()">
+        <ion-icon name="trash-outline" slot="start"></ion-icon>
+        Clear All
+      </ion-button>
+    </div>
+    
+    <ion-card class="settings-card">
+      <ion-card-content>
+        <ion-list>
+          <ion-item 
+            *ngFor="let location of preferences.locationHistory" 
+            button
+            (click)="selectFromHistory(location)">
+            <ion-icon [name]="getLocationTypeIcon(location)" slot="start" color="medium"></ion-icon>
+            <ion-label>
+              <h3>{{ getLocationDisplay(location) }}</h3>
+              <p>{{ location.coordinates.latitude.toFixed(4) }}, {{ location.coordinates.longitude.toFixed(4) }}</p>
+              <p class="timestamp">{{ getRelativeTime(location.timestamp) }}</p>
+            </ion-label>
+            <div slot="end" class="action-buttons">
+              <ion-button 
+                fill="clear" 
+                size="small"
+                [color]="isLocationFavorite(location.id) ? 'warning' : 'medium'"
+                (click)="isLocationFavorite(location.id) ? removeFromFavorites(location) : addToFavorites(location); $event.stopPropagation()">
+                <ion-icon [name]="isLocationFavorite(location.id) ? 'heart' : 'heart-outline'"></ion-icon>
+              </ion-button>
+              <ion-button 
+                fill="clear" 
+                size="small"
+                color="danger"
+                (click)="removeFromHistory(location); $event.stopPropagation()">
+                <ion-icon name="close-outline"></ion-icon>
+              </ion-button>
+            </div>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="preferences.locationHistory.length === 0 && preferences.favorites.length === 0" class="empty-state">
+    <ion-card class="settings-card">
+      <ion-card-content class="ion-text-center">
+        <ion-icon name="location-outline" color="medium" style="font-size: 4rem;"></ion-icon>
+        <h3>No Saved Locations</h3>
+        <p>Search for locations or enable GPS to get started</p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Advanced Options -->
+  <div class="preferences-section">
+    <div class="section-header">
+      <h2 class="section-title">Advanced</h2>
+    </div>
+    
+    <ion-card class="settings-card">
+      <ion-card-content>
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          color="danger"
+          (click)="resetAllPreferences()">
+          <ion-icon name="refresh-outline" slot="start"></ion-icon>
+          Reset All Preferences
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+</ion-content>

@@ -1,0 +1,771 @@
+/**
+ * Animated CSS Weather Icons
+ *
+ * Custom CSS-based weather icons with smooth animations
+ * Replaces Ionicons with beautiful, performant animated icons
+ * Optimized for all device sizes and accessibility
+ */
+
+/* Base weather icon styling */
+.weather-icon {
+  position: relative;
+  display: inline-block;
+  width: 64px;
+  height: 64px;
+  margin: 0;
+  padding: 0;
+
+  // Hardware acceleration for smooth animations
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+
+  // Size variants
+  &.weather-icon-small {
+    width: 32px;
+    height: 32px;
+  }
+
+  &.weather-icon-medium {
+    width: 48px;
+    height: 48px;
+  }
+
+  &.weather-icon-large {
+    width: 64px;
+    height: 64px;
+  }
+
+  // Responsive scaling
+  @media (max-width: 480px) {
+    &.weather-icon-large {
+      width: 48px;
+      height: 48px;
+    }
+
+    &.weather-icon-medium {
+      width: 40px;
+      height: 40px;
+    }
+
+    &.weather-icon-small {
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  @media (max-width: 320px) {
+    &.weather-icon-large {
+      width: 40px;
+      height: 40px;
+    }
+
+    &.weather-icon-medium {
+      width: 32px;
+      height: 32px;
+    }
+
+    &.weather-icon-small {
+      width: 24px;
+      height: 24px;
+    }
+  }
+}
+
+/* Base SVG styling for all weather icons */
+.weather-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* Animation control classes */
+.weather-icon-animated {
+  // Default animated state - animations are enabled in specific icon classes below
+}
+
+.weather-icon-static {
+  // Disable all animations when static is requested
+  * {
+    animation: none !important;
+  }
+}
+
+/* Common animation classes with enhanced entrance effects */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+}
+
+/* Enhanced entrance animations for load effects */
+@keyframes slideInScale {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-5px) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-10deg);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.15) rotate(5deg);
+  }
+  70% {
+    opacity: 0.9;
+    transform: scale(0.95) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleRotateIn {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-180deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.2) rotate(-90deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes elasticIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.1);
+  }
+  20% {
+    transform: scale(1.1);
+  }
+  40% {
+    transform: scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  80% {
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Glowing effect for interactive elements */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.4);
+  }
+}
+
+/* Ripple effect for touch interactions */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Sunny/Clear Sky Icon with enhanced load animation */
+.weather-icon-sunny {
+  // Load animation: bouncing entrance with scale
+  animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+
+  .sun-rays {
+    animation: rotate 8s linear infinite;
+    transform-origin: center;
+    // Initial load effect
+    animation-delay: 0.2s;
+  }
+
+  .sun-core {
+    animation: pulse 4s ease-in-out infinite;
+    fill: #FFD700;
+    // Enhanced load animation
+    animation-delay: 0.1s;
+  }
+
+  &:hover {
+    .sun-core {
+      animation-duration: 2s;
+      filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+    }
+    .sun-rays {
+      animation-duration: 4s;
+    }
+  }
+
+  // Interactive glow effect
+  &:active .sun-core {
+    animation: glow 0.6s ease-in-out;
+  }
+}
+
+/* Partly Cloudy Icon with enhanced load animation */
+.weather-icon-partly-cloudy {
+  // Load animation: slide in from left with scale
+  animation: slideInScale 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+
+  .cloud {
+    animation: float 6s ease-in-out infinite;
+    fill: #E0E0E0;
+    // Staggered load effect
+    animation-delay: 0.3s;
+  }
+
+  .sun-behind {
+    animation: pulse 5s ease-in-out infinite;
+    fill: #FFD700;
+    opacity: 0.8;
+    // Earlier load effect for sun
+    animation-delay: 0.1s;
+  }
+
+  .cloud-shadow {
+    fill: #C0C0C0;
+    opacity: 0.6;
+    // Delayed shadow appearance
+    animation: fadeInUp 0.6s ease-out 0.4s both;
+  }
+
+  &:hover {
+    .cloud {
+      animation-duration: 4s;
+      transform: translateY(-2px);
+    }
+    .sun-behind {
+      animation-duration: 3s;
+      filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+    }
+  }
+
+  &:active .cloud {
+    transform: scale(1.05);
+    transition: transform 0.2s ease-out;
+  }
+}
+
+/* Cloudy/Overcast Icon with enhanced load animation */
+.weather-icon-cloudy {
+  // Load animation: elastic entrance
+  animation: elasticIn 1.1s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+
+  .cloud-1 {
+    animation: float 8s ease-in-out infinite;
+    fill: #B0B0B0;
+    // First cloud appears
+    animation-delay: 0.2s;
+  }
+
+  .cloud-2 {
+    animation: float 8s ease-in-out infinite reverse;
+    animation-delay: 0.4s; // Changed from -2s to stagger the entrance
+    fill: #D0D0D0;
+  }
+
+  .cloud-3 {
+    animation: float 6s ease-in-out infinite;
+    animation-delay: 0.6s; // Changed from -4s to complete the stagger
+    fill: #C8C8C8;
+  }
+
+  &:hover {
+    .cloud-1, .cloud-2, .cloud-3 {
+      animation-duration: 5s;
+      filter: drop-shadow(0 2px 8px rgba(176, 176, 176, 0.4));
+    }
+  }
+
+  &:active {
+    transform: scale(1.02);
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+}
+
+/* Fog/Mist Icon with enhanced load animation */
+.weather-icon-fog {
+  // Load animation: fade in upward
+  animation: fadeInUp 1.0s ease-out forwards;
+
+  .fog-line {
+    opacity: 0.6;
+    stroke: #A0A0A0;
+    stroke-width: 3;
+    fill: none;
+
+    &:nth-child(1) {
+      animation: float 4s ease-in-out infinite, fadeInUp 0.8s ease-out forwards;
+      animation-delay: 0s, 0.1s;
+    }
+
+    &:nth-child(2) {
+      animation: float 4s ease-in-out infinite reverse, fadeInUp 0.8s ease-out forwards;
+      animation-delay: -1s, 0.2s;
+    }
+
+    &:nth-child(3) {
+      animation: float 4s ease-in-out infinite, fadeInUp 0.8s ease-out forwards;
+      animation-delay: -2s, 0.3s;
+    }
+
+    &:nth-child(4) {
+      animation: float 4s ease-in-out infinite reverse, fadeInUp 0.8s ease-out forwards;
+      animation-delay: -3s, 0.4s;
+    }
+  }
+
+  &:hover .fog-line {
+    animation-duration: 2.5s, 0.8s;
+    stroke-width: 4;
+    opacity: 0.8;
+  }
+
+  &:active {
+    filter: blur(1px);
+    transition: filter 0.3s ease-in-out;
+  }
+}
+
+/* Rain/Drizzle Icon with enhanced load animation */
+.weather-icon-rain {
+  // Load animation: scale and rotate entrance
+  animation: scaleRotateIn 1.0s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+  .cloud {
+    animation: float 5s ease-in-out infinite;
+    fill: #708090;
+    // Cloud appears first
+    animation-delay: 0.1s;
+  }
+
+  .rain-drop {
+    animation: bounce 1.5s ease-in-out infinite;
+    fill: #4682B4;
+    opacity: 0.8;
+
+    &:nth-child(2) {
+      animation-delay: 0.2s; // Staggered load effect
+    }
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    &:nth-child(4) {
+      animation-delay: 0.6s;
+    }
+    &:nth-child(5) {
+      animation-delay: 0.8s;
+    }
+  }
+
+  &:hover {
+    .rain-drop {
+      animation-duration: 1s;
+      fill: #1E90FF;
+      opacity: 1;
+    }
+    .cloud {
+      animation-duration: 3s;
+      filter: drop-shadow(0 3px 10px rgba(112, 128, 144, 0.4));
+    }
+  }
+
+  &:active .cloud {
+    animation: shake 0.5s ease-in-out;
+  }
+}
+
+/* Heavy Rain/Showers Icon with enhanced load animation */
+.weather-icon-showers {
+  // Load animation: dramatic bouncing entrance
+  animation: bounceIn 1.1s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+
+  .cloud {
+    animation: shake 3s ease-in-out infinite;
+    fill: #2F4F4F;
+    // Cloud appears with shake
+    animation-delay: 0.1s;
+  }
+
+  .rain-drop {
+    animation: bounce 1s ease-in-out infinite;
+    fill: #1E90FF;
+    opacity: 0.9;
+
+    &:nth-child(2) {
+      animation-delay: 0.1s; // Quick staggered appearance
+    }
+    &:nth-child(3) {
+      animation-delay: 0.2s;
+    }
+    &:nth-child(4) {
+      animation-delay: 0.3s;
+    }
+    &:nth-child(5) {
+      animation-delay: 0.4s;
+    }
+    &:nth-child(6) {
+      animation-delay: 0.5s;
+    }
+  }
+
+  &:hover {
+    .cloud {
+      animation-duration: 2s;
+      filter: drop-shadow(0 4px 12px rgba(47, 79, 79, 0.5));
+    }
+    .rain-drop {
+      animation-duration: 0.7s;
+      fill: #00BFFF;
+      opacity: 1;
+    }
+  }
+
+  &:active {
+    .cloud {
+      animation: shake 0.3s ease-in-out;
+    }
+    .rain-drop {
+      animation-duration: 0.5s;
+    }
+  }
+}
+
+/* Snow Icon with enhanced load animation */
+.weather-icon-snow {
+  // Load animation: gentle slide with scale
+  animation: slideInScale 1.2s ease-out forwards;
+
+  .cloud {
+    animation: float 7s ease-in-out infinite;
+    fill: #F0F8FF;
+    // Cloud floats in gently
+    animation-delay: 0.2s;
+  }
+
+  .snowflake {
+    animation: float 3s ease-in-out infinite, rotate 10s linear infinite;
+    fill: #FFFFFF;
+    opacity: 0.9;
+
+    &:nth-child(2) {
+      animation-delay: 0.3s, 0.3s; // Gentle staggered entrance
+      animation-duration: 4s, 12s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0.6s, 0.6s;
+      animation-duration: 5s, 8s;
+    }
+    &:nth-child(4) {
+      animation-delay: 0.9s, 0.9s;
+      animation-duration: 3.5s, 15s;
+    }
+    &:nth-child(5) {
+      animation-delay: 1.2s, 1.2s;
+      animation-duration: 4.5s, 11s;
+    }
+  }
+
+  &:hover {
+    .snowflake {
+      animation-duration: 2s, 5s;
+      opacity: 1;
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+    }
+    .cloud {
+      animation-duration: 5s;
+      filter: drop-shadow(0 2px 10px rgba(240, 248, 255, 0.3));
+    }
+  }
+
+  &:active .snowflake {
+    animation-duration: 1.5s, 3s;
+  }
+}
+
+/* Thunderstorm Icon with enhanced load animation */
+.weather-icon-thunderstorm {
+  // Load animation: dramatic scale and rotate with intensity
+  animation: scaleRotateIn 1.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+  .cloud {
+    animation: shake 2s ease-in-out infinite;
+    fill: #2C3E50;
+    // Dark cloud rumbles in
+    animation-delay: 0.1s;
+  }
+
+  .lightning {
+    animation: pulse 1.5s ease-in-out infinite;
+    fill: #FFD700;
+    opacity: 0.9;
+
+    &:nth-child(2) {
+      animation-delay: 0.3s; // Lightning appears after cloud
+    }
+    &:nth-child(3) {
+      animation-delay: 0.5s;
+    }
+  }
+
+  .rain-drop {
+    animation: bounce 1.2s ease-in-out infinite;
+    fill: #87CEEB;
+    opacity: 0.7;
+
+    &:nth-child(4) {
+      animation-delay: 0.6s; // Rain follows lightning
+    }
+    &:nth-child(5) {
+      animation-delay: 0.8s;
+    }
+    &:nth-child(6) {
+      animation-delay: 1.0s;
+    }
+  }
+
+  &:hover {
+    .lightning {
+      animation-duration: 0.8s;
+      fill: #FFFF00;
+      opacity: 1;
+      filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
+    }
+    .cloud {
+      animation-duration: 1.5s;
+      filter: drop-shadow(0 5px 15px rgba(44, 62, 80, 0.6));
+    }
+    .rain-drop {
+      animation-duration: 0.8s;
+      opacity: 0.9;
+    }
+  }
+
+  &:active {
+    .lightning {
+      animation: pulse 0.3s ease-in-out;
+      filter: brightness(1.5);
+    }
+    .cloud {
+      animation: shake 0.5s ease-in-out;
+    }
+  }
+}
+
+/* Default/Unknown Weather Icon with enhanced load animation */
+.weather-icon-default {
+  // Load animation: questioning entrance
+  animation: elasticIn 1.0s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+
+  .question-mark {
+    animation: breathe 3s ease-in-out infinite;
+    fill: #888888;
+    // Question mark pulses in
+    animation-delay: 0.3s;
+  }
+
+  &:hover {
+    .question-mark {
+      animation-duration: 1.5s;
+      fill: #BBBBBB;
+      filter: drop-shadow(0 2px 6px rgba(136, 136, 136, 0.4));
+    }
+    transform: scale(1.1);
+  }
+
+  &:active .question-mark {
+    animation: shake 0.6s ease-in-out;
+    fill: #FFFFFF;
+  }
+}
+
+/* Accessibility and reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .weather-icon {
+    * {
+      animation: none !important;
+    }
+  }
+
+  /* Keep subtle scaling for interaction feedback */
+  .weather-icon:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease-in-out;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .weather-icon svg {
+    filter: contrast(1.5) brightness(1.2);
+  }
+
+  .weather-icon-sunny .sun-core { fill: #FFD700; }
+  .weather-icon-partly-cloudy .cloud { fill: #000000; }
+  .weather-icon-cloudy .cloud-1,
+  .weather-icon-cloudy .cloud-2,
+  .weather-icon-cloudy .cloud-3 { fill: #000000; }
+  .weather-icon-rain .cloud { fill: #000000; }
+  .weather-icon-rain .rain-drop { fill: #0000FF; }
+  .weather-icon-snow .cloud { fill: #000000; }
+  .weather-icon-snow .snowflake { fill: #FFFFFF; }
+  .weather-icon-thunderstorm .cloud { fill: #000000; }
+  .weather-icon-thunderstorm .lightning { fill: #FFFF00; }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  .weather-icon svg {
+    filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.1));
+  }
+
+  .weather-icon-partly-cloudy .cloud { fill: #505050; }
+  .weather-icon-cloudy .cloud-1,
+  .weather-icon-cloudy .cloud-2,
+  .weather-icon-cloudy .cloud-3 { fill: #606060; }
+  .weather-icon-fog .fog-line { stroke: #707070; }
+}
+
+/* Performance optimizations for mobile */
+@media (max-width: 480px) {
+  .weather-icon {
+    /* Reduce animation complexity on mobile */
+    .sun-rays { animation-duration: 12s; }
+    .cloud { animation-duration: 8s; }
+    .rain-drop { animation-duration: 2s; }
+    .snowflake { animation-duration: 5s, 15s; }
+    .lightning { animation-duration: 2s; }
+  }
+}
+
+/* Loading state for weather icons with enhanced animation */
+.weather-icon-loading {
+  // Load animation: smooth fade in
+  animation: fadeInUp 0.6s ease-out forwards;
+
+  .loading-circle {
+    animation: rotate 2s linear infinite, pulse 3s ease-in-out infinite;
+    stroke: #888888;
+    stroke-width: 4;
+    fill: none;
+    opacity: 0.6;
+    // Glowing effect during loading
+    filter: drop-shadow(0 0 8px rgba(136, 136, 136, 0.3));
+  }
+
+  &:hover .loading-circle {
+    animation-duration: 1.5s, 2s;
+    stroke: #BBBBBB;
+    opacity: 0.8;
+    filter: drop-shadow(0 0 12px rgba(187, 187, 187, 0.5));
+  }
+}
+
+/* Hover effects for interactivity */
+.weather-icon:hover {
+  transform: scale(1.1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus styles for accessibility */
+.weather-icon:focus-visible {
+  outline: 2px solid #FFD700;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* Error state icon with enhanced animations */
+.weather-icon-error {
+  // Load animation: attention-grabbing entrance
+  animation: bounceIn 1.0s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+
+  .error-symbol {
+    animation: shake 2s ease-in-out infinite, pulse 3s ease-in-out infinite;
+    stroke: #FF6B6B;
+    fill: none;
+    // Glowing error effect
+    filter: drop-shadow(0 0 10px rgba(255, 107, 107, 0.4));
+    animation-delay: 0.2s;
+  }
+
+  &:hover {
+    .error-symbol {
+      animation-duration: 1s, 2s;
+      stroke: #FF4444;
+      filter: drop-shadow(0 0 15px rgba(255, 68, 68, 0.6));
+    }
+    transform: scale(1.1);
+  }
+
+  &:active .error-symbol {
+    animation: shake 0.5s ease-in-out, pulse 0.5s ease-in-out;
+    stroke: #FF0000;
+    filter: brightness(1.3);
+  }
+}

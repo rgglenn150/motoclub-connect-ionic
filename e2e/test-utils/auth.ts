@@ -19,17 +19,17 @@ export const TEST_CREDENTIALS: TestCredentials = {
  * @param credentials - Optional custom credentials, defaults to TEST_CREDENTIALS
  */
 export async function login(page: Page, credentials: TestCredentials = TEST_CREDENTIALS) {
-  // Navigate to login page
-  await page.goto('/auth/login');
+  // Navigate to login page (note: app redirects to /login, not /auth/login)
+  await page.goto('/login');
   
   // Wait for login form to be visible
-  await page.waitForSelector('ion-input[name="email"]');
+  await page.waitForSelector('input[type="email"]');
   
-  // Fill in email
-  await page.fill('ion-input[name="email"] input', credentials.email);
+  // Fill in email using working selector
+  await page.fill('input[type="email"]', credentials.email);
   
-  // Fill in password
-  await page.fill('ion-input[name="password"] input', credentials.password);
+  // Fill in password using working selector
+  await page.fill('input[type="password"]', credentials.password);
   
   // Click login button
   await page.click('ion-button[type="submit"]');
@@ -58,8 +58,8 @@ export async function logout(page: Page) {
   if (await logoutButton.isVisible()) {
     await logoutButton.click();
     
-    // Wait for redirect to login page
-    await page.waitForURL(/\/auth\/login/);
+    // Wait for redirect to login page (corrected URL pattern)
+    await page.waitForURL(/\/login/);
   }
 }
 

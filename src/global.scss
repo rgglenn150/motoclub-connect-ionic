@@ -37,6 +37,27 @@
   height: 100%;
 }
 
+/* Location Preferences Modal Styling */
+.location-preferences-modal {
+  --height: 90vh;
+  --border-radius: 16px;
+  --backdrop-opacity: 0.6;
+  
+  ion-modal {
+    --background: var(--ion-color-dark);
+  }
+  
+  .modal-wrapper {
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+  }
+  
+  @media (max-width: 768px) {
+    --height: 95vh;
+    --border-radius: 16px 16px 0 0;
+  }
+}
+
 /* Global Action Sheet Dark Theme Support - High Specificity Override */
 ion-action-sheet,
 ion-action-sheet.dark-theme-action-sheet,
