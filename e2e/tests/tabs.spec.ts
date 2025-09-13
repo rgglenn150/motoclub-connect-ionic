@@ -15,17 +15,17 @@ test.describe('Basic Application Tests', () => {
     await page.goto('/');
 
     // Wait for the login form to be visible
-    await expect(page.getByRole('heading', { name: 'MotoClub Connect' })).toBeVisible();
+    await expect(page.locator('h1.app-title')).toContainText('MotoClub Connect');
     
     // Verify login form elements are present
-    await expect(page.locator('input[type="email"]')).toBeVisible();
-    await expect(page.locator('input[type="password"]')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
+    await expect(page.locator('ion-input[type="email"]')).toBeVisible();
+    await expect(page.locator('ion-input[type="password"]')).toBeVisible();
+    await expect(page.locator('ion-button[type="submit"]')).toContainText('Login');
     
     // Verify additional login page elements
-    await expect(page.getByText('Sign in to join the ride')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Continue with Facebook' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign Up' })).toBeVisible();
+    await expect(page.locator('.app-subtitle')).toContainText('Sign in to join the ride');
+    await expect(page.locator('.facebook-button')).toContainText('Continue with Facebook');
+    await expect(page.locator('ion-button').filter({ hasText: 'Sign Up' })).toBeVisible();
   });
 
 });

@@ -1,0 +1,543 @@
+.weather-widget {
+  // Ensure consistent styling with existing app theme
+  background: var(--ion-color-dark-shade, #1e1e1e);
+  border: 1px solid var(--ion-color-dark-tint, #383838);
+  transition: all 0.3s ease-in-out;
+  
+  // Offline mode styling
+  &.offline-mode {
+    border-color: var(--ion-color-warning-shade, #d48e00);
+    background: linear-gradient(135deg, #1e1e1e 0%, #2a2200 100%);
+  }
+  
+  // Poor connection styling
+  &.poor-connection {
+    border-color: var(--ion-color-danger-shade, #c5000f);
+    background: linear-gradient(135deg, #1e1e1e 0%, #2a0a0a 100%);
+  }
+  
+  // Loading spinner styling
+  ion-spinner {
+    --color: var(--ion-color-warning, #ffc409);
+    width: 24px;
+    height: 24px;
+  }
+
+  // Weather icon styling
+  .weather-icon {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  }
+
+  // Responsive design for smaller screens
+  @media (max-width: 480px) {
+    .flex {
+      &.items-center.justify-between {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+    }
+
+    .text-6xl {
+      font-size: 3rem;
+      margin-left: 0;
+      align-self: flex-end;
+      margin-top: -2rem;
+    }
+    
+    // Enhanced responsive behavior for offline mode
+    &.offline-mode {
+      .weather-data-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        
+        .flex-1 {
+          width: 100%;
+          margin-bottom: 1rem;
+        }
+        
+        .weather-icon-container {
+          margin-left: 0;
+          margin-top: 0;
+        }
+      }
+    }
+  }
+
+  // Smooth transitions for interactive elements
+  button {
+    transition: all 0.2s ease-in-out;
+    
+    &:hover {
+      transform: translateY(-1px);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Error state styling
+  .error-container {
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // Loading state styling  
+  .loading-container {
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // Metric icons alignment
+  .metric-item {
+    display: flex;
+    align-items: center;
+    
+    ion-icon {
+      width: 14px;
+      height: 14px;
+      margin-right: 4px;
+    }
+  }
+
+  // Animation for refresh button
+  .refresh-btn {
+    &:active ion-icon {
+      transform: rotate(180deg);
+      transition: transform 0.3s ease-in-out;
+    }
+  }
+
+  // Ensure text is readable on all backgrounds
+  .text-contrast {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  // Skeleton Loading Styles
+  .skeleton-container {
+    min-height: 120px;
+    opacity: 1;
+    animation: fadeIn 0.3s ease-in-out;
+    
+    // Improve performance for animations
+    will-change: transform, opacity;
+    transform: translateZ(0); // Force hardware acceleration
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, #2a2a2a 25%, #383838 50%, #2a2a2a 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite, skeletonPulse 2s ease-in-out infinite;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      animation: shimmerOverlay 1.5s infinite;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes shimmerOverlay {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes skeletonPulse {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  // Skeleton element sizes to match actual content
+  .skeleton-location {
+    width: 120px;
+    height: 20px;
+  }
+
+  .skeleton-refresh-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+  }
+
+  .skeleton-temperature {
+    width: 100px;
+    height: 48px;
+    border-radius: 6px;
+  }
+
+  .skeleton-condition {
+    width: 80px;
+    height: 16px;
+  }
+
+  .skeleton-time {
+    width: 50px;
+    height: 12px;
+  }
+
+  .skeleton-metric {
+    width: 60px;
+    height: 12px;
+  }
+
+  .skeleton-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+  }
+
+  // Responsive skeleton adjustments
+  @media (max-width: 480px) {
+    .skeleton-container {
+      .flex.items-center.justify-between {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+
+      .skeleton-icon {
+        align-self: flex-end;
+        margin-top: -2rem;
+        width: 48px;
+        height: 48px;
+      }
+
+      .skeleton-temperature {
+        height: 36px;
+      }
+    }
+  }
+
+  // Smooth transition from skeleton to content
+  .weather-data-container {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  // Network Status Indicator Bar
+  .network-status-bar {
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease-in-out;
+    
+    &.offline {
+      background: rgba(255, 196, 9, 0.1);
+      border: 1px solid rgba(255, 196, 9, 0.3);
+      color: var(--ion-color-warning);
+    }
+    
+    &.poor-connection {
+      background: rgba(245, 101, 101, 0.1);
+      border: 1px solid rgba(245, 101, 101, 0.3);
+      color: var(--ion-color-danger);
+    }
+    
+    &.warning-connection {
+      background: rgba(255, 196, 9, 0.1);
+      border: 1px solid rgba(255, 196, 9, 0.3);
+      color: var(--ion-color-warning);
+    }
+  }
+  
+  // Data Source Indicator
+  .data-source-indicator {
+    animation: fadeIn 0.5s ease-in-out;
+    
+    ion-icon {
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+  }
+  
+  // Network Indicator
+  .network-indicator {
+    transition: all 0.2s ease-in-out;
+    
+    &:hover {
+      transform: scale(1.1);
+    }
+    
+    ion-icon {
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+  }
+  
+  // Enhanced Refresh Button
+  .refresh-btn {
+    transition: all 0.2s ease-in-out;
+    
+    &:hover:not(.disabled) {
+      transform: scale(1.1);
+    }
+    
+    &.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      
+      &:hover {
+        transform: none;
+      }
+    }
+    
+    ion-icon {
+      transition: transform 0.3s ease-in-out;
+      
+      &.animate-spin {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+  
+  // Location Preferences Settings Button
+  .settings-btn {
+    transition: all 0.2s ease-in-out;
+    
+    &:hover {
+      transform: scale(1.1);
+      color: var(--ion-color-primary) !important;
+    }
+    
+    ion-icon {
+      transition: transform 0.3s ease-in-out;
+      
+      &:hover {
+        transform: rotate(90deg);
+      }
+    }
+  }
+  
+  // Location Source Indicator
+  .location-source-indicator {
+    transition: all 0.2s ease-in-out;
+    
+    &:hover {
+      transform: scale(1.1);
+    }
+    
+    ion-icon {
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+  }
+  
+  // Location Source Info
+  .location-source-info {
+    opacity: 0.8;
+    transition: opacity 0.2s ease-in-out;
+    
+    &:hover {
+      opacity: 1;
+    }
+    
+    ion-icon {
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+  }
+  
+  // Data Freshness Indicator
+  .data-freshness {
+    .freshness-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      transition: all 0.3s ease-in-out;
+      
+      &.fresh {
+        background: var(--ion-color-success);
+        box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+      }
+      
+      &.stale {
+        background: var(--ion-color-warning);
+        box-shadow: 0 0 6px rgba(255, 196, 9, 0.6);
+      }
+    }
+  }
+  
+  // Cached Data Notice
+  .cached-data-notice {
+    animation: slideInUp 0.5s ease-out;
+    backdrop-filter: blur(10px);
+    
+    ion-icon {
+      animation: pulse 2s infinite;
+    }
+  }
+  
+  // Weather Icon Container
+  .weather-icon-container {
+    .absolute {
+      animation: bounce 2s infinite;
+    }
+    
+    .text-6xl {
+      transition: opacity 0.3s ease-in-out;
+    }
+  }
+  
+  // Connection Tooltip
+  .connection-tooltip {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+    z-index: 1000;
+    
+    &.visible {
+      opacity: 1;
+      visibility: visible;
+      top: -5px;
+    }
+    
+    .tooltip-content {
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+  }
+  
+  // Animations
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  
+  @keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+      animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+      transform: translate3d(0, 0, 0);
+    }
+    40%, 43% {
+      animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+      transform: translate3d(0, -4px, 0);
+    }
+    70% {
+      animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+      transform: translate3d(0, -2px, 0);
+    }
+    90% {
+      transform: translate3d(0, -1px, 0);
+    }
+  }
+  
+  @keyframes slideInUp {
+    from {
+      transform: translate3d(0, 20px, 0);
+      opacity: 0;
+    }
+    to {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+  }
+  
+  // Enhanced Error State
+  .text-center {
+    .flex.flex-col {
+      .space-y-2 {
+        button {
+          transition: all 0.2s ease-in-out;
+          
+          &:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          }
+          
+          &:disabled {
+            animation: pulse 2s infinite;
+          }
+        }
+      }
+    }
+  }
+  
+  // Responsive enhancements for network indicators
+  @media (max-width: 480px) {
+    .network-status-bar {
+      padding: 8px 12px;
+      
+      span {
+        font-size: 10px;
+      }
+    }
+    
+    .data-source-indicator,
+    .network-indicator {
+      ion-icon {
+        font-size: 12px;
+      }
+    }
+    
+    .cached-data-notice {
+      padding: 8px;
+      
+      span {
+        font-size: 10px;
+      }
+    }
+    
+    .weather-icon-container {
+      .absolute {
+        width: 12px;
+        height: 12px;
+        
+        ion-icon {
+          font-size: 8px;
+        }
+      }
+    }
+  }
+}

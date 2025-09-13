@@ -12,16 +12,11 @@
 
   <!-- Weather Widget -->
   <div class="px-6 pb-6">
-      <div class="asphalt-secondary rounded-xl p-4 flex items-center justify-between">
-          <div>
-              <p class="font-semibold">Oton, Western Visayas</p>
-              <p class="text-4xl font-condensed font-bold">28°C</p>
-              <p class="text-sm text-gray-400">Partly Cloudy</p>
-          </div>
-          <div class="text-6xl text-amber-400">
-              <ion-icon name="partly-sunny-outline"></ion-icon>
-          </div>
-      </div>
+    <app-weather-widget 
+      [showForecast]="false"
+      [autoRefresh]="true"
+      [refreshInterval]="600000">
+    </app-weather-widget>
   </div>
 
   <!-- Next Ride Section -->

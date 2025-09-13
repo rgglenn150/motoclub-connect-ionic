@@ -1,0 +1,201 @@
+<!-- Weather Widget Container -->
+<div class="weather-widget asphalt-secondary rounded-xl p-4" [class.offline-mode]="!networkStatus.online" [class.poor-connection]="connectionQuality.quality === 'poor'">
+  
+  <!-- Network Status Indicator Bar (shows when offline or poor connection) -->
+  <div *ngIf="statusMessage" class="network-status-bar mb-3 px-3 py-2 rounded-lg flex items-center space-x-2" 
+       [class.offline]="!networkStatus.online"
+       [class.poor-connection]="connectionQuality.quality === 'poor'"
+       [class.warning-connection]="connectionQuality.quality === 'fair'">
+    <ion-icon [name]="networkStatusIcon" class="text-sm"></ion-icon>
+    <span class="text-xs font-medium">{{ statusMessage }}</span>
+  </div>
+
+  <!-- Skeleton Loading State -->
+  <div *ngIf="isLoading" class="skeleton-container">
+    <div class="flex items-center justify-between">
+      
+      <!-- Weather Info Skeleton -->
+      <div class="flex-1">
+        <!-- Location name skeleton -->
+        <div class="flex items-center justify-between mb-1">
+          <div class="skeleton skeleton-location"></div>
+          <div class="skeleton skeleton-refresh-btn"></div>
+        </div>
+        
+        <!-- Temperature skeleton -->
+        <div class="skeleton skeleton-temperature mb-1"></div>
+        
+        <!-- Condition and last updated skeleton -->
+        <div class="flex items-center justify-between">
+          <div class="skeleton skeleton-condition"></div>
+          <div class="skeleton skeleton-time"></div>
+        </div>
+        
+        <!-- Additional Weather Metrics Skeleton -->
+        <div class="mt-3 flex items-center space-x-4">
+          <div class="skeleton skeleton-metric"></div>
+          <div class="skeleton skeleton-metric"></div>
+          <div class="skeleton skeleton-metric"></div>
+        </div>
+      </div>
+
+      <!-- Weather Icon Skeleton -->
+      <div class="ml-4">
+        <div class="skeleton skeleton-icon"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="hasError && !isLoading" class="text-center">
+    <div class="flex flex-col items-center space-y-3">
+      <ion-icon [name]="networkStatusIcon" class="text-4xl" [style.color]="'var(--ion-color-' + networkStatusColor + ')'">
+      </ion-icon>
+      <div>
+        <p class="text-sm text-gray-400 mb-2">{{ errorMessage }}</p>
+        <!-- Enhanced retry button with network awareness -->
+        <div class="flex flex-col space-y-2">
+          <button 
+            *ngIf="canRefresh"
+            (click)="refreshWeatherData()" 
+            class="px-4 py-2 bg-amber-500 text-gray-900 rounded-lg text-sm font-medium hover:bg-amber-400 transition-colors"
+            [class.opacity-50]="!canRefresh">
+            <ion-icon name="refresh-outline" class="mr-1"></ion-icon>
+            Retry
+          </button>
+          <button 
+            *ngIf="!canRefresh && !networkStatus.online"
+            disabled
+            class="px-4 py-2 bg-gray-600 text-gray-400 rounded-lg text-sm font-medium cursor-not-allowed">
+            <ion-icon name="wifi-outline" class="mr-1"></ion-icon>
+            Connect to internet
+          </button>
+        </div>
+        <!-- Connection tips for poor network -->
+        <div *ngIf="connectionQuality.quality === 'poor'" class="mt-3 text-xs text-gray-500">
+          <p>💡 Try moving to an area with better signal</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weather Data Display -->
+  <div *ngIf="weatherData && !isLoading && !hasError" class="weather-data-container flex items-center justify-between">
+    
+    <!-- Weather Info -->
+    <div class="flex-1">
+      <!-- Header with location and network indicator -->
+      <div class="flex items-center justify-between mb-1">
+        <div class="flex items-center space-x-2">
+          <p class="font-semibold text-white">{{ locationName }}</p>
+          <!-- Data source indicator -->
+          <div *ngIf="isUsingCachedData" class="data-source-indicator flex items-center">
+            <ion-icon name="archive-outline" class="text-xs text-amber-400" title="Using cached data"></ion-icon>
+          </div>
+        </div>
+        <!-- Enhanced refresh button with network state and location preferences -->
+        <div class="flex items-center space-x-1">
+          <!-- Location source indicator -->
+          <div class="location-source-indicator flex items-center" [title]="locationSourceIndicator">
+            <ion-icon [name]="locationSourceIcon" class="text-sm text-amber-400">
+            </ion-icon>
+          </div>
+          <!-- Network quality indicator -->
+          <div class="network-indicator flex items-center" [title]="connectionQuality.description">
+            <ion-icon [name]="networkStatusIcon" class="text-sm" 
+                     [style.color]="'var(--ion-color-' + networkStatusColor + ')'">
+            </ion-icon>
+          </div>
+          <!-- Location preferences button -->
+          <button 
+            (click)="openLocationPreferences()" 
+            class="settings-btn text-gray-400 hover:text-white transition-colors"
+            [attr.aria-label]="'Open location preferences'">
+            <ion-icon name="settings-outline" class="text-lg">
+            </ion-icon>
+          </button>
+          <!-- Refresh button -->
+          <button 
+            (click)="refreshWeatherData()" 
+            class="refresh-btn text-gray-400 hover:text-white transition-colors"
+            [class.disabled]="!canRefresh"
+            [disabled]="!canRefresh"
+            [attr.aria-label]="canRefresh ? 'Refresh weather data' : 'Cannot refresh - no internet connection'">
+            <ion-icon name="refresh-outline" class="text-lg" 
+                     [class.animate-spin]="isLoading">
+            </ion-icon>
+          </button>
+        </div>
+      </div>
+      
+      <p class="text-4xl font-condensed font-bold text-white mb-1">{{ temperatureText }}</p>
+      
+      <!-- Condition and timestamp with data freshness -->
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-400">{{ conditionText }}</p>
+        <div *ngIf="lastUpdated" class="timestamp-container flex items-center space-x-2">
+          <!-- Data freshness indicator -->
+          <div class="data-freshness flex items-center space-x-1">
+            <div class="freshness-dot" [class.fresh]="!isDataStale" [class.stale]="isDataStale"></div>
+            <span class="text-xs text-gray-500">{{ dataFreshnessText }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Location source indicator -->
+      <div class="location-source-info mt-1">
+        <p class="text-xs text-gray-500 flex items-center">
+          <ion-icon [name]="locationSourceIcon" class="mr-1 text-amber-400"></ion-icon>
+          {{ locationSourceIndicator }}
+        </p>
+      </div>
+      
+      <!-- Enhanced metrics with connection awareness -->
+      <div *ngIf="weatherData" class="mt-3 flex items-center space-x-4 text-xs text-gray-400">
+        <span *ngIf="weatherData.metrics.humidity">
+          <ion-icon name="water-outline" class="mr-1"></ion-icon>
+          {{ weatherData.metrics.humidity }}%
+        </span>
+        <span *ngIf="weatherData.metrics.windSpeed">
+          <ion-icon name="leaf-outline" class="mr-1"></ion-icon>
+          {{ weatherData.metrics.windSpeed }} km/h
+        </span>
+        <span *ngIf="weatherData.temperature.feelsLike">
+          <ion-icon name="thermometer-outline" class="mr-1"></ion-icon>
+          Feels {{ weatherData.temperature.feelsLike }}°C
+        </span>
+      </div>
+      
+      <!-- Cached data notice -->
+      <div *ngIf="isUsingCachedData && !networkStatus.online" 
+           class="cached-data-notice mt-2 p-2 bg-orange-900/30 border border-orange-700/50 rounded-lg">
+        <div class="flex items-center space-x-2">
+          <ion-icon name="information-circle-outline" class="text-orange-400 text-sm"></ion-icon>
+          <span class="text-xs text-orange-300">Showing offline data from {{ lastUpdatedText }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weather Icon with connection state -->
+    <div class="weather-icon-container ml-4 relative">
+      <div class="text-6xl text-amber-400" [class.opacity-75]="!networkStatus.online">
+        <ion-icon [name]="iconName"></ion-icon>
+      </div>
+      <!-- Offline indicator on weather icon -->
+      <div *ngIf="!networkStatus.online" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+        <ion-icon name="wifi-outline" class="text-white text-xs" style="transform: rotate(180deg);"></ion-icon>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forecast Section (if enabled) -->
+  <div *ngIf="showForecast && weatherData && !isLoading && !hasError" class="mt-4 pt-4 border-t border-gray-600">
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-sm text-gray-400">Extended forecast coming soon...</p>
+      <div *ngIf="!networkStatus.online" class="offline-forecast-notice">
+        <ion-icon name="cloud-offline-outline" class="text-gray-500 text-sm" title="Forecast requires internet connection"></ion-icon>
+      </div>
+    </div>
+  </div>
+
+</div>

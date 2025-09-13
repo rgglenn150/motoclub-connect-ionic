@@ -12,7 +12,8 @@ test.describe('Authentication Examples', () => {
     
     // Verify we can access authenticated content
     await expect(authenticatedPage.locator('ion-tab-bar')).toBeVisible();
-    await expect(authenticatedPage.locator('ion-title')).toContainText('Home');
+    // Home page doesn't have ion-title, check for main content instead
+    await expect(authenticatedPage.locator('h1').first()).toBeVisible();
   });
 
   test('should test login functionality', async ({ loginPage }) => {
@@ -22,9 +23,9 @@ test.describe('Authentication Examples', () => {
     await expect(loginPage.locator('ion-input[name="email"]')).toBeVisible();
     await expect(loginPage.locator('ion-input[name="password"]')).toBeVisible();
     
-    // Fill in credentials
-    await loginPage.fill('ion-input[name="email"] input', TEST_CREDENTIALS.email);
-    await loginPage.fill('ion-input[name="password"] input', TEST_CREDENTIALS.password);
+    // Fill in credentials - Ionic inputs require targeting the native input element
+    await loginPage.locator('ion-input[name="email"] input').fill(TEST_CREDENTIALS.email);
+    await loginPage.locator('ion-input[name="password"] input').fill(TEST_CREDENTIALS.password);
     
     // Submit login
     await loginPage.click('ion-button[type="submit"]');
@@ -41,9 +42,9 @@ test.describe('Authentication Examples', () => {
     // Verify profile page elements
     await expect(authenticatedPage.locator('ion-content')).toBeVisible();
     
-    // Check for user-specific content
-    // Note: Adjust these selectors based on your actual profile page structure
-    await expect(authenticatedPage.locator('ion-avatar, .profile-photo')).toBeVisible();
+    // Check for user-specific content - profile page elements
+    await expect(authenticatedPage.locator('.profile-photo-button')).toBeVisible();
+    await expect(authenticatedPage.locator('h1')).toContainText(/rider|glenn|user/i);
   });
 
   test('should access clubs page', async ({ authenticatedPage }) => {
@@ -52,7 +53,7 @@ test.describe('Authentication Examples', () => {
     
     // Verify clubs page loaded
     await expect(authenticatedPage.locator('ion-content')).toBeVisible();
-    await expect(authenticatedPage.locator('ion-title')).toContainText('Clubs');
+    await expect(authenticatedPage.locator('ion-header ion-title').first()).toContainText('Clubs');
   });
 
   test('should access events page', async ({ authenticatedPage }) => {
@@ -61,6 +62,6 @@ test.describe('Authentication Examples', () => {
     
     // Verify events page loaded
     await expect(authenticatedPage.locator('ion-content')).toBeVisible();
-    await expect(authenticatedPage.locator('ion-title')).toContainText('Events');
+    await expect(authenticatedPage.locator('ion-header ion-title').first()).toContainText('Events');
   });
 });

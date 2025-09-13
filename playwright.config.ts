@@ -4,8 +4,8 @@ import { defineConfig, devices } from '@playwright/test';
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-import dotenv from 'dotenv';
-import path from 'path';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
@@ -30,6 +30,27 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+
+    /* Screenshot on failure for better debugging */
+    screenshot: 'only-on-failure',
+    
+    /* Video recording for test failures */
+    video: 'retain-on-failure',
+
+    /* Grant permissions for geolocation (needed for weather widget GPS testing) */
+    permissions: ['geolocation'],
+
+    /* Set geolocation for weather widget testing */
+    geolocation: { latitude: 10.7202, longitude: 122.5621 },
+
+    /* Enable network condition simulation */
+    offline: false,
+    
+    /* Timeout for actions (weather API calls might take time) */
+    actionTimeout: 15000,
+    
+    /* Timeout for navigation (initial app load) */
+    navigationTimeout: 30000,
   },
 
   /* Configure projects for major browsers */
@@ -50,14 +71,58 @@ export default defineConfig({
     },
 
     /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
+    {
+      name: 'Mobile Chrome',
+      use: { 
+        ...devices['Pixel 5'],
+        /* Mobile-specific settings for weather widget testing */
+        geolocation: { latitude: 10.7202, longitude: 122.5621 },
+        permissions: ['geolocation'],
+      },
+    },
+    {
+      name: 'Mobile Safari',
+      use: { 
+        ...devices['iPhone 12'],
+        /* Mobile-specific settings for weather widget testing */
+        geolocation: { latitude: 10.7202, longitude: 122.5621 },
+        permissions: ['geolocation'],
+      },
+    },
+
+    /* Weather Widget Specific Testing Project */
+    {
+      name: 'weather-widget-tests',
+      testMatch: '**/weather-widget.spec.ts',
+      use: { 
+        ...devices['Pixel 5'],
+        /* Optimized settings for weather widget testing */
+        geolocation: { latitude: 10.7202, longitude: 122.5621 },
+        permissions: ['geolocation'],
+        /* Longer timeout for weather API calls */
+        actionTimeout: 20000,
+        /* Capture more screenshots for weather widget debugging */
+        screenshot: 'always',
+        /* Slower motion for visual debugging */
+        slowMo: 100,
+      },
+    },
+
+    /* Location Preferences Specific Testing Project */
+    {
+      name: 'location-preferences-tests',
+      testMatch: '**/location-preferences.spec.ts',
+      use: { 
+        ...devices['Pixel 5'],
+        /* Optimized settings for location preferences testing */
+        geolocation: { latitude: 10.7202, longitude: 122.5621 },
+        permissions: ['geolocation'],
+        /* Modal interactions might need longer timeouts */
+        actionTimeout: 15000,
+        /* Capture screenshots for modal interactions */
+        screenshot: 'always',
+      },
+    },
 
     /* Test against branded browsers. */
     // {

@@ -58,7 +58,8 @@ export class PlacesService {
       // Load the script
       const script = document.createElement('script');
       script.type = 'text/javascript';
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&libraries=places`;
+      // Google Maps API disabled - using Mapbox instead
+      script.src = ''; // Disabled Google Maps API
       script.async = true;
       script.defer = true;
 
@@ -193,9 +194,8 @@ export class PlacesService {
    * Check if Google Maps API is available
    */
   isApiAvailable(): boolean {
-    return this.isGoogleMapsLoaded && 
-           environment.googleMapsApiKey && 
-           environment.googleMapsApiKey !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
+    // Google Maps API disabled - using Mapbox instead
+    return false;
   }
 
   /**
