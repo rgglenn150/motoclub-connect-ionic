@@ -97,7 +97,7 @@ export class AuthService {
 
   getLoggedInUser() {
     const user = localStorage.getItem('user');
-    console.log('getLoggedInUser', user);
+   
     return user ? JSON.parse(user) : null;
   }
 

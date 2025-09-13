@@ -25,7 +25,7 @@ export class PlacesService {
   private isGoogleMapsLoaded = false;
 
   constructor() {
-    this.loadGoogleMapsApi();
+   // this.loadGoogleMapsApi();
   }
 
   /**
