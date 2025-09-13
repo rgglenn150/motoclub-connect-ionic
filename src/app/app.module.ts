@@ -28,6 +28,12 @@ import { Tab2PageModule } from './tab2/tab2.module';
 import { RegisterPageRoutingModule } from './pages/register/register-routing.module';
 import { CreateClubPageRoutingModule } from './pages/clubs/create-club/create-club-routing.module';
 import { ServiceWorkerModule } from '@angular/service-worker';
+import { LottieComponent, provideLottieOptions } from 'ngx-lottie';
+import player from 'lottie-web';
+
+export function playerFactory() {
+  return player;
+}
 
 @NgModule({
   declarations: [AppComponent],
@@ -64,6 +70,7 @@ import { ServiceWorkerModule } from '@angular/service-worker';
       useClass: ErrorInterceptor,
       multi: true,
     },
+    provideLottieOptions({ player: playerFactory }),
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],

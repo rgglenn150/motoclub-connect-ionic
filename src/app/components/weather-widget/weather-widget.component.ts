@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { WeatherService } from '../../service/weather.service';
 import { LocationPreferencesService } from '../../service/location-preferences.service';
@@ -12,7 +12,8 @@ import { LocationPreferencesComponent } from '../location-preferences/location-p
 @Component({
   selector: 'app-weather-widget',
   templateUrl: './weather-widget.component.html',
-  styleUrls: ['./weather-widget.component.scss']
+  styleUrls: ['./weather-widget.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WeatherWidgetComponent implements OnInit, OnDestroy {
   @Input() showForecast: boolean = false;
@@ -26,6 +27,9 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
   hasError: boolean = false;
   errorMessage: string = '';
   lastUpdated: Date | null = null;
+
+  // Flip animation state
+  isFlipped: boolean = false;
   
   // Network status properties (mock for now - these would come from NetworkService)
   networkStatus = { online: true };
@@ -40,7 +44,8 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
     private weatherService: WeatherService,
     private locationPreferencesService: LocationPreferencesService,
     private placesService: PlacesService,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -98,12 +103,14 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
         this.lastUpdated = new Date();
         this.isLoading = false;
         this.hasError = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Weather widget error:', error);
         this.hasError = true;
         this.errorMessage = error.message || 'Unable to load weather data';
         this.isLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -147,10 +154,12 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
             this.weatherData = data;
             this.lastUpdated = new Date();
             this.hasError = false;
+            this.cdr.markForCheck();
           },
           error: (error) => {
             console.error('Auto-refresh weather error:', error);
             // Don't show error state during auto-refresh, keep existing data
+            this.cdr.markForCheck();
           }
         });
     }
@@ -196,10 +205,34 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Get weather icon name
+   * Get weather icon name (legacy - kept for compatibility)
    */
   get iconName(): string {
     return this.weatherData?.conditions.iconName || 'help-outline';
+  }
+
+  /**
+   * Get weather icon type for custom SVG icons
+   */
+  get iconType(): string {
+    if (!this.weatherData) {
+      return 'default';
+    }
+
+    const code = this.weatherData.conditions.code;
+
+    if (code === 0) return 'sunny';
+    if (code >= 1 && code <= 2) return 'partly-cloudy';
+    if (code === 3) return 'cloudy';
+    if (code >= 45 && code <= 48) return 'fog';
+    if (code >= 51 && code <= 57) return 'rain';
+    if (code >= 61 && code <= 67) return 'rain';
+    if (code >= 71 && code <= 77) return 'snow';
+    if (code >= 80 && code <= 82) return 'showers';
+    if (code >= 85 && code <= 86) return 'snow';
+    if (code >= 95 && code <= 99) return 'thunderstorm';
+
+    return 'default';
   }
 
   /**
@@ -372,5 +405,149 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
     } else {
       return 'location-outline';
     }
+  }
+
+  /**
+   * Get dynamic background class based on weather conditions
+   */
+  get weatherBackgroundClass(): string {
+    if (!this.weatherData) {
+      return 'weather-bg-default';
+    }
+
+    const code = this.weatherData.conditions.code;
+
+    if (code === 0) return 'weather-bg-clear';
+    if (code >= 1 && code <= 2) return 'weather-bg-partly-cloudy';
+    if (code === 3) return 'weather-bg-cloudy';
+    if (code >= 45 && code <= 48) return 'weather-bg-fog';
+    if (code >= 51 && code <= 57) return 'weather-bg-drizzle';
+    if (code >= 61 && code <= 67) return 'weather-bg-rain';
+    if (code >= 71 && code <= 77) return 'weather-bg-snow';
+    if (code >= 80 && code <= 82) return 'weather-bg-showers';
+    if (code >= 95 && code <= 99) return 'weather-bg-thunderstorm';
+
+    return 'weather-bg-default';
+  }
+
+  /**
+   * Toggle the flip state of the weather widget
+   */
+  toggleFlip(): void {
+    this.isFlipped = !this.isFlipped;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Get descriptive text for humidity levels
+   */
+  getHumidityDescription(humidity: number): string {
+    if (humidity < 30) return 'Very dry';
+    if (humidity < 60) return 'Comfortable';
+    if (humidity < 80) return 'Humid';
+    return 'Very humid';
+  }
+
+  /**
+   * Get descriptive text for wind speed
+   */
+  getWindDescription(windSpeed: number): string {
+    if (windSpeed < 5) return 'Calm';
+    if (windSpeed < 15) return 'Light breeze';
+    if (windSpeed < 25) return 'Moderate breeze';
+    if (windSpeed < 40) return 'Strong breeze';
+    if (windSpeed < 60) return 'High wind';
+    return 'Very high wind';
+  }
+
+  /**
+   * Get descriptive text for atmospheric pressure
+   */
+  getPressureDescription(pressure: number): string {
+    if (pressure < 1000) return 'Low pressure';
+    if (pressure < 1020) return 'Normal pressure';
+    if (pressure < 1030) return 'High pressure';
+    return 'Very high pressure';
+  }
+
+  /**
+   * Get descriptive text for visibility
+   */
+  getVisibilityDescription(visibility: number): string {
+    if (visibility < 1) return 'Very poor';
+    if (visibility < 5) return 'Poor';
+    if (visibility < 10) return 'Moderate';
+    if (visibility < 20) return 'Good';
+    return 'Excellent';
+  }
+
+  /**
+   * Get descriptive text for UV Index
+   */
+  getUVIndexDescription(uvIndex: number): string {
+    if (uvIndex <= 2) return 'Low';
+    if (uvIndex <= 5) return 'Moderate';
+    if (uvIndex <= 7) return 'High';
+    if (uvIndex <= 10) return 'Very high';
+    return 'Extreme';
+  }
+
+  /**
+   * Check if forecast data is available
+   */
+  get hasForecast(): boolean {
+    return !!(this.weatherData?.forecast && this.weatherData.forecast.length > 0);
+  }
+
+  /**
+   * Get weather icon type for forecast item
+   */
+  getForecastIconType(code: number): string {
+    if (code === 0) return 'sunny';
+    if (code >= 1 && code <= 2) return 'partly-cloudy';
+    if (code === 3) return 'cloudy';
+    if (code >= 45 && code <= 48) return 'fog';
+    if (code >= 51 && code <= 57) return 'rain';
+    if (code >= 61 && code <= 67) return 'rain';
+    if (code >= 71 && code <= 77) return 'snow';
+    if (code >= 80 && code <= 82) return 'showers';
+    if (code >= 85 && code <= 86) return 'snow';
+    if (code >= 95 && code <= 99) return 'thunderstorm';
+    return 'default';
+  }
+
+  /**
+   * Get short description for forecast
+   */
+  getForecastShortDescription(description: string): string {
+    // Shorten descriptions for better display in compact forecast
+    const shortcuts: { [key: string]: string } = {
+      'Clear sky': 'Clear',
+      'Mainly clear': 'Mostly Clear',
+      'Partly cloudy': 'Partly Cloudy',
+      'Overcast': 'Cloudy',
+      'Light drizzle': 'Light Rain',
+      'Moderate drizzle': 'Rain',
+      'Dense drizzle': 'Heavy Rain',
+      'Slight rain': 'Light Rain',
+      'Moderate rain': 'Rain',
+      'Heavy rain': 'Heavy Rain',
+      'Slight snow fall': 'Light Snow',
+      'Moderate snow fall': 'Snow',
+      'Heavy snow fall': 'Heavy Snow',
+      'Slight rain showers': 'Showers',
+      'Moderate rain showers': 'Showers',
+      'Violent rain showers': 'Heavy Showers',
+      'Thunderstorm': 'Storms'
+    };
+
+    return shortcuts[description] || description;
+  }
+
+  /**
+   * TrackBy function for forecast ngFor performance optimization
+   */
+  trackForecastDay(index: number, day: any): string {
+    return day.date;
   }
 }

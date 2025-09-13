@@ -65,6 +65,37 @@ export interface WeatherData {
     /** Local time at the weather location */
     localTime?: string;
   };
+
+  /** 3-day forecast data */
+  forecast?: ForecastDay[];
+}
+
+/**
+ * Interface for daily forecast data
+ */
+export interface ForecastDay {
+  /** Date in YYYY-MM-DD format */
+  date: string;
+  /** Human-readable day name (Today, Tomorrow, Mon, Tue, etc.) */
+  dayName: string;
+  /** Temperature range for the day */
+  temperature: {
+    /** Minimum temperature in Celsius */
+    min: number;
+    /** Maximum temperature in Celsius */
+    max: number;
+  };
+  /** Weather conditions for the day */
+  conditions: {
+    /** WMO weather interpretation code */
+    code: number;
+    /** Human-readable weather description */
+    description: string;
+    /** Ionic icon name for displaying weather condition */
+    iconName: string;
+  };
+  /** Precipitation chance percentage (optional) */
+  precipitationChance?: number;
 }
 
 /**
@@ -99,6 +130,7 @@ export interface WeatherResponse {
     temperature_2m_max: number[];
     temperature_2m_min: number[];
     weather_code: number[];
+    precipitation_probability_max?: number[];
     [key: string]: any;
   };
 }

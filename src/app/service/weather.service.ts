@@ -134,12 +134,14 @@ export class WeatherService {
       }
     }
 
-    // Make API call with enhanced error handling
+    // Make API call with enhanced error handling - now includes daily forecast
     const params = {
       latitude: latitude.toString(),
       longitude: longitude.toString(),
       current: 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure',
-      timezone: 'auto'
+      daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
+      timezone: 'auto',
+      forecast_days: '4' // Today + 3 days
     };
 
     const requestTimeout = this.networkService.getRecommendedTimeout();
@@ -195,7 +197,33 @@ export class WeatherService {
    */
   private mapApiResponseToWeatherData(response: WeatherResponse): WeatherData {
     const weatherCode = response.current.weather_code;
-    
+
+    // Map daily forecast data if available
+    let dailyForecast;
+    if (response.daily && response.daily.time && response.daily.time.length > 1) {
+      // Skip today (index 0) and take next 3 days (indices 1, 2, 3)
+      const forecastDates = response.daily.time.slice(1, 4);
+
+      dailyForecast = forecastDates.map((date, index) => {
+        const dayIndex = index + 1; // Adjust to access correct indices in daily arrays
+
+        return {
+          date: date,
+          dayName: this.getDayName(date),
+          temperature: {
+            min: Math.round(response.daily!.temperature_2m_min[dayIndex]),
+            max: Math.round(response.daily!.temperature_2m_max[dayIndex])
+          },
+          conditions: {
+            code: response.daily!.weather_code[dayIndex],
+            description: this.mapWeatherCodeToDescription(response.daily!.weather_code[dayIndex]),
+            iconName: this.mapWeatherCodeToIcon(response.daily!.weather_code[dayIndex])
+          },
+          precipitationChance: response.daily!.precipitation_probability_max ? response.daily!.precipitation_probability_max[dayIndex] : undefined
+        };
+      });
+    }
+
     return {
       location: {
         latitude: response.latitude,
@@ -204,7 +232,10 @@ export class WeatherService {
       },
       temperature: {
         current: Math.round(response.current.temperature_2m),
-        feelsLike: response.current.apparent_temperature ? Math.round(response.current.apparent_temperature) : undefined
+        feelsLike: response.current.apparent_temperature ? Math.round(response.current.apparent_temperature) : undefined,
+        // Include today's min/max if available
+        min: response.daily?.temperature_2m_min ? Math.round(response.daily.temperature_2m_min[0]) : undefined,
+        max: response.daily?.temperature_2m_max ? Math.round(response.daily.temperature_2m_max[0]) : undefined
       },
       conditions: {
         description: this.mapWeatherCodeToDescription(weatherCode),
@@ -218,7 +249,9 @@ export class WeatherService {
       },
       timestamps: {
         lastUpdated: response.current.time
-      }
+      },
+      // Add forecast data to the weather data
+      forecast: dailyForecast
     };
   }
 
@@ -275,6 +308,35 @@ export class WeatherService {
   }
 
   /**
+   * Get day name from date string
+   * @param dateString - Date in YYYY-MM-DD format
+   * @returns Day name (Today, Tomorrow, or day of week)
+   */
+  private getDayName(dateString: string): string {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const date = new Date(dateString);
+
+    // Format dates to compare (YYYY-MM-DD)
+    const todayStr = today.getFullYear() + '-' +
+      String(today.getMonth() + 1).padStart(2, '0') + '-' +
+      String(today.getDate()).padStart(2, '0');
+    const tomorrowStr = tomorrow.getFullYear() + '-' +
+      String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' +
+      String(tomorrow.getDate()).padStart(2, '0');
+
+    if (dateString === todayStr) {
+      return 'Today';
+    } else if (dateString === tomorrowStr) {
+      return 'Tomorrow';
+    } else {
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    }
+  }
+
+  /**
    * Map WMO weather interpretation codes to human-readable descriptions
    * @param code - WMO weather code
    * @returns Weather description string
@@ -316,6 +378,8 @@ export class WeatherService {
 
   /**
    * Map WMO weather interpretation codes to appropriate Ionic icons
+   * Note: This method provides legacy Ionic icon support.
+   * The weather widget now uses custom SVG icons via the iconType getter.
    * @param code - WMO weather code
    * @returns Ionic icon name string
    */

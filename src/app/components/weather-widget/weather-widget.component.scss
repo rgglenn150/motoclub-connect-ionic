@@ -1,8 +1,237 @@
+/**
+ * Weather Widget Main Styles
+ *
+ * This file imports all modular SCSS files and contains the main component styles.
+ */
+
+// Import modular style files
+@import './variables';
+@import './animations';
+@import './weather-icons.scss';
+
+// Main Weather Widget Component Styles
+
 .weather-widget {
+  // Apply typography system
+  @extend .weather-typography;
+
+  // Set base font family
+  font-family: var(--weather-font-primary);
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
   // Ensure consistent styling with existing app theme
   background: var(--ion-color-dark-shade, #1e1e1e);
   border: 1px solid var(--ion-color-dark-tint, #383838);
-  transition: all 0.3s ease-in-out;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  cursor: pointer;
+
+  // Subtle hover effect for the entire widget
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--ion-color-medium-tint, #4a4a4a);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
+                0 2px 8px rgba(0, 0, 0, 0.1);
+
+    // Enhance dynamic background animation on hover
+    &::before {
+      opacity: 0.15 !important;
+    }
+  }
+
+  // Subtle press effect
+  &:active {
+    transform: translateY(-1px);
+    transition: transform 0.1s ease-out;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  // Focus state for accessibility (when widget is interactive)
+  &:focus-visible {
+    outline: 2px solid var(--ion-color-primary);
+    outline-offset: 2px;
+  }
+
+  // Enhanced dynamic background transitions with multiple animations
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  // Hardware acceleration and performance optimization
+  will-change: transform, background, opacity;
+  transform: translateZ(0); // Force hardware acceleration
+  backface-visibility: hidden;
+
+  // Base animated background overlay for all weather conditions
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.1;
+    pointer-events: none;
+    transition: all 0.6s ease-in-out;
+    z-index: 1;
+
+    // Hardware acceleration for smooth animations
+    will-change: transform, opacity, background;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  // Weather content should be above background effects
+  > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  // Clear sky - sunny with subtle sun rays
+  &.weather-bg-clear {
+    background: linear-gradient(135deg, #87CEEB 0%, #4A90E2 50%, #1E90FF 100%);
+
+    &::before {
+      background: radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
+                  conic-gradient(from 0deg at 80% 20%, rgba(255, 215, 0, 0.1) 0deg, transparent 30deg, rgba(255, 215, 0, 0.1) 60deg, transparent 90deg, rgba(255, 215, 0, 0.1) 120deg, transparent 150deg, rgba(255, 215, 0, 0.1) 180deg, transparent 210deg, rgba(255, 215, 0, 0.1) 240deg, transparent 270deg, rgba(255, 215, 0, 0.1) 300deg, transparent 330deg);
+      animation: sunRays 8s linear infinite;
+    }
+  }
+
+  // Partly cloudy - dynamic cloud movement
+  &.weather-bg-partly-cloudy {
+    background: linear-gradient(135deg, #B8D4F0 0%, #7BB3F0 50%, #4A90E2 100%);
+
+    &::before {
+      background: radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.4) 25%, transparent 50%),
+                  radial-gradient(ellipse at 70% 60%, rgba(255, 255, 255, 0.3) 30%, transparent 60%),
+                  radial-gradient(ellipse at 40% 80%, rgba(255, 255, 255, 0.2) 20%, transparent 45%);
+      animation: cloudsFloat 12s ease-in-out infinite;
+    }
+  }
+
+  // Overcast - heavy cloud cover
+  &.weather-bg-cloudy {
+    background: linear-gradient(135deg, #95A5B8 0%, #6B7C8D 50%, #4A5562 100%);
+
+    &::before {
+      background: radial-gradient(ellipse at 30% 40%, rgba(255, 255, 255, 0.2) 40%, transparent 70%),
+                  radial-gradient(ellipse at 80% 20%, rgba(255, 255, 255, 0.15) 35%, transparent 65%),
+                  radial-gradient(ellipse at 60% 80%, rgba(255, 255, 255, 0.1) 30%, transparent 60%);
+      animation: heavyClouds 15s ease-in-out infinite;
+    }
+  }
+
+  // Fog - misty effect
+  &.weather-bg-fog {
+    background: linear-gradient(135deg, #D3D3D3 0%, #A9A9A9 50%, #808080 100%);
+
+    &::before {
+      background: linear-gradient(45deg,
+                    rgba(255, 255, 255, 0.3) 0%,
+                    transparent 25%,
+                    rgba(255, 255, 255, 0.2) 50%,
+                    transparent 75%,
+                    rgba(255, 255, 255, 0.1) 100%);
+      animation: fogWave 10s ease-in-out infinite;
+    }
+  }
+
+  // Drizzle - light rain effect
+  &.weather-bg-drizzle {
+    background: linear-gradient(135deg, #B0C4DE 0%, #778899 50%, #4F6D8E 100%);
+
+    &::before {
+      background: repeating-linear-gradient(
+                    110deg,
+                    transparent 0px,
+                    transparent 2px,
+                    rgba(173, 216, 230, 0.3) 2px,
+                    rgba(173, 216, 230, 0.3) 4px
+                  );
+      animation: lightRain 2s linear infinite;
+    }
+  }
+
+  // Rain - animated rain drops
+  &.weather-bg-rain {
+    background: linear-gradient(135deg, #4682B4 0%, #5F9EA0 50%, #2F4F4F 100%);
+
+    &::before {
+      background: repeating-linear-gradient(
+                    110deg,
+                    transparent 0px,
+                    transparent 3px,
+                    rgba(173, 216, 230, 0.5) 3px,
+                    rgba(173, 216, 230, 0.5) 6px
+                  );
+      animation: heavyRain 1.5s linear infinite;
+    }
+  }
+
+  // Snow - falling snow effect
+  &.weather-bg-snow {
+    background: linear-gradient(135deg, #F0F8FF 0%, #E6E6FA 50%, #D3D3D3 100%);
+
+    &::before {
+      background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
+                  radial-gradient(circle at 80% 40%, rgba(255, 255, 255, 0.6) 1px, transparent 2px),
+                  radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.7) 1px, transparent 2px),
+                  radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.5) 1px, transparent 2px);
+      background-size: 50px 50px, 30px 30px, 40px 40px, 35px 35px;
+      animation: snowfall 8s linear infinite;
+    }
+  }
+
+  // Rain showers - intense rain
+  &.weather-bg-showers {
+    background: linear-gradient(135deg, #4682B4 0%, #1E90FF 50%, #0D4F8C 100%);
+
+    &::before {
+      background: repeating-linear-gradient(
+                    105deg,
+                    transparent 0px,
+                    transparent 2px,
+                    rgba(173, 216, 230, 0.7) 2px,
+                    rgba(173, 216, 230, 0.7) 5px
+                  );
+      animation: showers 1s linear infinite;
+    }
+  }
+
+  // Thunderstorm - lightning and dark clouds
+  &.weather-bg-thunderstorm {
+    background: linear-gradient(135deg, #2C3E50 0%, #34495E 30%, #1B2631 70%, #17202A 100%);
+
+    &::before {
+      background: radial-gradient(ellipse at 50% 30%, rgba(255, 255, 0, 0.1) 30%, transparent 70%);
+      animation: lightning 4s ease-in-out infinite;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+      opacity: 0.6;
+      z-index: 1;
+    }
+  }
+
+  // Default state
+  &.weather-bg-default {
+    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 50%, #1a1a1a 100%);
+
+    &::before {
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 30%, transparent 70%);
+      animation: subtlePulse 6s ease-in-out infinite;
+    }
+  }
   
   // Offline mode styling
   &.offline-mode {
@@ -23,12 +252,38 @@
     height: 24px;
   }
 
-  // Weather icon styling
+  // Weather icon styling (legacy Ionicons)
   .weather-icon {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   }
 
-  // Responsive design for smaller screens
+  // New weather icon wrapper styling
+  .weather-icon-wrapper {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    // Ensure proper sizing and alignment
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+
+    @media (max-width: 480px) {
+      width: 48px;
+      height: 48px;
+    }
+
+    @media (max-width: 320px) {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  // Enhanced responsive design with accessibility considerations
   @media (max-width: 480px) {
     .flex {
       &.items-center.justify-between {
@@ -38,30 +293,139 @@
       }
     }
 
-    .text-6xl {
-      font-size: 3rem;
+    // Maintain minimum touch target sizes (44px minimum)
+    button, [role="button"] {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px;
+    }
+
+    // Enhanced text scaling for mobile accessibility
+    .weather-temperature {
+      font-size: var(--weather-text-4xl);
       margin-left: 0;
       align-self: flex-end;
       margin-top: -2rem;
     }
-    
+
+    .weather-location {
+      font-size: var(--weather-text-base);
+      line-height: var(--weather-leading-relaxed);
+    }
+
+    .weather-condition {
+      font-size: var(--weather-text-sm);
+      line-height: var(--weather-leading-relaxed);
+    }
+
+    .weather-metrics {
+      font-size: var(--weather-text-sm);
+
+      .metric-value {
+        font-size: var(--weather-text-sm);
+      }
+    }
+
     // Enhanced responsive behavior for offline mode
     &.offline-mode {
       .weather-data-container {
         flex-direction: column;
         align-items: center;
         text-align: center;
-        
+
         .flex-1 {
           width: 100%;
           margin-bottom: 1rem;
         }
-        
+
         .weather-icon-container {
           margin-left: 0;
           margin-top: 0;
         }
       }
+    }
+
+    // Reduce animation intensity on small screens for better performance
+    &::before {
+      opacity: 0.05 !important;
+    }
+
+    // Simplify weather animations for mobile
+    &.weather-bg-clear::before {
+      animation-duration: 12s; // Slower for mobile
+    }
+
+    &.weather-bg-partly-cloudy::before,
+    &.weather-bg-cloudy::before {
+      animation-duration: 18s; // Slower cloud movement
+    }
+
+    &.weather-bg-rain::before,
+    &.weather-bg-drizzle::before,
+    &.weather-bg-showers::before {
+      animation-duration: 2.5s; // Slightly slower rain
+    }
+
+    &.weather-bg-snow::before {
+      animation-duration: 12s; // Slower snowfall
+    }
+
+    &.weather-bg-thunderstorm::before {
+      animation-duration: 6s; // Slower lightning
+    }
+  }
+
+  // Performance optimizations for reduced motion preference
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      animation: none !important;
+      opacity: 0.3 !important;
+    }
+
+    transition: background 0.3s ease-in-out !important;
+  }
+
+  // Enhanced high contrast mode support with better text visibility
+  @media (prefers-contrast: high) {
+    &.weather-bg-clear {
+      background: linear-gradient(135deg, #000080 0%, #4169E1 100%);
+    }
+
+    &.weather-bg-rain,
+    &.weather-bg-drizzle,
+    &.weather-bg-showers {
+      background: linear-gradient(135deg, #000080 0%, #191970 100%);
+    }
+
+    &.weather-bg-snow {
+      background: linear-gradient(135deg, #2F2F2F 0%, #1A1A1A 100%);
+
+      .weather-temperature, .weather-location, .weather-condition {
+        color: #ffffff;
+        text-shadow: 0 0 8px rgba(0, 0, 0, 1), 0 2px 4px rgba(0, 0, 0, 0.9);
+      }
+    }
+
+    &.weather-bg-thunderstorm {
+      background: linear-gradient(135deg, #000000 0%, #1A1A1A 100%);
+    }
+
+    // Ensure all backgrounds provide sufficient contrast
+    &.weather-bg-partly-cloudy,
+    &.weather-bg-cloudy,
+    &.weather-bg-fog {
+      background: linear-gradient(135deg, #2F2F2F 0%, #1A1A1A 100%);
+    }
+  }
+
+  // Dark mode enhancements
+  @media (prefers-color-scheme: dark) {
+    &.weather-bg-clear {
+      background: linear-gradient(135deg, #1A237E 0%, #3949AB 50%, #5C6BC0 100%);
+    }
+
+    &.weather-bg-snow {
+      background: linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 50%, #B0BEC5 100%);
     }
   }
 
@@ -114,20 +478,323 @@
     }
   }
 
-  // Ensure text is readable on all backgrounds
-  .text-contrast {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  // Enhanced Typography Classes
+  .weather-text-primary {
+    color: var(--weather-text-primary);
+    text-shadow: var(--weather-text-shadow-md);
   }
 
-  // Skeleton Loading Styles
+  .weather-text-secondary {
+    color: var(--weather-text-secondary);
+    text-shadow: var(--weather-text-shadow-sm);
+  }
+
+  .weather-text-tertiary {
+    color: var(--weather-text-tertiary);
+    text-shadow: var(--weather-text-shadow-sm);
+  }
+
+  .weather-text-muted {
+    color: var(--weather-text-muted);
+    text-shadow: var(--weather-text-shadow-sm);
+  }
+
+  // Temperature Display Typography with micro-interactions
+  .weather-temperature {
+    font-family: var(--weather-font-mono);
+    font-size: var(--weather-text-5xl);
+    font-weight: var(--weather-font-bold);
+    line-height: var(--weather-leading-tight);
+    letter-spacing: var(--weather-tracking-tighter);
+    color: var(--weather-text-primary);
+    text-shadow: var(--weather-text-shadow-lg);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    display: inline-block;
+
+    // Subtle hover effect
+    &:hover {
+      transform: scale(1.05);
+      text-shadow: var(--weather-text-shadow-lg),
+                   0 0 20px rgba(255, 255, 255, 0.2);
+      color: var(--weather-text-primary);
+    }
+
+    // Touch feedback
+    &:active {
+      transform: scale(1.02);
+      transition: transform 0.1s ease-out;
+    }
+
+    // Animated loading entrance
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+
+    // Responsive scaling
+    @media (max-width: 480px) {
+      font-size: var(--weather-text-4xl);
+    }
+
+    @media (max-width: 320px) {
+      font-size: var(--weather-text-3xl);
+    }
+  }
+
+  // Location Name Typography
+  .weather-location {
+    font-family: var(--weather-font-primary);
+    font-size: var(--weather-text-lg);
+    font-weight: var(--weather-font-semibold);
+    line-height: var(--weather-leading-snug);
+    letter-spacing: var(--weather-tracking-tight);
+    color: var(--weather-text-primary);
+    text-shadow: var(--weather-text-shadow-md);
+
+    @media (max-width: 480px) {
+      font-size: var(--weather-text-base);
+    }
+  }
+
+  // Weather Condition Typography
+  .weather-condition {
+    font-family: var(--weather-font-primary);
+    font-size: var(--weather-text-sm);
+    font-weight: var(--weather-font-medium);
+    line-height: var(--weather-leading-normal);
+    letter-spacing: var(--weather-tracking-normal);
+    color: var(--weather-text-secondary);
+    text-shadow: var(--weather-text-shadow-sm);
+    text-transform: capitalize;
+
+    @media (max-width: 480px) {
+      font-size: var(--weather-text-xs);
+    }
+  }
+
+  // Weather Metrics Typography with micro-interactions
+  .weather-metrics {
+    font-family: var(--weather-font-primary);
+    font-size: var(--weather-text-xs);
+    font-weight: var(--weather-font-normal);
+    line-height: var(--weather-leading-normal);
+    letter-spacing: var(--weather-tracking-wide);
+    color: var(--weather-text-tertiary);
+    text-shadow: var(--weather-text-shadow-sm);
+
+    // Individual metric hover effects
+    > span {
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.3s ease-out;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      position: relative;
+
+      &:hover {
+        transform: translateY(-1px);
+        color: var(--weather-text-secondary);
+        background: rgba(255, 255, 255, 0.05);
+        text-shadow: var(--weather-text-shadow-md);
+
+        ion-icon {
+          transform: scale(1.2);
+          filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.2));
+        }
+      }
+
+      &:active {
+        transform: translateY(0);
+        transition: transform 0.1s ease-out;
+      }
+
+      // Staggered entrance animation
+      &:nth-child(1) { animation: slideInLeft 0.6s ease-out 0.3s both; }
+      &:nth-child(2) { animation: slideInLeft 0.6s ease-out 0.4s both; }
+      &:nth-child(3) { animation: slideInLeft 0.6s ease-out 0.5s both; }
+
+      ion-icon {
+        transition: all 0.3s ease-out;
+        margin-right: 4px;
+      }
+    }
+
+    .metric-value {
+      font-family: var(--weather-font-mono);
+      font-weight: var(--weather-font-medium);
+      letter-spacing: var(--weather-tracking-normal);
+      transition: all 0.2s ease-out;
+    }
+  }
+
+  // Timestamp Typography
+  .weather-timestamp {
+    font-family: var(--weather-font-primary);
+    font-size: var(--weather-text-xs);
+    font-weight: var(--weather-font-normal);
+    line-height: var(--weather-leading-normal);
+    letter-spacing: var(--weather-tracking-wider);
+    color: var(--weather-text-muted);
+    text-shadow: var(--weather-text-shadow-sm);
+    text-transform: uppercase;
+  }
+
+  // Error State Typography
+  .weather-error {
+    font-family: var(--weather-font-primary);
+    font-size: var(--weather-text-sm);
+    font-weight: var(--weather-font-medium);
+    line-height: var(--weather-leading-relaxed);
+    letter-spacing: var(--weather-tracking-normal);
+    color: var(--weather-text-tertiary);
+    text-shadow: var(--weather-text-shadow-sm);
+    text-align: center;
+  }
+
+  // Button Typography
+  .weather-button {
+    font-family: var(--weather-font-primary);
+    font-size: var(--weather-text-sm);
+    font-weight: var(--weather-font-semibold);
+    line-height: var(--weather-leading-tight);
+    letter-spacing: var(--weather-tracking-wide);
+    text-shadow: none;
+  }
+
+  // Network Status Typography
+  .weather-network-status {
+    font-family: var(--weather-font-primary);
+    font-size: var(--weather-text-xs);
+    font-weight: var(--weather-font-medium);
+    line-height: var(--weather-leading-tight);
+    letter-spacing: var(--weather-tracking-wider);
+    text-transform: uppercase;
+  }
+
+  // Data Freshness Typography
+  .weather-freshness {
+    font-family: var(--weather-font-primary);
+    font-size: var(--weather-text-xs);
+    font-weight: var(--weather-font-normal);
+    line-height: var(--weather-leading-normal);
+    letter-spacing: var(--weather-tracking-wide);
+    color: var(--weather-text-muted);
+    text-shadow: var(--weather-text-shadow-sm);
+  }
+
+  // Accessibility Enhancements
+  // Focus states for interactive elements
+  button, [role="button"] {
+    &:focus, &:focus-visible {
+      outline: 2px solid var(--ion-color-primary);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  }
+
+  // High contrast mode support with enhanced contrast
+  @media (prefers-contrast: high) {
+    --weather-text-primary: #ffffff;
+    --weather-text-secondary: #ffffff;
+    --weather-text-tertiary: #ffffff;
+    --weather-text-muted: rgba(255, 255, 255, 0.9);
+    --weather-text-disabled: rgba(255, 255, 255, 0.7);
+
+    .weather-temperature {
+      text-shadow: 0 0 8px rgba(0, 0, 0, 1), 0 2px 4px rgba(0, 0, 0, 0.8);
+      font-weight: var(--weather-font-bold);
+    }
+
+    .weather-location {
+      text-shadow: 0 0 4px rgba(0, 0, 0, 1), 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .weather-condition, .weather-metrics {
+      color: #ffffff;
+      text-shadow: 0 0 4px rgba(0, 0, 0, 1);
+    }
+  }
+
+  // Enhanced Reduced motion preferences with performance optimization
+  @media (prefers-reduced-motion: reduce) {
+    // Disable all animations but maintain essential interactions
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.15s !important; // Allow brief transitions for usability
+    }
+
+    // Keep hover effects but make them instant
+    .weather-widget:hover {
+      transition-duration: 0.1s !important;
+    }
+
+    .refresh-btn:hover:not(.disabled),
+    .settings-btn:hover,
+    .location-source-indicator:hover {
+      transition-duration: 0.1s !important;
+    }
+
+    // Maintain text shadows for readability even with reduced motion
+    .weather-temperature, .weather-location, .weather-condition {
+      text-shadow: var(--weather-text-shadow-md);
+    }
+
+    // Remove complex animations but keep simple state changes
+    .weather-metrics > span:hover {
+      animation: none !important;
+      transform: none !important;
+      transition: color 0.1s ease-out !important;
+    }
+
+    // Ensure loading states are still visible
+    .skeleton-container {
+      animation: none !important;
+      opacity: 1 !important;
+    }
+
+    // Keep essential loading indicator
+    .loading-circle {
+      animation: rotate 1s linear infinite !important;
+    }
+  }
+
+  // Large text mode support
+  @media (min-resolution: 2dppx) and (orientation: portrait) {
+    .weather-temperature {
+      font-size: calc(var(--weather-text-5xl) * 1.1);
+    }
+
+    .weather-location {
+      font-size: calc(var(--weather-text-lg) * 1.1);
+    }
+
+    .weather-condition {
+      font-size: calc(var(--weather-text-sm) * 1.1);
+    }
+  }
+
+  // Ensure text is readable on all backgrounds
+  .text-contrast {
+    text-shadow: var(--weather-text-shadow-md);
+  }
+
+  // Enhanced Skeleton Loading Styles with smooth animations
   .skeleton-container {
     min-height: 120px;
     opacity: 1;
-    animation: fadeIn 0.3s ease-in-out;
-    
+    animation: fadeIn 0.5s ease-out, breatheLoading 3s ease-in-out infinite 0.5s;
+
     // Improve performance for animations
     will-change: transform, opacity;
     transform: translateZ(0); // Force hardware acceleration
+
+    // Subtle pulsing background during loading
+    background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.02) 50%, transparent 60%);
+    background-size: 200% 200%;
+    animation: gradientShift 4s ease-in-out infinite, fadeIn 0.5s ease-out;
   }
 
   .skeleton {
@@ -183,6 +850,44 @@
     }
     50% {
       opacity: 0.8;
+    }
+  }
+
+  @keyframes breatheLoading {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.01);
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes gradientShift {
+    0%, 100% {
+      background-position: 0% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+  }
+
+  @keyframes bounceIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
     }
   }
 
@@ -298,60 +1003,237 @@
     }
   }
   
-  // Enhanced Refresh Button
+  // Enhanced Refresh Button with advanced micro-interactions
   .refresh-btn {
-    transition: all 0.2s ease-in-out;
-    
-    &:hover:not(.disabled) {
-      transform: scale(1.1);
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-radius: 50%;
+    overflow: hidden;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    // Ripple effect container
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s ease-out, height 0.6s ease-out;
+      pointer-events: none;
+      z-index: 1;
     }
-    
+
+    &:hover:not(.disabled) {
+      transform: scale(1.15) rotate(5deg);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+
+      &::before {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    &:active:not(.disabled) {
+      transform: scale(1.05) rotate(-5deg);
+      transition: transform 0.1s ease-out;
+
+      &::before {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        transition: width 0.1s ease-out, height 0.1s ease-out;
+      }
+    }
+
     &.disabled {
       opacity: 0.3;
       cursor: not-allowed;
-      
+      filter: grayscale(1);
+
       &:hover {
         transform: none;
+        background: transparent;
+        box-shadow: none;
       }
     }
-    
+
     ion-icon {
-      transition: transform 0.3s ease-in-out;
-      
+      position: relative;
+      z-index: 2;
+      transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+
       &.animate-spin {
         animation: spin 1s linear infinite;
       }
     }
-  }
-  
-  // Location Preferences Settings Button
-  .settings-btn {
-    transition: all 0.2s ease-in-out;
-    
-    &:hover {
-      transform: scale(1.1);
-      color: var(--ion-color-primary) !important;
+
+    // Enhanced click feedback
+    &:not(.disabled):active ion-icon {
+      transform: rotate(180deg) scale(0.9);
+      transition: transform 0.2s ease-out;
     }
-    
-    ion-icon {
-      transition: transform 0.3s ease-in-out;
-      
-      &:hover {
-        transform: rotate(90deg);
+
+    // Pulse effect for loading state
+    &.loading {
+      animation: pulse 2s ease-in-out infinite;
+
+      ion-icon {
+        animation: spin 1s linear infinite, pulse 2s ease-in-out infinite;
       }
     }
   }
   
-  // Location Source Indicator
-  .location-source-indicator {
-    transition: all 0.2s ease-in-out;
-    
-    &:hover {
-      transform: scale(1.1);
+  // Location Preferences Settings Button with enhanced interactions
+  .settings-btn {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-radius: 50%;
+    overflow: hidden;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    // Subtle glow effect
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: var(--ion-color-primary);
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      transition: all 0.4s ease-out;
+      pointer-events: none;
+      z-index: 1;
     }
-    
+
+    &:hover {
+      transform: scale(1.2) rotate(15deg);
+      color: var(--ion-color-primary) !important;
+      background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.1);
+      box-shadow: 0 0 20px rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.3);
+
+      &::before {
+        width: 40px;
+        height: 40px;
+        opacity: 0.1;
+      }
+    }
+
+    &:active {
+      transform: scale(1.1) rotate(-10deg);
+      transition: transform 0.15s ease-out;
+
+      &::before {
+        width: 50px;
+        height: 50px;
+        opacity: 0.2;
+        transition: all 0.15s ease-out;
+      }
+    }
+
     ion-icon {
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+      position: relative;
+      z-index: 2;
+      transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
+    }
+
+    &:hover ion-icon {
+      transform: rotate(180deg) scale(1.1);
+      filter: drop-shadow(0 2px 8px rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.4));
+    }
+
+    &:active ion-icon {
+      transform: rotate(360deg) scale(0.9);
+      transition: transform 0.2s ease-out;
+    }
+
+    // Focus state for accessibility
+    &:focus-visible {
+      outline: 2px solid var(--ion-color-primary);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.2);
+    }
+  }
+  
+  // Location Source Indicator with enhanced interactions
+  .location-source-indicator {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-radius: 50%;
+    overflow: hidden;
+    min-width: 32px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    // Subtle pulsing background
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 193, 7, 0.3);
+      transform: translate(-50%, -50%);
+      transition: all 0.4s ease-out;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    &:hover {
+      transform: scale(1.2);
+      background: rgba(255, 193, 7, 0.1);
+
+      &::before {
+        width: 30px;
+        height: 30px;
+        background: rgba(255, 193, 7, 0.2);
+      }
+    }
+
+    &:active {
+      transform: scale(1.1);
+      transition: transform 0.15s ease-out;
+
+      &::before {
+        width: 35px;
+        height: 35px;
+        background: rgba(255, 193, 7, 0.3);
+        transition: all 0.15s ease-out;
+      }
+    }
+
+    ion-icon {
+      position: relative;
+      z-index: 2;
+      transition: all 0.3s ease-out;
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+    }
+
+    &:hover ion-icon {
+      filter: drop-shadow(0 2px 8px rgba(255, 193, 7, 0.4));
+      transform: scale(1.1);
     }
   }
   
@@ -483,61 +1365,954 @@
       opacity: 1;
     }
   }
+
+  @keyframes slideInLeft {
+    from {
+      transform: translate3d(-20px, 0, 0);
+      opacity: 0;
+    }
+    to {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translate3d(20px, 0, 0);
+      opacity: 0;
+    }
+    to {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+  }
+
+  // Weather-specific animation keyframes
+  @keyframes sunRays {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes cloudsFloat {
+    0%, 100% {
+      transform: translateX(0%) scale(1);
+      opacity: 0.6;
+    }
+    33% {
+      transform: translateX(-10%) scale(1.05);
+      opacity: 0.8;
+    }
+    66% {
+      transform: translateX(5%) scale(0.95);
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes heavyClouds {
+    0%, 100% {
+      transform: translateX(0%) translateY(0%);
+      opacity: 0.4;
+    }
+    50% {
+      transform: translateX(-5%) translateY(-2%);
+      opacity: 0.6;
+    }
+  }
+
+  @keyframes fogWave {
+    0%, 100% {
+      transform: translateX(-100%);
+      opacity: 0.3;
+    }
+    50% {
+      transform: translateX(100%);
+      opacity: 0.6;
+    }
+  }
+
+  @keyframes lightRain {
+    0% {
+      transform: translateX(-50px) translateY(-100px);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(50px) translateY(100px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes heavyRain {
+    0% {
+      transform: translateX(-30px) translateY(-150px);
+      opacity: 0;
+    }
+    5% {
+      opacity: 1;
+    }
+    95% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(30px) translateY(150px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes snowfall {
+    0% {
+      transform: translateY(-100px) rotate(0deg);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100px) rotate(360deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes showers {
+    0% {
+      transform: translateX(-40px) translateY(-200px) skew(10deg);
+      opacity: 0;
+    }
+    3% {
+      opacity: 1;
+    }
+    97% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(40px) translateY(200px) skew(10deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes lightning {
+    0%, 90%, 100% {
+      opacity: 0.1;
+    }
+    5%, 10% {
+      opacity: 0.8;
+      background: radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 0.9) 20%, rgba(173, 216, 230, 0.5) 40%, transparent 70%);
+    }
+    15% {
+      opacity: 0.3;
+    }
+    20% {
+      opacity: 1;
+      background: radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 1) 15%, rgba(255, 255, 0, 0.8) 30%, rgba(173, 216, 230, 0.3) 50%, transparent 70%);
+    }
+  }
+
+  @keyframes subtlePulse {
+    0%, 100% {
+      opacity: 0.03;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.08;
+      transform: scale(1.02);
+    }
+  }
   
-  // Enhanced Error State
+  // Enhanced Error State with engaging animations and accessibility
   .text-center {
+    animation: slideInUp 0.6s ease-out;
+
     .flex.flex-col {
       .space-y-2 {
         button {
-          transition: all 0.2s ease-in-out;
-          
-          &:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          position: relative;
+          transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          min-width: 44px;
+          min-height: 44px;
+          overflow: hidden;
+
+          // Ripple effect
+          &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease-out, height 0.6s ease-out;
+            pointer-events: none;
           }
-          
+
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+
+            &::before {
+              width: 60px;
+              height: 60px;
+            }
+
+            ion-icon {
+              transform: rotate(360deg) scale(1.1);
+            }
+          }
+
+          &:active:not(:disabled) {
+            transform: translateY(-1px);
+            transition: transform 0.1s ease-out;
+
+            &::before {
+              width: 80px;
+              height: 80px;
+              transition: width 0.1s ease-out, height 0.1s ease-out;
+            }
+          }
+
+          &:focus, &:focus-visible {
+            outline: 2px solid var(--ion-color-primary);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.2);
+          }
+
           &:disabled {
-            animation: pulse 2s infinite;
+            animation: pulse 2s infinite, shake 3s ease-in-out infinite;
+            opacity: 0.6;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+
+            &:hover {
+              transform: none;
+              box-shadow: none;
+            }
+          }
+
+          ion-icon {
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            z-index: 2;
+          }
+
+          // Staggered entrance for error buttons
+          &:nth-child(1) {
+            animation: bounceIn 0.6s ease-out 0.2s both;
+          }
+
+          &:nth-child(2) {
+            animation: bounceIn 0.6s ease-out 0.4s both;
           }
         }
       }
     }
   }
+
+  // Screen reader support
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  // Ensure proper color contrast for icons
+  ion-icon {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+
+    @media (prefers-contrast: high) {
+      filter: drop-shadow(0 0 4px rgba(0, 0, 0, 1)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+    }
+  }
   
-  // Responsive enhancements for network indicators
-  @media (max-width: 480px) {
-    .network-status-bar {
-      padding: 8px 12px;
-      
-      span {
-        font-size: 10px;
-      }
+  // ========================================
+  // FLIP ANIMATION STYLES
+  // ========================================
+
+  // Flip container setup
+  .flip-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+  }
+
+  // Flip sides setup
+  .flip-side {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+    backface-visibility: hidden;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+
+  // Front side (main weather view)
+  .flip-front {
+    transform: rotateY(0deg);
+    z-index: 2;
+
+    &.hidden {
+      transform: rotateY(-180deg);
+      pointer-events: none;
     }
-    
-    .data-source-indicator,
-    .network-indicator {
+  }
+
+  // Back side (detailed weather view)
+  .flip-back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    transform: rotateY(180deg);
+    z-index: 1;
+
+    &.hidden {
+      transform: rotateY(180deg);
+      pointer-events: none;
+    }
+
+    &:not(.hidden) {
+      transform: rotateY(0deg);
+      z-index: 2;
+    }
+  }
+
+  // Enhanced flip state for widget container
+  &.flipped {
+    .flip-front {
+      transform: rotateY(-180deg);
+      pointer-events: none;
+    }
+
+    .flip-back {
+      transform: rotateY(0deg);
+      pointer-events: auto;
+      z-index: 2;
+    }
+  }
+
+  // Flip header styling
+  .flip-header {
+    .weather-detail-title {
+      font-family: var(--weather-font-primary);
+      font-weight: var(--weather-font-semibold);
+      display: flex;
+      align-items: center;
+      color: var(--weather-text-primary);
+      text-shadow: var(--weather-text-shadow-md);
+
       ion-icon {
-        font-size: 12px;
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+        color: var(--ion-color-primary);
       }
     }
-    
-    .cached-data-notice {
-      padding: 8px;
-      
-      span {
-        font-size: 10px;
+
+    .weather-detail-location {
+      font-family: var(--weather-font-primary);
+      font-weight: var(--weather-font-normal);
+      color: var(--weather-text-tertiary);
+      text-shadow: var(--weather-text-shadow-sm);
+    }
+  }
+
+  // Flip back button
+  .flip-back-btn {
+    position: relative;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--weather-text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.4s ease-out, height 0.4s ease-out;
+      pointer-events: none;
+    }
+
+    &:hover {
+      transform: scale(1.1) rotate(-10deg);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+
+      &::before {
+        width: 40px;
+        height: 40px;
+      }
+
+      ion-icon {
+        transform: translateX(-2px);
       }
     }
-    
-    .weather-icon-container {
-      .absolute {
-        width: 12px;
-        height: 12px;
-        
-        ion-icon {
-          font-size: 8px;
+
+    &:active {
+      transform: scale(1.05) rotate(-5deg);
+      transition: transform 0.15s ease-out;
+
+      &::before {
+        width: 50px;
+        height: 50px;
+        transition: width 0.15s ease-out, height 0.15s ease-out;
+      }
+    }
+
+    &:focus, &:focus-visible {
+      outline: 2px solid var(--ion-color-primary);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.2);
+    }
+
+    ion-icon {
+      position: relative;
+      z-index: 2;
+      transition: transform 0.3s ease-out;
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+    }
+  }
+
+  // Section titles
+  .section-title {
+    font-family: var(--weather-font-primary);
+    font-size: var(--weather-text-sm);
+    font-weight: var(--weather-font-semibold);
+    color: var(--weather-text-primary);
+    text-shadow: var(--weather-text-shadow-sm);
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+
+    ion-icon {
+      color: var(--ion-color-primary);
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+  }
+
+  // Forecast section
+  .forecast-section {
+    .forecast-placeholder {
+      .forecast-item {
+        transition: all 0.3s ease-out;
+
+        &:hover {
+          transform: translateY(-1px);
+          background: rgba(255, 255, 255, 0.05) !important;
         }
       }
+    }
+  }
+
+  // Details grid layout
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+
+    @media (max-width: 640px) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 360px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Detail cards
+  .detail-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+
+    // Subtle hover glow effect
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.05) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease-out;
+      pointer-events: none;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+
+      &::before {
+        opacity: 1;
+      }
+
+      .detail-icon {
+        transform: scale(1.1);
+        filter: drop-shadow(0 2px 8px rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.4));
+      }
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+
+      .detail-icon {
+        color: var(--ion-color-primary);
+        margin-right: 0.5rem;
+        transition: all 0.3s ease-out;
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+      }
+
+      .detail-label {
+        font-family: var(--weather-font-primary);
+        font-size: var(--weather-text-xs);
+        font-weight: var(--weather-font-medium);
+        color: var(--weather-text-secondary);
+        text-shadow: var(--weather-text-shadow-sm);
+        text-transform: uppercase;
+        letter-spacing: var(--weather-tracking-wide);
+      }
+    }
+
+    .detail-content {
+      position: relative;
+      z-index: 2;
+
+      .detail-primary {
+        font-family: var(--weather-font-mono);
+        font-size: var(--weather-text-lg);
+        font-weight: var(--weather-font-bold);
+        color: var(--weather-text-primary);
+        text-shadow: var(--weather-text-shadow-md);
+        margin: 0;
+        line-height: var(--weather-leading-tight);
+      }
+
+      .detail-secondary {
+        font-family: var(--weather-font-primary);
+        font-size: var(--weather-text-xs);
+        font-weight: var(--weather-font-normal);
+        color: var(--weather-text-tertiary);
+        text-shadow: var(--weather-text-shadow-sm);
+        margin: 0.25rem 0 0 0;
+        line-height: var(--weather-leading-normal);
+      }
+
+      .detail-range {
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+
+        .range-label {
+          font-family: var(--weather-font-primary);
+          font-size: var(--weather-text-xs);
+          font-weight: var(--weather-font-normal);
+          color: var(--weather-text-muted);
+          text-shadow: var(--weather-text-shadow-sm);
+        }
+
+        .range-value {
+          font-family: var(--weather-font-mono);
+          font-size: var(--weather-text-xs);
+          font-weight: var(--weather-font-medium);
+          color: var(--weather-text-tertiary);
+          text-shadow: var(--weather-text-shadow-sm);
+        }
+      }
+    }
+  }
+
+  // Data info section
+  .data-info {
+    font-family: var(--weather-font-primary);
+    color: var(--weather-text-muted);
+
+    ion-icon {
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+
+    .freshness-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      transition: all 0.3s ease-in-out;
+
+      &.fresh {
+        background: var(--ion-color-success);
+        box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+      }
+
+      &.stale {
+        background: var(--ion-color-warning);
+        box-shadow: 0 0 6px rgba(255, 196, 9, 0.6);
+      }
+    }
+  }
+
+  // Accessibility enhancements for flip animation
+  @media (prefers-reduced-motion: reduce) {
+    .flip-side {
+      transition: opacity 0.3s ease-in-out !important;
+      transform: none !important;
+    }
+
+    .flip-front.hidden {
+      opacity: 0;
+      transform: none !important;
+    }
+
+    .flip-back.hidden {
+      opacity: 0;
+      transform: none !important;
+    }
+
+    .flip-back:not(.hidden) {
+      opacity: 1;
+      transform: none !important;
+    }
+
+    &.flipped {
+      .flip-front {
+        opacity: 0;
+        transform: none !important;
+      }
+
+      .flip-back {
+        opacity: 1;
+        transform: none !important;
+      }
+    }
+
+    .detail-card {
+      &:hover {
+        transform: none !important;
+      }
+    }
+
+    .flip-back-btn {
+      &:hover {
+        transform: scale(1.05) !important;
+      }
+
+      &:active {
+        transform: scale(1.02) !important;
+      }
+    }
+  }
+
+  // High contrast mode support for flip content
+  @media (prefers-contrast: high) {
+    .detail-card {
+      background: rgba(0, 0, 0, 0.8);
+      border-color: rgba(255, 255, 255, 0.8);
+
+      .detail-primary, .detail-secondary, .detail-label {
+        color: #ffffff;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 1);
+      }
+    }
+
+    .flip-back-btn {
+      background: rgba(0, 0, 0, 0.8);
+      border-color: rgba(255, 255, 255, 0.8);
+      color: #ffffff;
+    }
+
+    .section-title {
+      color: #ffffff;
+      text-shadow: 0 0 4px rgba(0, 0, 0, 1);
+    }
+  }
+
+  // Enhanced responsive design with touch optimizations
+  @media (max-width: 480px) {
+    // Optimize widget hover effects for mobile
+    .weather-widget:hover {
+      transform: translateY(-1px); // Reduced movement for mobile
+      transition-duration: 0.2s;
+    }
+
+    // Enhanced touch targets for mobile accessibility
+    .network-status-bar {
+      padding: 12px 16px;
+      min-height: 48px; // Larger touch targets for mobile
+
+      .weather-network-status {
+        font-size: var(--weather-text-xs);
+        line-height: var(--weather-leading-normal);
+      }
+    }
+
+    // Larger touch targets for indicators
+    .data-source-indicator,
+    .network-indicator,
+    .location-source-indicator {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px;
+
+      ion-icon {
+        font-size: 16px;
+      }
+    }
+
+    // Enhanced button touch targets
+    .refresh-btn,
+    .settings-btn {
+      min-width: 48px;
+      min-height: 48px;
+      padding: 12px;
+
+      // Reduce hover effects for mobile
+      &:hover:not(.disabled) {
+        transform: scale(1.08); // Reduced scale for mobile
+      }
+
+      &:active:not(.disabled) {
+        transform: scale(1.02);
+        transition-duration: 0.1s;
+      }
+    }
+
+    // Optimize weather metrics for touch
+    .weather-metrics > span {
+      min-height: 32px;
+      padding: 4px 8px;
+
+      &:hover {
+        transform: none; // Remove transform on mobile
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      &:active {
+        background: rgba(255, 255, 255, 0.12);
+        transform: scale(0.98);
+        transition: all 0.1s ease-out;
+      }
+    }
+
+    // Enhanced temperature interaction for mobile
+    .weather-temperature {
+      &:hover {
+        transform: scale(1.02); // Reduced scale for mobile
+      }
+
+      &:active {
+        transform: scale(1.01);
+        transition: transform 0.1s ease-out;
+      }
+    }
+
+    .cached-data-notice {
+      padding: 16px;
+      margin: 8px 0;
+
+      .weather-network-status {
+        font-size: var(--weather-text-xs);
+        line-height: var(--weather-leading-relaxed);
+      }
+    }
+
+    .weather-icon-container {
+      .absolute {
+        width: 20px;
+        height: 20px;
+
+        ion-icon {
+          font-size: 12px;
+        }
+      }
+
+      // Add touch feedback for weather icon
+      .weather-icon-wrapper {
+        &:active {
+          transform: scale(0.95);
+          transition: transform 0.1s ease-out;
+        }
+      }
+    }
+
+    // Reduce animation intensity on mobile for better performance
+    .skeleton-container {
+      animation-duration: 4s; // Slower for better mobile performance
+    }
+
+    // Error state mobile optimizations
+    .text-center .flex.flex-col .space-y-2 button {
+      min-width: 48px;
+      min-height: 48px;
+      padding: 12px 16px;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-1px); // Reduced mobile transform
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.98);
+        transition: transform 0.1s ease-out;
+      }
+    }
+
+    // Mobile optimizations for flip animation
+    .flip-container {
+      perspective: 800px; // Reduced perspective for mobile
+    }
+
+    .flip-side {
+      transition-duration: 0.4s; // Faster animation for mobile
+    }
+
+    .flip-back-btn {
+      min-width: 48px;
+      min-height: 48px;
+      padding: 12px;
+
+      &:hover {
+        transform: scale(1.08) !important; // Reduced scale for mobile
+      }
+
+      &:active {
+        transform: scale(1.02) !important;
+        transition-duration: 0.1s;
+      }
+    }
+
+    // Mobile-optimized detail cards
+    .details-grid {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .detail-card {
+      padding: 1rem;
+
+      &:hover {
+        transform: none; // Remove transform on mobile
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      &:active {
+        background: rgba(255, 255, 255, 0.05);
+        transform: scale(0.98);
+        transition: all 0.1s ease-out;
+      }
+
+      .detail-content {
+        .detail-primary {
+          font-size: var(--weather-text-base);
+        }
+      }
+    }
+
+    // Mobile-optimized section titles
+    .section-title {
+      font-size: var(--weather-text-sm);
+      margin-bottom: 0.5rem;
+    }
+
+    // Mobile forecast section
+    .forecast-section {
+      margin-bottom: 1rem;
+
+      .forecast-item {
+        &:hover {
+          transform: none !important;
+        }
+
+        &:active {
+          background: rgba(255, 255, 255, 0.08) !important;
+          transform: scale(0.98);
+          transition: all 0.1s ease-out;
+        }
+      }
+    }
+
+    // Mobile data info
+    .data-info {
+      margin-top: 1rem;
+      padding-top: 1rem;
+    }
+
+    // Flip header mobile adjustments
+    .flip-header {
+      margin-bottom: 1rem;
+
+      .weather-detail-title {
+        font-size: var(--weather-text-base);
+      }
+
+      .weather-detail-location {
+        font-size: var(--weather-text-xs);
+      }
+    }
+  }
+
+  // Extra small screens with enhanced accessibility
+  @media (max-width: 320px) {
+    .weather-temperature {
+      font-size: var(--weather-text-3xl);
+    }
+
+    .weather-location {
+      font-size: var(--weather-text-sm);
+    }
+
+    .weather-condition, .weather-metrics {
+      font-size: var(--weather-text-xs);
+    }
+
+    // Ensure adequate spacing for touch targets
+    .weather-data-container {
+      gap: 0.75rem;
+    }
+
+    button, [role="button"] {
+      min-width: 48px;
+      min-height: 48px;
+      padding: 12px;
     }
   }
 }
