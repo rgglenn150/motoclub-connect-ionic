@@ -1,387 +1,50 @@
 /**
  * Weather Widget Dynamic Backgrounds
- *
- * This file contains all weather condition background styles and animations.
- * Each weather condition has its own unique background with subtle animations
- * that provide visual feedback for the current weather state.
  */
 
-// ========================================
-// BASE BACKGROUND SETUP
-// ========================================
-
-// Base animated background overlay for all weather conditions
-.weather-widget {
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    opacity: 0.1;
-    pointer-events: none;
-    transition: all 0.6s ease-in-out;
-    z-index: var(--weather-z-background);
-
-    // Hardware acceleration for smooth animations
-    will-change: var(--weather-will-change-all);
-    transform: var(--weather-hardware-accel);
-    backface-visibility: var(--weather-backface-hidden);
-  }
-
-  // Weather content should be above background effects
-  > * {
-    position: relative;
-    z-index: var(--weather-z-content);
-  }
+.weather-widget::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.8;
+  pointer-events: none;
+  transition: background var(--weather-duration-very-slow) var(--weather-ease-in-out);
+  z-index: var(--weather-z-background);
+  will-change: transform, opacity, background;
+  transform: translateZ(0);
 }
 
-// ========================================
-// WEATHER CONDITION BACKGROUNDS
-// ========================================
-
-// Clear sky - sunny with subtle sun rays
-.weather-bg-clear {
-  background: linear-gradient(135deg, var(--weather-clear-primary) 0%, var(--weather-clear-secondary) 50%, var(--weather-clear-tertiary) 100%);
-
-  &::before {
-    background: radial-gradient(circle at 80% 20%, var(--weather-clear-accent) 0%, transparent 50%),
-                conic-gradient(from 0deg at 80% 20%,
-                  rgba(255, 215, 0, 0.1) 0deg, transparent 30deg,
-                  rgba(255, 215, 0, 0.1) 60deg, transparent 90deg,
-                  rgba(255, 215, 0, 0.1) 120deg, transparent 150deg,
-                  rgba(255, 215, 0, 0.1) 180deg, transparent 210deg,
-                  rgba(255, 215, 0, 0.1) 240deg, transparent 270deg,
-                  rgba(255, 215, 0, 0.1) 300deg, transparent 330deg);
-    animation: sunRays var(--weather-animation-slow) linear infinite;
-  }
+.weather-bg-clear::before {
+  background: linear-gradient(135deg, #2a4c8d 0%, #1a237e 100%);
+  animation: sunRays 20s linear infinite;
 }
-
-// Partly cloudy - dynamic cloud movement
-.weather-bg-partly-cloudy {
-  background: linear-gradient(135deg, #B8D4F0 0%, #7BB3F0 50%, var(--weather-clear-secondary) 100%);
-
-  &::before {
-    background: radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.4) 25%, transparent 50%),
-                radial-gradient(ellipse at 70% 60%, rgba(255, 255, 255, 0.3) 30%, transparent 60%),
-                radial-gradient(ellipse at 40% 80%, rgba(255, 255, 255, 0.2) 20%, transparent 45%);
-    animation: cloudsFloat 12s ease-in-out infinite;
-  }
+.weather-bg-partly-cloudy::before {
+  background: linear-gradient(135deg, #4a6fa1 0%, #3949ab 100%);
+  animation: cloudsFloat 25s ease-in-out infinite;
 }
-
-// Overcast - heavy cloud cover
-.weather-bg-cloudy {
-  background: linear-gradient(135deg, var(--weather-cloudy-primary) 0%, var(--weather-cloudy-secondary) 50%, var(--weather-cloudy-tertiary) 100%);
-
-  &::before {
-    background: radial-gradient(ellipse at 30% 40%, rgba(255, 255, 255, 0.2) 40%, transparent 70%),
-                radial-gradient(ellipse at 80% 20%, rgba(255, 255, 255, 0.15) 35%, transparent 65%),
-                radial-gradient(ellipse at 60% 80%, rgba(255, 255, 255, 0.1) 30%, transparent 60%);
-    animation: heavyClouds 15s ease-in-out infinite;
-  }
+.weather-bg-cloudy::before, .weather-bg-fog::before {
+  background: linear-gradient(135deg, #546e7a 0%, #37474f 100%);
+  animation: heavyClouds 30s ease-in-out infinite;
 }
-
-// Fog - misty effect
-.weather-bg-fog {
-  background: linear-gradient(135deg, var(--weather-fog-primary) 0%, var(--weather-fog-secondary) 50%, var(--weather-fog-tertiary) 100%);
-
-  &::before {
-    background: linear-gradient(45deg,
-                  rgba(255, 255, 255, 0.3) 0%,
-                  transparent 25%,
-                  rgba(255, 255, 255, 0.2) 50%,
-                  transparent 75%,
-                  rgba(255, 255, 255, 0.1) 100%);
-    animation: fogWave 10s ease-in-out infinite;
-  }
+.weather-bg-drizzle::before, .weather-bg-rain::before {
+  background: linear-gradient(135deg, #425c78 0%, #28354a 100%);
+  animation: heavyRain 1.5s linear infinite;
 }
-
-// Drizzle - light rain effect
-.weather-bg-drizzle {
-  background: linear-gradient(135deg, #B0C4DE 0%, #778899 50%, #4F6D8E 100%);
-
-  &::before {
-    background: repeating-linear-gradient(
-                  110deg,
-                  transparent 0px,
-                  transparent 2px,
-                  rgba(173, 216, 230, 0.3) 2px,
-                  rgba(173, 216, 230, 0.3) 4px
-                );
-    animation: lightRain 2s linear infinite;
-  }
+.weather-bg-showers::before {
+  background: linear-gradient(135deg, #395270 0%, #1e2a3a 100%);
+  animation: showers 1s linear infinite;
 }
-
-// Rain - animated rain drops
-.weather-bg-rain {
-  background: linear-gradient(135deg, var(--weather-rain-primary) 0%, var(--weather-rain-secondary) 50%, var(--weather-rain-tertiary) 100%);
-
-  &::before {
-    background: repeating-linear-gradient(
-                  110deg,
-                  transparent 0px,
-                  transparent 3px,
-                  rgba(173, 216, 230, 0.5) 3px,
-                  rgba(173, 216, 230, 0.5) 6px
-                );
-    animation: heavyRain 1.5s linear infinite;
-  }
+.weather-bg-snow::before {
+  background: linear-gradient(135deg, #607d8b 0%, #455a64 100%);
+  animation: snowfall 10s linear infinite;
 }
-
-// Snow - falling snow effect
-.weather-bg-snow {
-  background: linear-gradient(135deg, var(--weather-snow-primary) 0%, var(--weather-snow-secondary) 50%, var(--weather-snow-tertiary) 100%);
-
-  &::before {
-    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
-                radial-gradient(circle at 80% 40%, rgba(255, 255, 255, 0.6) 1px, transparent 2px),
-                radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.7) 1px, transparent 2px),
-                radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.5) 1px, transparent 2px);
-    background-size: 50px 50px, 30px 30px, 40px 40px, 35px 35px;
-    animation: snowfall var(--weather-animation-slow) linear infinite;
-  }
+.weather-bg-thunderstorm::before {
+  background: linear-gradient(135deg, #263238 0%, #1a1a1a 100%);
+  animation: lightning 5s ease-in-out infinite;
 }
-
-// Rain showers - intense rain
-.weather-bg-showers {
-  background: linear-gradient(135deg, var(--weather-rain-primary) 0%, var(--weather-clear-tertiary) 50%, #0D4F8C 100%);
-
-  &::before {
-    background: repeating-linear-gradient(
-                  105deg,
-                  transparent 0px,
-                  transparent 2px,
-                  rgba(173, 216, 230, 0.7) 2px,
-                  rgba(173, 216, 230, 0.7) 5px
-                );
-    animation: showers var(--weather-animation-medium) linear infinite;
-  }
-}
-
-// Thunderstorm - lightning and dark clouds
-.weather-bg-thunderstorm {
-  background: linear-gradient(135deg, var(--weather-thunder-primary) 0%, var(--weather-thunder-secondary) 30%, var(--weather-thunder-tertiary) 70%, #17202A 100%);
-
-  &::before {
-    background: radial-gradient(ellipse at 50% 30%, var(--weather-thunder-accent) 30%, transparent 70%);
-    animation: lightning 4s ease-in-out infinite;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
-    opacity: 0.6;
-    z-index: var(--weather-z-background);
-  }
-}
-
-// Default state
-.weather-bg-default {
-  background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 50%, #1a1a1a 100%);
-
-  &::before {
-    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 30%, transparent 70%);
-    animation: subtlePulse 6s ease-in-out infinite;
-  }
-}
-
-// ========================================
-// NETWORK STATUS BACKGROUNDS
-// ========================================
-
-// Offline mode styling
-.weather-widget.offline-mode {
-  border-color: var(--weather-network-fair);
-  background: linear-gradient(135deg, #1e1e1e 0%, #2a2200 100%);
-}
-
-// Poor connection styling
-.weather-widget.poor-connection {
-  border-color: var(--weather-network-poor);
-  background: linear-gradient(135deg, #1e1e1e 0%, #2a0a0a 100%);
-}
-
-// ========================================
-// RESPONSIVE BACKGROUNDS
-// ========================================
-
-@media (max-width: 480px) {
-  .weather-widget {
-    // Reduce animation intensity on small screens for better performance
-    &::before {
-      opacity: 0.05 !important;
-    }
-
-    // Simplify weather animations for mobile
-    &.weather-bg-clear::before {
-      animation-duration: 12s; // Slower for mobile
-    }
-
-    &.weather-bg-partly-cloudy::before,
-    &.weather-bg-cloudy::before {
-      animation-duration: 18s; // Slower cloud movement
-    }
-
-    &.weather-bg-rain::before,
-    &.weather-bg-drizzle::before,
-    &.weather-bg-showers::before {
-      animation-duration: 2.5s; // Slightly slower rain
-    }
-
-    &.weather-bg-snow::before {
-      animation-duration: 12s; // Slower snowfall
-    }
-
-    &.weather-bg-thunderstorm::before {
-      animation-duration: 6s; // Slower lightning
-    }
-
-    // Enhanced responsive behavior for offline mode
-    &.offline-mode {
-      .weather-data-container {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-
-        .flex-1 {
-          width: 100%;
-          margin-bottom: var(--weather-space);
-        }
-
-        .weather-icon-container {
-          margin-left: 0;
-          margin-top: 0;
-        }
-      }
-    }
-  }
-}
-
-// ========================================
-// ACCESSIBILITY BACKGROUNDS
-// ========================================
-
-// Performance optimizations for reduced motion preference
-@media (prefers-reduced-motion: reduce) {
-  .weather-widget {
-    &::before {
-      animation: none !important;
-      opacity: 0.3 !important;
-    }
-
-    transition: background var(--weather-transition-normal) ease-in-out !important;
-  }
-}
-
-// Enhanced high contrast mode support with better text visibility
-@media (prefers-contrast: high) {
-  .weather-bg-clear {
-    background: linear-gradient(135deg, #000080 0%, #4169E1 100%);
-  }
-
-  .weather-bg-rain,
-  .weather-bg-drizzle,
-  .weather-bg-showers {
-    background: linear-gradient(135deg, #000080 0%, #191970 100%);
-  }
-
-  .weather-bg-snow {
-    background: linear-gradient(135deg, #2F2F2F 0%, #1A1A1A 100%);
-
-    .weather-temperature,
-    .weather-location,
-    .weather-condition {
-      color: #ffffff;
-      text-shadow: 0 0 8px rgba(0, 0, 0, 1), 0 2px 4px rgba(0, 0, 0, 0.9);
-    }
-  }
-
-  .weather-bg-thunderstorm {
-    background: linear-gradient(135deg, #000000 0%, #1A1A1A 100%);
-  }
-
-  // Ensure all backgrounds provide sufficient contrast
-  .weather-bg-partly-cloudy,
-  .weather-bg-cloudy,
-  .weather-bg-fog {
-    background: linear-gradient(135deg, #2F2F2F 0%, #1A1A1A 100%);
-  }
-}
-
-// Dark mode enhancements
-@media (prefers-color-scheme: dark) {
-  .weather-bg-clear {
-    background: linear-gradient(135deg, #1A237E 0%, #3949AB 50%, #5C6BC0 100%);
-  }
-
-  .weather-bg-snow {
-    background: linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 50%, #B0BEC5 100%);
-  }
-}
-
-// ========================================
-// BACKGROUND HOVER EFFECTS
-// ========================================
-
-.weather-widget {
-  // Subtle hover effect for the entire widget
-  &:hover {
-    transform: translateY(-2px);
-    border-color: var(--ion-color-medium-tint, #4a4a4a);
-    box-shadow: var(--weather-shadow-lg);
-
-    // Enhance dynamic background animation on hover
-    &::before {
-      opacity: 0.15 !important;
-    }
-  }
-
-  // Subtle press effect
-  &:active {
-    transform: translateY(-1px);
-    transition: transform var(--weather-transition-fast) ease-out;
-    box-shadow: var(--weather-shadow);
-  }
-
-  // Focus state for accessibility (when widget is interactive)
-  &:focus-visible {
-    outline: 2px solid var(--weather-button-primary);
-    outline-offset: 2px;
-  }
-
-  // Optimize widget hover effects for mobile
-  @media (max-width: 480px) {
-    &:hover {
-      transform: translateY(-1px); // Reduced movement for mobile
-      transition-duration: var(--weather-transition-very-fast);
-    }
-  }
-}
-
-// ========================================
-// BACKGROUND PERFORMANCE OPTIMIZATIONS
-// ========================================
-
-.weather-widget {
-  // Enhanced dynamic background transitions with multiple animations
-  transition: all var(--weather-transition-slow) var(--weather-ease-smooth);
-  position: relative;
-  overflow: hidden;
-
-  // Hardware acceleration and performance optimization
-  will-change: var(--weather-will-change-all);
-  transform: var(--weather-hardware-accel); // Force hardware acceleration
-  backface-visibility: var(--weather-backface-hidden);
-
-  // Ensure consistent styling with existing app theme
-  background: var(--ion-color-dark-shade, #1e1e1e);
-  border: 1px solid var(--ion-color-dark-tint, #383838);
-  transition: all var(--weather-transition-normal) var(--weather-ease-out);
-  cursor: pointer;
+.weather-bg-default::before {
+  background: linear-gradient(135deg, #333 0%, #1a1a1a 100%);
 }
