@@ -271,7 +271,7 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
   /**
    * Get contextual error message based on network state
    */
-  private getContextualErrorMessage(originalMessage: string): string {
+  getContextualErrorMessage(originalMessage: string): string {
     if (!this.networkStatus.online) {
       return 'No internet connection. Weather data unavailable.';
     }
