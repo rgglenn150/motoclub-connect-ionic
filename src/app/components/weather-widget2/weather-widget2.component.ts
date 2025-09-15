@@ -1,13 +1,22 @@
-import { Component, OnInit } from '@angular/core';
-import { WeatherService } from '../../service/weather.service'; // Import the weather service
-import { WeatherData } from '../../models/weather.model'; // Import the shared WeatherData model
+import {
+  Component,
+  OnInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core'; // Added ChangeDetectionStrategy and ChangeDetectorRef
+import { WeatherService } from '../../service/weather.service';
+import { LocationPreferencesService } from '../../service/location-preferences.service'; // Assuming you have this service
+import { WeatherData } from '../../models/weather.model';
+import { Subject, takeUntil } from 'rxjs'; // Added Subject and takeUntil
+import { GeolocationService } from 'src/app/service/geolocation.service';
 
 // Represents the evaluated verdict for the rider
 interface RidingConditions {
   verdict: 'Great' | 'Caution' | 'Poor';
   title: string;
   advice: string;
-  icon: string;
+  icon: string; // Ionic icon name
+  animatedIconType: string; // Custom animated icon type
   colorClass: string;
 }
 
@@ -15,9 +24,9 @@ interface RidingConditions {
   selector: 'app-weather-widget2',
   templateUrl: './weather-widget2.component.html',
   styleUrls: ['./weather-widget2.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush, // Optimize change detection
 })
 export class WeatherWidget2Component implements OnInit {
-
   // --- Properties ---
   public isLoading: boolean = true;
   public hasError: boolean = false;
@@ -25,12 +34,33 @@ export class WeatherWidget2Component implements OnInit {
 
   public currentWeather!: WeatherData;
   public ridingConditions!: RidingConditions;
-  public lastUpdated: Date = new Date();
+  public lastUpdated: Date | null = null; // Changed to Date | null
+  public locationName: string = 'Loading...'; // Default loading state for location
 
-  constructor(private weatherService: WeatherService) { } // Inject the service
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private weatherService: WeatherService,
+    private locationPreferencesService: LocationPreferencesService, // Inject LocationPreferencesService
+    private cdr: ChangeDetectorRef, // Inject ChangeDetectorRef
+    private geolocationService: GeolocationService
+  ) {}
 
   ngOnInit() {
+    // Subscribe to location preferences changes
+    this.locationPreferencesService.preferences$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        // Reload weather data when preferences change
+        this.fetchWeatherData();
+      });
+
     this.fetchWeatherData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -39,21 +69,62 @@ export class WeatherWidget2Component implements OnInit {
   public fetchWeatherData(): void {
     this.isLoading = true;
     this.hasError = false;
+    this.locationName = 'Loading...'; // Reset location name
+    this.cdr.markForCheck();
 
-    // Use the service to get weather for the user's current location
-    this.weatherService.getCurrentWeatherForCurrentLocation().subscribe({
+    const preferences = this.locationPreferencesService.getCurrentPreferences();
+    let weatherObservable;
+
+    if (!preferences.useGps && preferences.preferredLocation) {
+      const coords = preferences.preferredLocation.coordinates;
+      weatherObservable = this.weatherService.getCurrentWeather(
+        coords.latitude,
+        coords.longitude
+      );
+    } else {
+      // Default to GPS with fallback, or just fallback if GPS is not preferred and no preferred location
+      weatherObservable =
+        this.weatherService.getCurrentWeatherForCurrentLocation(); // Assumes service handles fallback
+    }
+
+    weatherObservable.subscribe({
       next: (data) => {
         this.currentWeather = data;
+        console.log('rgdb data ', data.location);
+        this.geolocationService
+          .reverseGeocode(data.location.latitude, data.location.longitude)
+          .subscribe((address) => {
+            console.log('rgdb address ', address);
+            if (address) {
+              this.locationName = address;
+            } else {
+              this.locationName =
+                data.location.name ||
+                `${data.location.latitude.toFixed(
+                  1
+                )}°, ${data.location.longitude.toFixed(1)}°`;
+            }
+            this.cdr.markForCheck();
+          });
+
+      /*   this.locationName =
+          data.location.name ||
+          `${data.location.latitude.toFixed(
+            1
+          )}°, ${data.location.longitude.toFixed(1)}°`; */
         this.ridingConditions = this.evaluateRidingConditions(data);
-        this.lastUpdated = new Date(); // Use current time for "last updated"
+        this.lastUpdated = new Date();
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Failed to fetch weather data:', err);
-        this.errorMessage = err.message || 'Could not load weather. Please try again.';
+        this.errorMessage =
+          err.message || 'Could not load weather. Please try again.';
         this.hasError = true;
         this.isLoading = false;
-      }
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -63,48 +134,61 @@ export class WeatherWidget2Component implements OnInit {
    * @returns A RidingConditions object with a verdict and advice.
    */
   private evaluateRidingConditions(weather: WeatherData): RidingConditions {
-    const todayForecast = weather.forecast ? weather.forecast[0] : null;
+    const todayForecast =
+      weather.forecast && weather.forecast.length > 0
+        ? weather.forecast[0]
+        : null;
     const chanceOfRain = todayForecast?.precipitationChance ?? 0;
+    const windSpeed = weather.metrics.windSpeed ?? 0;
+    const feelsLike =
+      weather.temperature.feelsLike ?? weather.temperature.current; // Fallback for feelsLike
+    const weatherCode = weather.conditions.code;
 
     // POOR conditions: High chance of rain or dangerous weather
-    if (chanceOfRain > 40 || weather.conditions.code >= 80) { // WMO codes for showers/thunderstorms
+    if (chanceOfRain > 40 || weatherCode >= 80) {
+      // WMO codes for showers/thunderstorms
       return {
         verdict: 'Poor',
-        title: 'Not a Good Day to Ride',
+        title: 'Ride With Caution',
         advice: 'High chance of rain. Grab your raincoat if you must go!',
-        icon: 'rainy',
-        colorClass: 'condition-poor'
+        icon: 'umbrella',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-poor',
       };
     }
 
     // CAUTION conditions: Strong wind, extreme heat, or fog
-    if (weather.metrics.windSpeed && weather.metrics.windSpeed > 35) {
+    if (windSpeed > 35) {
       return {
         verdict: 'Caution',
         title: 'Ride With Caution',
         advice: 'Strong winds expected. Be mindful of crosswinds.',
         icon: 'flag',
-        colorClass: 'condition-caution'
+        animatedIconType: 'windy', // Specific animated icon for wind
+        colorClass: 'condition-caution',
       };
     }
 
-    if (weather.temperature.feelsLike && weather.temperature.feelsLike > 34) {
+    if (feelsLike > 34) {
       return {
         verdict: 'Caution',
         title: 'Ride With Caution',
-        advice: 'It\'s extremely hot. Stay hydrated and take breaks.',
+        advice: "It's extremely hot. Stay hydrated and take breaks.",
         icon: 'thermometer',
-        colorClass: 'condition-caution'
+        animatedIconType: 'hot', // Specific animated icon for heat
+        colorClass: 'condition-caution',
       };
     }
 
-    if (weather.conditions.code >= 45 && weather.conditions.code <= 48) { // WMO codes for Fog
-       return {
+    if (weatherCode >= 45 && weatherCode <= 48) {
+      // WMO codes for Fog
+      return {
         verdict: 'Caution',
         title: 'Ride With Caution',
         advice: 'Foggy conditions ahead. Visibility may be low.',
         icon: 'eye-off',
-        colorClass: 'condition-caution'
+        animatedIconType: 'fog',
+        colorClass: 'condition-caution',
       };
     }
 
@@ -114,7 +198,25 @@ export class WeatherWidget2Component implements OnInit {
       title: 'Great Day for a Ride!',
       advice: 'Weather is clear. Enjoy the open road!',
       icon: 'sparkles',
-      colorClass: 'condition-great'
+      animatedIconType: this.getAnimatedIconType(weatherCode),
+      colorClass: 'condition-great',
     };
+  }
+
+  /**
+   * Maps WMO weather codes to custom animated icon types.
+   */
+  private getAnimatedIconType(code: number): string {
+    if (code === 0) return 'sunny';
+    if (code >= 1 && code <= 2) return 'partly-cloudy';
+    if (code === 3) return 'cloudy';
+    if (code >= 45 && code <= 48) return 'fog';
+    if (code >= 51 && code <= 57) return 'rain'; // Drizzle is categorized as rain
+    if (code >= 61 && code <= 67) return 'rain';
+    if (code >= 71 && code <= 77) return 'snow';
+    if (code >= 80 && code <= 82) return 'showers';
+    if (code >= 85 && code <= 86) return 'snow';
+    if (code >= 95 && code <= 99) return 'thunderstorm';
+    return 'default'; // A generic fallback icon
   }
 }

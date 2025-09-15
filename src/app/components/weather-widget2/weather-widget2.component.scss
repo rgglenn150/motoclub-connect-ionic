@@ -80,16 +80,25 @@
 }
 .verdict-icon-container {
   margin: 0 auto 16px;
-  width: 80px;
-  height: 80px;
+  width: 90px; // Slightly larger for animated icon
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background-color: rgba(255, 255, 255, 0.15);
+  // Optional: Add a subtle pulse animation to the container itself
+  animation: pulse-border 2s infinite ease-in-out;
 }
+
+@keyframes pulse-border {
+  0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2); }
+}
+
 .verdict-icon {
-  font-size: 42px;
+  font-size: 42px; // This is for Ionic icons, now using app-weather-svg-icon
   color: #ffffff;
 }
 .verdict-title {
@@ -116,14 +125,26 @@
   display: flex;
   justify-content: space-around;
   padding: 24px 16px;
+  flex-wrap: wrap; // Allow metrics to wrap on smaller screens
+  gap: 16px 8px; // Gap for wrapping items
 }
 .metric-item {
   text-align: center;
+  flex: 1 1 30%; // Allow items to grow/shrink but maintain min-width
+  min-width: 90px; // Prevent items from getting too small
 }
 .metric-value {
   font-size: 28px;
   font-weight: 600;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px; // Space between icon and value
+}
+.metric-icon {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.7);
 }
 .metric-unit {
   font-size: 16px;
@@ -145,22 +166,38 @@
 // Default/Loading theme
 .condition-loading {
   background: linear-gradient(45deg, #6c757d, #343a40);
+  .verdict-icon-container {
+    animation: none; // Disable pulse for loading
+  }
 }
 
 // Great riding conditions
 .condition-great {
   background: linear-gradient(45deg, #0072ff, #00c6ff);
-  .verdict-icon { color: #80f0c0; }
+  .verdict-icon-container .weather-icon svg { filter: drop-shadow(0 0 10px rgba(128, 240, 192, 0.6)); }
 }
 
 // Ride with caution
 .condition-caution {
   background: linear-gradient(45deg, #ff8c00, #ffc837);
-  .verdict-icon { color: #fff380; }
+  .verdict-icon-container .weather-icon svg { filter: drop-shadow(0 0 10px rgba(255, 243, 128, 0.6)); }
 }
 
 // Poor riding conditions
 .condition-poor {
   background: linear-gradient(45deg, #4c5c68, #2e3a42);
-  .verdict-icon { color: #87ceeb; }
+  .verdict-icon-container .weather-icon svg { filter: drop-shadow(0 0 10px rgba(135, 206, 235, 0.6)); }
+}
+
+// Responsive adjustments
+@media (max-width: 350px) {
+  .metrics-section {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .metric-item {
+    min-width: auto;
+    width: 100%;
+  }
 }
