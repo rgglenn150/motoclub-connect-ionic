@@ -1,0 +1,62 @@
+<ion-card class="weather-card" [ngClass]="ridingConditions?.colorClass || 'condition-loading'">
+  
+  <div *ngIf="isLoading" class="state-container loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Checking the skies...</p>
+  </div>
+
+  <div *ngIf="hasError" class="state-container error-container">
+    <ion-icon name="cloud-offline-outline"></ion-icon>
+    <p class="error-message">{{ errorMessage }}</p>
+    <ion-button fill="clear" class="retry-button" (click)="fetchWeatherData()">
+      <ion-icon slot="start" name="refresh"></ion-icon>
+      Retry
+    </ion-button>
+  </div>
+
+  <div *ngIf="!isLoading && !hasError">
+    <ion-card-header>
+      <div class="header-content">
+        <div class="location">
+          <ion-icon name="location-outline" class="location-icon"></ion-icon>
+          Oton, Western Visayas, Philippines
+        </div>
+        <div class="last-updated">
+          {{ lastUpdated | date:'shortTime' }}
+        </div>
+      </div>
+    </ion-card-header>
+
+    <ion-card-content>
+      <div class="verdict-section">
+        <div class="verdict-icon-container">
+          <ion-icon [name]="ridingConditions.icon" class="verdict-icon"></ion-icon>
+        </div>
+        <h2 class="verdict-title">{{ ridingConditions.title }}</h2>
+        <p class="verdict-advice">{{ ridingConditions.advice }}</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="metrics-section">
+        
+        <div class="metric-item">
+          <div class="metric-value">{{ currentWeather.temperature.current }}<span class="metric-unit">°C</span></div>
+          <div class="metric-label">Temperature</div>
+        </div>
+
+        <div class="metric-item">
+          <div class="metric-value">{{ currentWeather.forecast && currentWeather.forecast[0] ? currentWeather.forecast[0].precipitationChance : 0 }}<span class="metric-unit">%</span></div>
+          <div class="metric-label">Chance of Rain</div>
+        </div>
+
+        <div class="metric-item">
+          <div class="metric-value">{{ currentWeather.metrics.windSpeed }}<span class="metric-unit"> km/h</span></div>
+          <div class="metric-label">Wind</div>
+        </div>
+
+      </div>
+    </ion-card-content>
+  </div>
+
+</ion-card>
