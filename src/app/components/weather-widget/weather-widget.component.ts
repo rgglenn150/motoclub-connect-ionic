@@ -225,7 +225,7 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
     if (code >= 1 && code <= 2) return 'partly-cloudy';
     if (code === 3) return 'cloudy';
     if (code >= 45 && code <= 48) return 'fog';
-    if (code >= 51 && code <= 57) return 'rain';
+    if (code >= 51 && code <= 57) return 'rain'; // Drizzle is categorized as rain
     if (code >= 61 && code <= 67) return 'rain';
     if (code >= 71 && code <= 77) return 'snow';
     if (code >= 80 && code <= 82) return 'showers';
@@ -411,7 +411,7 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
    * Get dynamic background class based on weather conditions
    */
   get weatherBackgroundClass(): string {
-    if (!this.weatherData) {
+    if (!this.weatherData || this.isLoading || this.hasError) {
       return 'weather-bg-default';
     }
 
@@ -434,8 +434,10 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
    * Toggle the flip state of the weather widget
    */
   toggleFlip(): void {
-    this.isFlipped = !this.isFlipped;
-    this.cdr.markForCheck();
+    if (!this.isLoading && !this.hasError) {
+      this.isFlipped = !this.isFlipped;
+      this.cdr.markForCheck();
+    }
   }
 
   /**
@@ -459,7 +461,7 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
     if (windSpeed < 60) return 'High wind';
     return 'Very high wind';
   }
-
+  
   /**
    * Get descriptive text for atmospheric pressure
    */
@@ -515,12 +517,11 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
     if (code >= 95 && code <= 99) return 'thunderstorm';
     return 'default';
   }
-
+  
   /**
    * Get short description for forecast
    */
   getForecastShortDescription(description: string): string {
-    // Shorten descriptions for better display in compact forecast
     const shortcuts: { [key: string]: string } = {
       'Clear sky': 'Clear',
       'Mainly clear': 'Mostly Clear',
@@ -540,7 +541,6 @@ export class WeatherWidgetComponent implements OnInit, OnDestroy {
       'Violent rain showers': 'Heavy Showers',
       'Thunderstorm': 'Storms'
     };
-
     return shortcuts[description] || description;
   }
 

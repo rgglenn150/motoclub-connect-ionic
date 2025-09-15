@@ -23,7 +23,7 @@ export function playerFactory() {
     WeatherSvgIconComponent
   ],
   exports: [
-    WeatherWidgetComponent
+    WeatherWidgetComponent,WeatherSvgIconComponent
   ]
 })
 export class WeatherWidgetModule {}
