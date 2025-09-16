@@ -1,8 +1,23 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ViewWillEnter } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ClubService, Club as ServiceClub, JoinRequest, ClubMember } from '../../../service/club.service';
-import { ToastController, LoadingController, AlertController, ActionSheetController } from '@ionic/angular';
-import { NetworkService, NetworkStatus, ConnectionQuality } from '../../../service/network.service';
+import {
+  ClubService,
+  Club as ServiceClub,
+  JoinRequest,
+  ClubMember,
+} from '../../../service/club.service';
+import {
+  ToastController,
+  LoadingController,
+  AlertController,
+  ActionSheetController,
+} from '@ionic/angular';
+import {
+  NetworkService,
+  NetworkStatus,
+  ConnectionQuality,
+} from '../../../service/network.service';
 import { ErrorService, ErrorInfo } from '../../../service/error.service';
 import { UserStateService } from '../../../service/user-state.service';
 import { Subscription } from 'rxjs';
@@ -41,44 +56,42 @@ interface ClubEvent {
 }
 
 interface PinnedPost {
-    title: string;
-    content: string;
+  title: string;
+  content: string;
 }
-
 
 @Component({
   selector: 'app-club-home',
   templateUrl: './club-home.page.html',
   styleUrls: ['./club-home.page.scss'],
 })
-export class ClubHomePage implements OnInit, OnDestroy {
-
+export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
   // --- STATE MANAGEMENT ---
   // Club ID from route parameter
   clubId: string | null = null;
-  
+
   // Loading and error states
   isLoading: boolean = false;
   statusLoading: boolean = false;
   joiningClub: boolean = false;
   isRefreshing: boolean = false;
   errorMessage: string = '';
-  
+
   // Enhanced error handling
   currentError: ErrorInfo | null = null;
   retryAttempts: number = 0;
   maxRetryAttempts: number = 3;
   isRetrying: boolean = false;
-  
+
   // Network status
   networkStatus: NetworkStatus = { online: true };
   connectionQuality: ConnectionQuality = {
     quality: 'good',
     description: 'Connected',
     color: 'success',
-    icon: 'wifi-outline'
+    icon: 'wifi-outline',
   };
-  
+
   // Operation-specific error states
   operationErrors: {
     clubData: ErrorInfo | null;
@@ -89,18 +102,18 @@ export class ClubHomePage implements OnInit, OnDestroy {
     clubData: null,
     membershipStatus: null,
     joinOperation: null,
-    adminOperations: null
+    adminOperations: null,
   };
-  
+
   // Subscriptions for cleanup
   private subscriptions: Subscription[] = [];
-  
+
   // This variable controls which tab is currently active.
   selectedTab: 'feed' | 'members' | 'events' = 'feed';
-  
+
   // User's membership status in this club - dynamically determined via API
   userStatus: 'admin' | 'member' | 'pending' | 'not-member' = 'not-member';
-  
+
   // Additional membership info from API
   membershipData: {
     role?: 'member' | 'admin';
@@ -114,11 +127,11 @@ export class ClubHomePage implements OnInit, OnDestroy {
   // Join requests data
   joinRequests: JoinRequest[] = [];
   joinRequestsLoading: boolean = false;
-  
+
   // Club members data
   clubMembers: ClubMember[] = [];
   membersLoading: boolean = false;
-  
+
   // Operation loading states
   processingRequests: Set<string> = new Set(); // Track which requests are being processed
   processingMembers: Set<string> = new Set(); // Track which members are being processed
@@ -132,29 +145,34 @@ export class ClubHomePage implements OnInit, OnDestroy {
     joinClub: false,
     refreshData: false,
     membershipStatusCheck: false,
-    adminDataLoad: false
+    adminDataLoad: false,
   };
-  
+
   // Debounce timer for join action
   private joinDebounceTimer: any = null;
   private readonly JOIN_DEBOUNCE_MS = 500;
-  
+
   // Track last membership status check timestamp
   private lastStatusCheckTime = 0;
   private readonly STATUS_CHECK_COOLDOWN_MS = 2000;
-  
+
   // Queue for pending operations
-  private operationQueue: Array<{type: string, data: any, resolve: Function, reject: Function}> = [];
+  private operationQueue: Array<{
+    type: string;
+    data: any;
+    resolve: Function;
+    reject: Function;
+  }> = [];
   private isProcessingQueue = false;
-  
+
   // Action state tracking
   private actionInProgress = {
     join: false,
     refresh: false,
     loadData: false,
-    adminActions: false
+    adminActions: false,
   };
-  
+
   // Request deduplication tracking
   private pendingRequests = new Map<string, Promise<any>>();
 
@@ -165,23 +183,24 @@ export class ClubHomePage implements OnInit, OnDestroy {
     memberCount: 0,
     isPrivate: false,
     coverPhotoUrl: 'https://placehold.co/600x250/2D3748/FFFFFF?text=Loading...',
-    logoUrl: 'https://placehold.co/100x100/4A5568/FFFFFF?text=..'
+    logoUrl: 'https://placehold.co/100x100/4A5568/FFFFFF?text=..',
   };
-  
+
   pinnedPost: PinnedPost = {
-      title: 'Clubhouse Maintenance Day',
-      content: 'Heads up, everyone! We\'re having a mandatory maintenance day this Saturday. Please come down to help clean and prep for the new season. Pizza and drinks on us!'
+    title: 'Clubhouse Maintenance Day',
+    content:
+      "Heads up, everyone! We're having a mandatory maintenance day this Saturday. Please come down to help clean and prep for the new season. Pizza and drinks on us!",
   };
 
   upcomingRide: ClubEvent = {
-      type: 'RIDE',
-      date: '2025-08-24T09:00:00Z',
-      title: 'Coastal Sunrise Cruise',
-      imageUrl: 'https://placehold.co/200x200/F59E0B/000000?text=RIDE',
-      location: 'Shell Gas Station, Oton',
-      attendeeCount: 18
+    type: 'RIDE',
+    date: '2025-08-24T09:00:00Z',
+    title: 'Coastal Sunrise Cruise',
+    imageUrl: 'https://placehold.co/200x200/F59E0B/000000?text=RIDE',
+    location: 'Shell Gas Station, Oton',
+    attendeeCount: 18,
   };
-  
+
   // Members data will be loaded from the API when the members tab is viewed
   membersForPublicView: ClubMember[] = []; // For non-admin users
   membersDataLoading: boolean = false; // Loading state for member data
@@ -195,8 +214,8 @@ export class ClubHomePage implements OnInit, OnDestroy {
       title: 'Monthly Club Meeting',
       imageUrl: 'https://placehold.co/200x200/4A5568/FFFFFF?text=MEET',
       location: 'Clubhouse Garage',
-      attendeeCount: 25
-    }
+      attendeeCount: 25,
+    },
   ];
 
   constructor(
@@ -210,49 +229,71 @@ export class ClubHomePage implements OnInit, OnDestroy {
     private networkService: NetworkService,
     private errorService: ErrorService,
     private userStateService: UserStateService
-  ) { }
+  ) {}
 
   ngOnInit() {
+    this.initializeClubData();
+  }
+
+  ionViewWillEnter() {
+    this.refreshClubPageData();
+  }
+
+  /**
+   * Initialize club data - called once on component init
+   */
+  private initializeClubData() {
     // Get the club ID from the route parameter
     this.clubId = this.route.snapshot.paramMap.get('id');
-    
+
     // Check for tab query parameter
     const tabParam = this.route.snapshot.queryParamMap.get('tab');
     if (tabParam && ['feed', 'members', 'events'].includes(tabParam)) {
       this.selectedTab = tabParam as 'feed' | 'members' | 'events';
     }
-    
+
     // Subscribe to network status changes
     this.setupNetworkMonitoring();
-    
+
     // Subscribe to user changes for global profile updates
     this.setupUserStateMonitoring();
-    
+
     if (this.clubId) {
       this.fetchClubData(this.clubId);
       // Check user's membership status after getting club ID
       this.checkMembershipStatus();
+      console.log('rgdb covertp[htop', this.club.coverPhotoUrl);
     } else {
       this.currentError = {
         type: 'validation',
         message: 'No club ID provided',
         userMessage: 'Invalid club ID provided',
-        retryable: false
+        retryable: false,
       };
       this.showErrorToast('Invalid club ID');
     }
   }
 
+  /**
+   * Refresh club page data - called when navigating back to the page
+   */
+  private refreshClubPageData() {
+    if (this.clubId) {
+      this.fetchClubData(this.clubId);
+      this.checkMembershipStatus();
+    }
+  }
+
   ngOnDestroy() {
     // Clean up subscriptions
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-    
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
+
     // Clear any pending operations in error service
     this.errorService.clearQueue();
   }
 
   // --- REFRESH FUNCTIONALITY ---
-  
+
   /**
    * Handle pull-to-refresh with comprehensive race condition prevention
    */
@@ -287,13 +328,13 @@ export class ClubHomePage implements OnInit, OnDestroy {
         // Refresh all data concurrently
         const refreshPromises = [
           this.refreshClubData(),
-          this.refreshMembershipStatus()
+          this.refreshMembershipStatus(),
         ];
 
         // If members tab is selected, refresh member data
         if (this.selectedTab === 'members') {
           refreshPromises.push(this.refreshMembersData());
-          
+
           // Also refresh admin data if user is admin (for join requests in members tab)
           if (this.isUserAdmin) {
             refreshPromises.push(this.refreshAdminData());
@@ -324,7 +365,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
     return new Promise((resolve) => {
       const checkOperations = () => {
-        const criticalOperationsInProgress = 
+        const criticalOperationsInProgress =
           this.operationLocks.joinClub ||
           this.operationLocks.membershipStatusCheck ||
           this.actionInProgress.join ||
@@ -360,7 +401,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error refreshing club data:', error);
           reject(error);
-        }
+        },
       });
     });
   }
@@ -385,7 +426,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
           // Don't reject on membership status errors, just default to not-member
           this.userStatus = 'not-member';
           resolve();
-        }
+        },
       });
     });
   }
@@ -398,7 +439,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
     const refreshPromises = [
       this.refreshJoinRequests(),
-      this.refreshClubMembers()
+      this.refreshClubMembers(),
     ];
 
     return Promise.all(refreshPromises).then(() => {});
@@ -416,13 +457,15 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
       this.clubService.getJoinRequests(this.clubId).subscribe({
         next: (requests) => {
-          this.joinRequests = requests.filter(req => req.status === 'pending');
+          this.joinRequests = requests.filter(
+            (req) => req.status === 'pending'
+          );
           resolve();
         },
         error: (error) => {
           console.error('Error refreshing join requests:', error);
           reject(error);
-        }
+        },
       });
     });
   }
@@ -445,7 +488,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error refreshing club members:', error);
           reject(error);
-        }
+        },
       });
     });
   }
@@ -465,44 +508,46 @@ export class ClubHomePage implements OnInit, OnDestroy {
   // --- NETWORK MONITORING ---
   private setupNetworkMonitoring() {
     // Subscribe to network status changes
-    const networkSub = this.networkService.networkStatus.subscribe(
-      status => {
-        this.networkStatus = status;
-        
-        // If we just came back online and have pending operations, process them
-        if (status.online && this.errorService.getQueueLength() > 0) {
-          this.presentToast('Connection restored. Retrying operations...', 'success');
-        }
+    const networkSub = this.networkService.networkStatus.subscribe((status) => {
+      this.networkStatus = status;
+
+      // If we just came back online and have pending operations, process them
+      if (status.online && this.errorService.getQueueLength() > 0) {
+        this.presentToast(
+          'Connection restored. Retrying operations...',
+          'success'
+        );
       }
-    );
-    
+    });
+
     // Subscribe to connection quality changes
     const qualitySub = this.networkService.connectionQuality.subscribe(
-      quality => {
+      (quality) => {
         this.connectionQuality = quality;
-        
+
         // Show warning for poor connections
         if (quality.quality === 'poor' && this.networkStatus.online) {
-          this.presentToast('Slow connection detected. Some operations may take longer.', 'warning');
+          this.presentToast(
+            'Slow connection detected. Some operations may take longer.',
+            'warning'
+          );
         }
       }
     );
-    
+
     this.subscriptions.push(networkSub, qualitySub);
   }
 
   // --- USER STATE MONITORING ---
   private setupUserStateMonitoring() {
     // Subscribe to user state changes
-    const userSub = this.userStateService.user$.subscribe(
-      user => {
-        if (user && this.selectedTab === 'members') {
-          // Refresh members list when user data changes and members tab is active
-          this.refreshMembersData();
-        }
+    const userSub = this.userStateService.user$.subscribe((user) => {
+      if (user && this.selectedTab === 'members') {
+        // Refresh members list when user data changes and members tab is active
+        this.refreshMembersData();
       }
-    );
-    
+    });
+
     this.subscriptions.push(userSub);
   }
 
@@ -510,31 +555,30 @@ export class ClubHomePage implements OnInit, OnDestroy {
   async fetchClubData(clubId: string) {
     const loading = await this.loadingController.create({
       message: 'Loading club details...',
-      duration: this.networkService.getRecommendedTimeout()
+      duration: this.networkService.getRecommendedTimeout(),
     });
-    
+
     try {
       this.isLoading = true;
       this.errorMessage = '';
       this.operationErrors.clubData = null;
       this.currentError = null;
       await loading.present();
-      
+
       // Use error service for retry logic
-      const clubDataRequest = this.errorService.withRetry(
-        this.clubService.getClubDetails(clubId),
-        'Fetch Club Data'
-      ).pipe(
-        tap(response => {
-          console.log('Club data received:', response);
-          this.updateClubData(response);
-        }),
-        finalize(() => {
-          this.isLoading = false;
-          loading.dismiss();
-        })
-      );
-      
+      const clubDataRequest = this.errorService
+        .withRetry(this.clubService.getClubDetails(clubId), 'Fetch Club Data')
+        .pipe(
+          tap((response) => {
+            console.log('Club data received:', response);
+            this.updateClubData(response);
+          }),
+          finalize(() => {
+            this.isLoading = false;
+            loading.dismiss();
+          })
+        );
+
       const subscription = clubDataRequest.subscribe({
         next: (response) => {
           this.retryAttempts = 0; // Reset retry attempts on success
@@ -542,20 +586,22 @@ export class ClubHomePage implements OnInit, OnDestroy {
         error: (error) => {
           const errorInfo = error as ErrorInfo;
           console.error('Error fetching club data:', errorInfo);
-          
+
           this.operationErrors.clubData = errorInfo;
           this.currentError = errorInfo;
           this.errorMessage = errorInfo.userMessage;
-          
+
           this.showErrorToast(this.errorService.createErrorMessage(errorInfo));
-        }
+        },
       });
-      
+
       this.subscriptions.push(subscription);
-      
     } catch (error) {
       console.error('Exception in fetchClubData:', error);
-      const errorInfo = this.errorService.analyzeError(error, 'Fetch Club Data');
+      const errorInfo = this.errorService.analyzeError(
+        error,
+        'Fetch Club Data'
+      );
       this.operationErrors.clubData = errorInfo;
       this.currentError = errorInfo;
       this.errorMessage = errorInfo.userMessage;
@@ -568,7 +614,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
   private updateClubData(response: any) {
     // Handle different response structures
     const clubData = response.club || response;
-    
+
     this.club = {
       ...this.club,
       _id: clubData._id,
@@ -578,12 +624,16 @@ export class ClubHomePage implements OnInit, OnDestroy {
       location: clubData.location || 'Location not specified',
       memberCount: clubData.members ? clubData.members.length : 0,
       isPrivate: clubData.isPrivate || false,
-      logoUrl: clubData.logoUrl || 'https://placehold.co/100x100/4A5568/FFFFFF?text=Logo',
-      coverPhotoUrl: clubData.coverPhotoUrl || 'https://placehold.co/600x250/2D3748/FFFFFF?text=Club+Cover+Photo',
+      logoUrl:
+        clubData.logoUrl ||
+        'https://placehold.co/100x100/4A5568/FFFFFF?text=Logo',
+      coverPhotoUrl:
+        clubData.coverPhotoUrl ||
+        'https://placehold.co/600x250/2D3748/FFFFFF?text=' + clubData.clubName,
       description: clubData.description,
       members: clubData.members,
       createdBy: clubData.createdBy,
-      createdAt: clubData.createdAt
+      createdAt: clubData.createdAt,
     };
   }
 
@@ -605,9 +655,9 @@ export class ClubHomePage implements OnInit, OnDestroy {
       this.statusLoading = true;
       this.operationErrors.membershipStatus = null;
       this.lastStatusCheckTime = Date.now();
-      
+
       const requestKey = `status-${this.clubId}`;
-      
+
       // Check if we already have a pending status request
       if (this.pendingRequests.has(requestKey)) {
         const existingRequest = this.pendingRequests.get(requestKey);
@@ -616,19 +666,21 @@ export class ClubHomePage implements OnInit, OnDestroy {
       }
 
       // Use error service for retry logic
-      const statusRequest = this.errorService.withRetry(
-        this.clubService.getMembershipStatus(this.clubId),
-        'Check Membership Status'
-      ).pipe(
-        tap(response => {
-          console.log('Membership status received:', response);
-          this.updateMembershipStatus(response);
-        }),
-        finalize(() => {
-          this.statusLoading = false;
-          this.operationLocks.membershipStatusCheck = false;
-        })
-      );
+      const statusRequest = this.errorService
+        .withRetry(
+          this.clubService.getMembershipStatus(this.clubId),
+          'Check Membership Status'
+        )
+        .pipe(
+          tap((response) => {
+            console.log('Membership status received:', response);
+            this.updateMembershipStatus(response);
+          }),
+          finalize(() => {
+            this.statusLoading = false;
+            this.operationLocks.membershipStatusCheck = false;
+          })
+        );
 
       // Create promise for tracking
       const statusPromise = statusRequest.toPromise();
@@ -639,12 +691,12 @@ export class ClubHomePage implements OnInit, OnDestroy {
         this.pendingRequests.delete(requestKey);
       } catch (error) {
         this.pendingRequests.delete(requestKey);
-        
+
         const errorInfo = error as ErrorInfo;
         console.error('Error fetching membership status:', errorInfo);
-        
+
         this.operationErrors.membershipStatus = errorInfo;
-        
+
         // Handle specific error scenarios
         if (errorInfo.type === 'authorization') {
           this.userStatus = 'not-member';
@@ -658,17 +710,19 @@ export class ClubHomePage implements OnInit, OnDestroy {
           // For other errors, default to not-member but show error
           console.warn('Defaulting to not-member status due to error');
           this.userStatus = 'not-member';
-          
+
           // Only show error toast for retryable errors
           if (errorInfo.retryable) {
             this.showErrorToast('Unable to check membership status');
           }
         }
       }
-
     } catch (error) {
       console.error('Exception in checkMembershipStatus:', error);
-      const errorInfo = this.errorService.analyzeError(error, 'Check Membership Status');
+      const errorInfo = this.errorService.analyzeError(
+        error,
+        'Check Membership Status'
+      );
       this.operationErrors.membershipStatus = errorInfo;
       this.userStatus = 'not-member';
       this.statusLoading = false;
@@ -679,16 +733,16 @@ export class ClubHomePage implements OnInit, OnDestroy {
   private updateMembershipStatus(response: any) {
     // Update user status based on API response
     this.userStatus = response.status || 'not-member';
-    
+
     // Store additional membership data
     this.membershipData = {
       role: response.role,
       joinRequestId: response.joinRequestId,
       memberSince: response.memberSince,
       permissions: response.permissions,
-      memberId: response.memberId
+      memberId: response.memberId,
     };
-    
+
     // If user is admin, preload admin data for better UX
     if (this.userStatus === 'admin' && !this.operationLocks.adminDataLoad) {
       this.preloadAdminData();
@@ -700,7 +754,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
       message: message,
       duration: 3000,
       color: 'danger',
-      position: 'top'
+      position: 'top',
     });
     toast.present();
   }
@@ -714,52 +768,59 @@ export class ClubHomePage implements OnInit, OnDestroy {
   get isUserMember(): boolean {
     return this.userStatus === 'admin' || this.userStatus === 'member';
   }
-  
+
   get canViewContent(): boolean {
-      // Users can view content if they are a member OR if the club is not private.
-      // Also check if we have successfully loaded club data and membership status
-      return !this.isLoading && !this.statusLoading && this.club.name && (this.isUserMember || !this.club.isPrivate);
+    // Users can view content if they are a member OR if the club is not private.
+    // Also check if we have successfully loaded club data and membership status
+    return (
+      !this.isLoading &&
+      !this.statusLoading &&
+      this.club.name &&
+      (this.isUserMember || !this.club.isPrivate)
+    );
   }
-  
+
   get hasError(): boolean {
     return !!this.currentError && !this.isLoading;
   }
-  
+
   get hasNetworkError(): boolean {
     return !!this.currentError && this.currentError.type === 'network';
   }
-  
+
   get hasServerError(): boolean {
     return !!this.currentError && this.currentError.type === 'server';
   }
-  
+
   get showNetworkIndicator(): boolean {
-    return !this.networkStatus.online || this.connectionQuality.quality === 'poor';
+    return (
+      !this.networkStatus.online || this.connectionQuality.quality === 'poor'
+    );
   }
 
   // --- EVENT HANDLERS ---
   // This function is called when the user taps on a different tab segment.
   segmentChanged(event: any) {
     this.selectedTab = event.detail.value;
-    
+
     // Load member data when members tab is selected
     if (this.selectedTab === 'members') {
       this.loadMembersForDisplay();
-      
+
       // Also load admin data (join requests) if user is admin
       if (this.isUserAdmin) {
         this.loadAdminData();
       }
     }
   }
-  
+
   // Join club functionality with comprehensive race condition prevention
   async joinClub() {
     // Debounce multiple rapid clicks
     if (this.joinDebounceTimer) {
       clearTimeout(this.joinDebounceTimer);
     }
-    
+
     this.joinDebounceTimer = setTimeout(() => {
       this.processJoinClub();
     }, this.JOIN_DEBOUNCE_MS);
@@ -775,14 +836,17 @@ export class ClubHomePage implements OnInit, OnDestroy {
     // Check network connectivity first
     if (!this.networkStatus.online) {
       // Queue the operation for when network comes back
-      this.presentToast('No internet connection. Operation will be retried when connection is restored.', 'warning');
-      
+      this.presentToast(
+        'No internet connection. Operation will be retried when connection is restored.',
+        'warning'
+      );
+
       try {
         const result = await this.errorService.queueOperation(
           () => this.clubService.joinClub(this.clubId!),
           'Join Club'
         );
-        
+
         this.handleJoinSuccess(result);
       } catch (error) {
         const errorInfo = error as ErrorInfo;
@@ -794,7 +858,9 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
     // Prevent multiple simultaneous join attempts
     if (this.operationLocks.joinClub || this.actionInProgress.join) {
-      console.warn('Join operation already in progress, ignoring duplicate request');
+      console.warn(
+        'Join operation already in progress, ignoring duplicate request'
+      );
       return;
     }
 
@@ -806,7 +872,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
     }
 
     // Validate current membership status before proceeding
-    if (!await this.validateMembershipStatusForJoin()) {
+    if (!(await this.validateMembershipStatusForJoin())) {
       return;
     }
 
@@ -817,30 +883,31 @@ export class ClubHomePage implements OnInit, OnDestroy {
     this.operationErrors.joinOperation = null;
 
     // Determine loading message based on club privacy
-    const loadingMessage = this.club?.isPrivate ? 'Sending join request...' : 'Joining club...';
+    const loadingMessage = this.club?.isPrivate
+      ? 'Sending join request...'
+      : 'Joining club...';
     const loading = await this.loadingController.create({
       message: loadingMessage,
-      duration: this.networkService.getRecommendedTimeout()
+      duration: this.networkService.getRecommendedTimeout(),
     });
 
     try {
       await loading.present();
-      
+
       // Use error service for retry logic
-      const joinRequest = this.errorService.withRetry(
-        this.clubService.joinClub(this.clubId),
-        'Join Club'
-      ).pipe(
-        tap(response => {
-          console.log('Join club response:', response);
-        }),
-        finalize(() => {
-          this.operationLocks.joinClub = false;
-          this.actionInProgress.join = false;
-          this.joiningClub = false;
-          loading.dismiss();
-        })
-      );
+      const joinRequest = this.errorService
+        .withRetry(this.clubService.joinClub(this.clubId), 'Join Club')
+        .pipe(
+          tap((response) => {
+            console.log('Join club response:', response);
+          }),
+          finalize(() => {
+            this.operationLocks.joinClub = false;
+            this.actionInProgress.join = false;
+            this.joiningClub = false;
+            loading.dismiss();
+          })
+        );
 
       // Track the pending request
       const joinPromise = joinRequest.toPromise();
@@ -848,22 +915,20 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
       // Wait for the join operation to complete
       const response: any = await joinPromise;
-      
+
       this.handleJoinSuccess(response);
-      
     } catch (error: any) {
       const errorInfo = error as ErrorInfo;
       console.error('Error joining club:', errorInfo);
-      
+
       this.operationErrors.joinOperation = errorInfo;
       this.showErrorToast(this.errorService.createErrorMessage(errorInfo));
-      
     } finally {
       // Clean up tracking
       this.pendingRequests.delete(requestKey);
     }
   }
-  
+
   private handleJoinSuccess(response: any) {
     // Enhanced success message based on response type
     if (response.instant) {
@@ -871,7 +936,10 @@ export class ClubHomePage implements OnInit, OnDestroy {
       this.presentToast('Successfully joined club!', 'success');
     } else {
       // Private club - join request sent
-      this.presentToast('Join request sent! Waiting for admin approval.', 'primary');
+      this.presentToast(
+        'Join request sent! Waiting for admin approval.',
+        'primary'
+      );
     }
 
     // Refresh data after successful join
@@ -925,7 +993,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
     try {
       const refreshPromises = [
         this.refreshClubData(),
-        this.refreshMembershipStatus()
+        this.refreshMembershipStatus(),
       ];
 
       await Promise.all(refreshPromises);
@@ -940,22 +1008,24 @@ export class ClubHomePage implements OnInit, OnDestroy {
       message: message,
       duration: 3000,
       color: 'success',
-      position: 'top'
+      position: 'top',
     });
     toast.present();
   }
 
   // Enhanced toast method for different message types
-  private async presentToast(message: string, color: 'success' | 'primary' | 'warning' | 'danger' = 'success') {
+  private async presentToast(
+    message: string,
+    color: 'success' | 'primary' | 'warning' | 'danger' = 'success'
+  ) {
     const toast = await this.toastController.create({
       message: message,
       duration: 3000,
       color: color,
-      position: 'top'
+      position: 'top',
     });
     toast.present();
   }
-  
 
   // --- SMART JOIN BUTTON LOGIC ---
   // Dynamic button text based on user status and club privacy
@@ -963,23 +1033,29 @@ export class ClubHomePage implements OnInit, OnDestroy {
     if (this.statusLoading || this.joiningClub) {
       return this.joiningClub ? 'Processing...' : 'Checking...';
     }
-    
-    switch(this.userStatus) {
-      case 'admin': return 'Manage';
-      case 'member': return 'Member';
-      case 'pending': return 'Request Pending';
+
+    switch (this.userStatus) {
+      case 'admin':
+        return 'Manage';
+      case 'member':
+        return 'Member';
+      case 'pending':
+        return 'Request Pending';
       case 'not-member':
         return this.club?.isPrivate ? 'Request to Join' : 'Join';
-      default: return 'Join';
+      default:
+        return 'Join';
     }
   }
 
   // Button disabled state logic
   isJoinButtonDisabled(): boolean {
-    return this.statusLoading || 
-           this.joiningClub ||
-           this.userStatus === 'member' || 
-           this.userStatus === 'pending';
+    return (
+      this.statusLoading ||
+      this.joiningClub ||
+      this.userStatus === 'member' ||
+      this.userStatus === 'pending'
+    );
   }
 
   // Button color logic based on status
@@ -987,13 +1063,18 @@ export class ClubHomePage implements OnInit, OnDestroy {
     if (this.statusLoading || this.joiningClub) {
       return 'medium';
     }
-    
-    switch(this.userStatus) {
-      case 'admin': return 'success';
-      case 'member': return 'medium';
-      case 'pending': return 'medium';
-      case 'not-member': return 'brand-amber';
-      default: return 'brand-amber';
+
+    switch (this.userStatus) {
+      case 'admin':
+        return 'success';
+      case 'member':
+        return 'medium';
+      case 'pending':
+        return 'medium';
+      case 'not-member':
+        return 'brand-amber';
+      default:
+        return 'brand-amber';
     }
   }
 
@@ -1002,13 +1083,18 @@ export class ClubHomePage implements OnInit, OnDestroy {
     if (this.statusLoading || this.joiningClub) {
       return '';
     }
-    
-    switch(this.userStatus) {
-      case 'admin': return 'settings-outline';
-      case 'member': return 'checkmark-circle-outline';
-      case 'pending': return 'time-outline';
-      case 'not-member': return 'person-add-outline';
-      default: return 'person-add-outline';
+
+    switch (this.userStatus) {
+      case 'admin':
+        return 'settings-outline';
+      case 'member':
+        return 'checkmark-circle-outline';
+      case 'pending':
+        return 'time-outline';
+      case 'not-member':
+        return 'person-add-outline';
+      default:
+        return 'person-add-outline';
     }
   }
 
@@ -1019,7 +1105,29 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
   // Check if button is actionable (not just status display)
   isJoinButtonActionable(): boolean {
-    return this.userStatus === 'not-member' && !this.statusLoading && !this.joiningClub;
+    return (
+      this.userStatus === 'not-member' &&
+      !this.statusLoading &&
+      !this.joiningClub
+    );
+  }
+
+  // Handle join button click - redirect to edit-club if admin, otherwise join club
+  handleJoinButtonClick() {
+    console.log(
+      'rgdb - Join button clicked with status:',
+      this.getJoinButtonText()
+    );
+    // If button text is "Manage", redirect to edit-club page
+    if (this.getJoinButtonText() === 'Manage') {
+      this.router.navigate(['/edit-club', this.clubId]);
+      return;
+    }
+
+    // Otherwise, handle as normal join club action
+    if (this.isJoinButtonActionable()) {
+      this.joinClub();
+    }
   }
 
   // --- ADMIN MANAGEMENT METHODS ---
@@ -1028,15 +1136,16 @@ export class ClubHomePage implements OnInit, OnDestroy {
    * Preload admin data silently in the background for better UX
    */
   private async preloadAdminData() {
-    if (!this.isUserAdmin || !this.clubId || this.operationLocks.adminDataLoad) return;
-    
+    if (!this.isUserAdmin || !this.clubId || this.operationLocks.adminDataLoad)
+      return;
+
     try {
       this.operationLocks.adminDataLoad = true;
-      
+
       // Load admin data in background without showing loading indicators
       await Promise.all([
         this.loadJoinRequestsSilently(),
-        this.loadClubMembersSilently()
+        this.loadClubMembersSilently(),
       ]);
     } catch (error) {
       console.error('Error preloading admin data:', error);
@@ -1051,12 +1160,9 @@ export class ClubHomePage implements OnInit, OnDestroy {
    */
   async loadAdminData() {
     if (!this.isUserAdmin || !this.clubId) return;
-    
+
     // Load both join requests and members in parallel
-    await Promise.all([
-      this.loadJoinRequests(),
-      this.loadClubMembers()
-    ]);
+    await Promise.all([this.loadJoinRequests(), this.loadClubMembers()]);
   }
 
   /**
@@ -1069,14 +1175,16 @@ export class ClubHomePage implements OnInit, OnDestroy {
       this.joinRequestsLoading = true;
       this.clubService.getJoinRequests(this.clubId).subscribe({
         next: (requests) => {
-          this.joinRequests = requests.filter(req => req.status === 'pending');
+          this.joinRequests = requests.filter(
+            (req) => req.status === 'pending'
+          );
           this.joinRequestsLoading = false;
         },
         error: (error) => {
           console.error('Error loading join requests:', error);
           this.handleAdminError('Failed to load join requests', error);
           this.joinRequestsLoading = false;
-        }
+        },
       });
     } catch (error) {
       console.error('Exception in loadJoinRequests:', error);
@@ -1101,7 +1209,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
           console.error('Error loading club members:', error);
           this.handleAdminError('Failed to load members', error);
           this.membersLoading = false;
-        }
+        },
       });
     } catch (error) {
       console.error('Exception in loadClubMembers:', error);
@@ -1118,13 +1226,15 @@ export class ClubHomePage implements OnInit, OnDestroy {
     return new Promise((resolve, reject) => {
       this.clubService.getJoinRequests(this.clubId!).subscribe({
         next: (requests) => {
-          this.joinRequests = requests.filter(req => req.status === 'pending');
+          this.joinRequests = requests.filter(
+            (req) => req.status === 'pending'
+          );
           resolve();
         },
         error: (error) => {
           console.error('Error silently loading join requests:', error);
           reject(error);
-        }
+        },
       });
     });
   }
@@ -1144,7 +1254,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error silently loading club members:', error);
           reject(error);
-        }
+        },
       });
     });
   }
@@ -1166,7 +1276,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
         next: (members) => {
           this.membersForPublicView = members;
           this.membersDataLoading = false;
-          
+
           // If user is admin, also update the admin members list
           if (this.isUserAdmin) {
             this.clubMembers = [...members];
@@ -1174,10 +1284,10 @@ export class ClubHomePage implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading members via API:', error);
-          
+
           // If API fails (likely due to permissions), try to extract from club data
           this.loadMembersFromClubData();
-        }
+        },
       });
     } catch (error) {
       console.error('Exception in loadMembersForDisplay:', error);
@@ -1193,16 +1303,26 @@ export class ClubHomePage implements OnInit, OnDestroy {
       if (this.club.members && this.club.members.length > 0) {
         // Map club.members to the expected format
         this.membersForPublicView = this.club.members.map((member: any) => ({
-          _id: member._id || member.id || `member-${Date.now()}-${Math.random()}`,
+          _id:
+            member._id || member.id || `member-${Date.now()}-${Math.random()}`,
           user: {
             _id: member.user?._id || member._id || member.id,
-            name: member.user?.name || member.name || member.username || 'Member',
+            name:
+              member.user?.name || member.name || member.username || 'Member',
             email: member.user?.email || member.email || '',
-            profilePicture: member.user?.profilePicture || member.profilePicture
+            profilePicture:
+              member.user?.profilePicture || member.profilePicture,
           },
           club: this.clubId!,
-          role: member.role || (member.roles && member.roles.includes && member.roles.includes('admin') ? 'admin' : 'member'),
-          joinedAt: member.joinedDate || member.joinedAt || new Date().toISOString()
+          role:
+            member.role ||
+            (member.roles &&
+            member.roles.includes &&
+            member.roles.includes('admin')
+              ? 'admin'
+              : 'member'),
+          joinedAt:
+            member.joinedDate || member.joinedAt || new Date().toISOString(),
         }));
       } else {
         // No member data available - show empty state
@@ -1227,15 +1347,15 @@ export class ClubHomePage implements OnInit, OnDestroy {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Approve',
           handler: () => {
             this.processJoinRequest(request, 'approve');
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
 
     await alert.present();
@@ -1251,16 +1371,16 @@ export class ClubHomePage implements OnInit, OnDestroy {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Reject',
           cssClass: 'danger',
           handler: () => {
             this.processJoinRequest(request, 'reject');
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
 
     await alert.present();
@@ -1269,7 +1389,10 @@ export class ClubHomePage implements OnInit, OnDestroy {
   /**
    * Process a join request (approve or reject) with race condition prevention
    */
-  private async processJoinRequest(request: JoinRequest, action: 'approve' | 'reject') {
+  private async processJoinRequest(
+    request: JoinRequest,
+    action: 'approve' | 'reject'
+  ) {
     if (!this.clubId) return;
 
     // Prevent concurrent processing of the same request
@@ -1280,12 +1403,15 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
     // Prevent admin actions during other critical operations
     if (this.operationLocks.refreshData || this.actionInProgress.refresh) {
-      this.presentToast('Please wait for current operation to complete', 'warning');
+      this.presentToast(
+        'Please wait for current operation to complete',
+        'warning'
+      );
       return;
     }
 
     const requestKey = `${action}-request-${request._id}`;
-    
+
     // Check for duplicate operations
     if (this.pendingRequests.has(requestKey)) {
       console.warn(`Duplicate ${action} request detected for ${request._id}`);
@@ -1295,12 +1421,13 @@ export class ClubHomePage implements OnInit, OnDestroy {
     try {
       this.processingRequests.add(request._id);
       this.actionInProgress.adminActions = true;
-      
+
       // Create operation promise
       const operationPromise = new Promise((resolve, reject) => {
-        const serviceCall = action === 'approve' 
-          ? this.clubService.approveJoinRequest(this.clubId!, request._id)
-          : this.clubService.rejectJoinRequest(this.clubId!, request._id);
+        const serviceCall =
+          action === 'approve'
+            ? this.clubService.approveJoinRequest(this.clubId!, request._id)
+            : this.clubService.rejectJoinRequest(this.clubId!, request._id);
 
         serviceCall.subscribe({
           next: (response) => {
@@ -1308,7 +1435,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
           },
           error: (error) => {
             reject(error);
-          }
+          },
         });
       });
 
@@ -1319,16 +1446,20 @@ export class ClubHomePage implements OnInit, OnDestroy {
       await operationPromise;
 
       const actionText = action === 'approve' ? 'approved' : 'rejected';
-      this.presentToast(`Successfully ${actionText} ${request.user.name}'s request`, 'success');
-      
+      this.presentToast(
+        `Successfully ${actionText} ${request.user.name}'s request`,
+        'success'
+      );
+
       // Remove the request from the list
-      this.joinRequests = this.joinRequests.filter(req => req._id !== request._id);
-      
+      this.joinRequests = this.joinRequests.filter(
+        (req) => req._id !== request._id
+      );
+
       // If approved, refresh member count and members list without conflicts
       if (action === 'approve') {
         await this.safeRefreshAfterMemberChange();
       }
-
     } catch (error: any) {
       console.error(`Error ${action}ing join request:`, error);
       this.handleAdminError(`Failed to ${action} request`, error);
@@ -1347,10 +1478,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
     try {
       // Only refresh if no other refresh operations are in progress
       if (!this.operationLocks.refreshData && !this.actionInProgress.refresh) {
-        await Promise.all([
-          this.refreshClubData(),
-          this.refreshClubMembers()
-        ]);
+        await Promise.all([this.refreshClubData(), this.refreshClubMembers()]);
       }
     } catch (error) {
       console.error('Error during safe refresh:', error);
@@ -1363,7 +1491,10 @@ export class ClubHomePage implements OnInit, OnDestroy {
   async presentMemberActions(member: ClubMember) {
     // Don't allow actions on self or if processing
     const currentUserId = this.membershipData.memberId;
-    if (member._id === currentUserId || this.processingMembers.has(member._id)) {
+    if (
+      member._id === currentUserId ||
+      this.processingMembers.has(member._id)
+    ) {
       return;
     }
 
@@ -1376,7 +1507,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
         icon: 'arrow-up-outline',
         handler: () => {
           this.promoteToAdmin(member);
-        }
+        },
       });
     } else if (member.role === 'admin') {
       buttons.push({
@@ -1384,7 +1515,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
         icon: 'arrow-down-outline',
         handler: () => {
           this.demoteToMember(member);
-        }
+        },
       });
     }
 
@@ -1395,20 +1526,20 @@ export class ClubHomePage implements OnInit, OnDestroy {
       role: 'destructive',
       handler: () => {
         this.removeMemberFromClub(member);
-      }
+      },
     });
 
     // Cancel button
     buttons.push({
       text: 'Cancel',
       icon: 'close-outline',
-      role: 'cancel'
+      role: 'cancel',
     });
 
     const actionSheet = await this.actionSheetController.create({
       header: `Manage ${member.user.name}`,
       buttons: buttons,
-      cssClass: 'dark-theme-action-sheet'
+      cssClass: 'dark-theme-action-sheet',
     });
 
     await actionSheet.present();
@@ -1424,15 +1555,15 @@ export class ClubHomePage implements OnInit, OnDestroy {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Promote',
           handler: () => {
             this.processMemberRoleChange(member, 'promote');
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
 
     await alert.present();
@@ -1448,16 +1579,16 @@ export class ClubHomePage implements OnInit, OnDestroy {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Demote',
           cssClass: 'warning',
           handler: () => {
             this.processMemberRoleChange(member, 'demote');
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
 
     await alert.present();
@@ -1473,16 +1604,16 @@ export class ClubHomePage implements OnInit, OnDestroy {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Remove',
           cssClass: 'danger',
           handler: () => {
             this.processMemberRemoval(member);
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
 
     await alert.present();
@@ -1491,7 +1622,10 @@ export class ClubHomePage implements OnInit, OnDestroy {
   /**
    * Process member role change (promote/demote) with race condition prevention
    */
-  private async processMemberRoleChange(member: ClubMember, action: 'promote' | 'demote') {
+  private async processMemberRoleChange(
+    member: ClubMember,
+    action: 'promote' | 'demote'
+  ) {
     if (!this.clubId) return;
 
     // Prevent concurrent processing of the same member
@@ -1502,27 +1636,33 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
     // Prevent admin actions during other critical operations
     if (this.operationLocks.refreshData || this.actionInProgress.refresh) {
-      this.presentToast('Please wait for current operation to complete', 'warning');
+      this.presentToast(
+        'Please wait for current operation to complete',
+        'warning'
+      );
       return;
     }
 
     const requestKey = `${action}-member-${member._id}`;
-    
+
     // Check for duplicate operations
     if (this.pendingRequests.has(requestKey)) {
-      console.warn(`Duplicate ${action} member request detected for ${member._id}`);
+      console.warn(
+        `Duplicate ${action} member request detected for ${member._id}`
+      );
       return;
     }
 
     try {
       this.processingMembers.add(member._id);
       this.actionInProgress.adminActions = true;
-      
+
       // Create operation promise
       const operationPromise = new Promise((resolve, reject) => {
-        const serviceCall = action === 'promote' 
-          ? this.clubService.promoteToAdmin(this.clubId!, member._id)
-          : this.clubService.demoteToMember(this.clubId!, member._id);
+        const serviceCall =
+          action === 'promote'
+            ? this.clubService.promoteToAdmin(this.clubId!, member._id)
+            : this.clubService.demoteToMember(this.clubId!, member._id);
 
         serviceCall.subscribe({
           next: (response) => {
@@ -1530,7 +1670,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
           },
           error: (error) => {
             reject(error);
-          }
+          },
         });
       });
 
@@ -1542,15 +1682,19 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
       const actionText = action === 'promote' ? 'promoted' : 'demoted';
       const newRole = action === 'promote' ? 'admin' : 'member';
-      
-      this.presentToast(`Successfully ${actionText} ${member.user.name}`, 'success');
-      
+
+      this.presentToast(
+        `Successfully ${actionText} ${member.user.name}`,
+        'success'
+      );
+
       // Update the member role locally
-      const memberIndex = this.clubMembers.findIndex(m => m._id === member._id);
+      const memberIndex = this.clubMembers.findIndex(
+        (m) => m._id === member._id
+      );
       if (memberIndex !== -1) {
         this.clubMembers[memberIndex].role = newRole;
       }
-
     } catch (error: any) {
       console.error(`Error ${action}ing member:`, error);
       this.handleAdminError(`Failed to ${action} member`, error);
@@ -1576,22 +1720,27 @@ export class ClubHomePage implements OnInit, OnDestroy {
 
     // Prevent admin actions during other critical operations
     if (this.operationLocks.refreshData || this.actionInProgress.refresh) {
-      this.presentToast('Please wait for current operation to complete', 'warning');
+      this.presentToast(
+        'Please wait for current operation to complete',
+        'warning'
+      );
       return;
     }
 
     const requestKey = `remove-member-${member._id}`;
-    
+
     // Check for duplicate operations
     if (this.pendingRequests.has(requestKey)) {
-      console.warn(`Duplicate remove member request detected for ${member._id}`);
+      console.warn(
+        `Duplicate remove member request detected for ${member._id}`
+      );
       return;
     }
 
     try {
       this.processingMembers.add(member._id);
       this.actionInProgress.adminActions = true;
-      
+
       // Create operation promise
       const operationPromise = new Promise((resolve, reject) => {
         this.clubService.removeMember(this.clubId!, member._id).subscribe({
@@ -1600,7 +1749,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
           },
           error: (error) => {
             reject(error);
-          }
+          },
         });
       });
 
@@ -1611,13 +1760,12 @@ export class ClubHomePage implements OnInit, OnDestroy {
       await operationPromise;
 
       this.presentToast(`Successfully removed ${member.user.name}`, 'success');
-      
+
       // Remove member from local list
-      this.clubMembers = this.clubMembers.filter(m => m._id !== member._id);
-      
+      this.clubMembers = this.clubMembers.filter((m) => m._id !== member._id);
+
       // Safely refresh club data for updated member count
       await this.safeRefreshAfterMemberChange();
-
     } catch (error: any) {
       console.error('Error removing member:', error);
       this.handleAdminError('Failed to remove member', error);
@@ -1635,81 +1783,84 @@ export class ClubHomePage implements OnInit, OnDestroy {
   private handleAdminError(message: string, error: any) {
     const errorInfo = this.errorService.analyzeError(error, 'Admin Operation');
     this.operationErrors.adminOperations = errorInfo;
-    
+
     const errorMessage = this.errorService.createErrorMessage(errorInfo);
-    this.presentToast(errorMessage, this.errorService.getErrorColor(errorInfo) as any);
+    this.presentToast(
+      errorMessage,
+      this.errorService.getErrorColor(errorInfo) as any
+    );
   }
-  
+
   // --- RETRY AND RECOVERY METHODS ---
-  
+
   /**
    * Retry the main club data loading operation
    */
   async retryFetchClubData() {
     if (!this.clubId || this.isRetrying) return;
-    
+
     this.isRetrying = true;
     this.retryAttempts++;
-    
+
     try {
       await this.fetchClubData(this.clubId);
     } finally {
       this.isRetrying = false;
     }
   }
-  
+
   /**
    * Retry checking membership status
    */
   async retryMembershipStatus() {
     if (this.isRetrying) return;
-    
+
     this.isRetrying = true;
-    
+
     try {
       await this.checkMembershipStatus();
     } finally {
       this.isRetrying = false;
     }
   }
-  
+
   /**
    * Retry the join operation
    */
   async retryJoinClub() {
     if (this.isRetrying) return;
-    
+
     this.isRetrying = true;
-    
+
     try {
       await this.processJoinClub();
     } finally {
       this.isRetrying = false;
     }
   }
-  
+
   /**
    * Clear all errors and retry all failed operations
    */
   async retryAllOperations() {
     if (this.isRetrying) return;
-    
+
     this.isRetrying = true;
     this.currentError = null;
     this.operationErrors = {
       clubData: null,
       membershipStatus: null,
       joinOperation: null,
-      adminOperations: null
+      adminOperations: null,
     };
-    
+
     const retryPromises = [];
-    
+
     if (this.clubId) {
       retryPromises.push(this.fetchClubData(this.clubId));
       retryPromises.push(this.checkMembershipStatus());
     }
-    
+
     try {
       await Promise.allSettled(retryPromises);
       this.presentToast('Operations retried successfully', 'success');
@@ -1719,7 +1870,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
       this.isRetrying = false;
     }
   }
-  
+
   /**
    * Check if a specific operation can be retried
    */
@@ -1727,14 +1878,16 @@ export class ClubHomePage implements OnInit, OnDestroy {
     const error = this.operationErrors[operation];
     return !!error && error.retryable && !this.isRetrying;
   }
-  
+
   /**
    * Get error info for display
    */
-  getOperationError(operation: keyof typeof this.operationErrors): ErrorInfo | null {
+  getOperationError(
+    operation: keyof typeof this.operationErrors
+  ): ErrorInfo | null {
     return this.operationErrors[operation];
   }
-  
+
   /**
    * Check network connectivity manually
    */
@@ -1769,7 +1922,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
    * Get display name (firstName + lastName or fallback to username/name)
    */
   getDisplayName(user: any): string {
-    console.log('rgdb user ', user)
+    console.log('rgdb user ', user);
     if (user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`.trim();
     } else if (user.firstName) {
@@ -1790,7 +1943,14 @@ export class ClubHomePage implements OnInit, OnDestroy {
       return profilePicture;
     }
     // Create initials-based placeholder
-    const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '??';
+    const initials = name
+      ? name
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2)
+      : '??';
     return `https://placehold.co/80x80/718096/FFFFFF?text=${initials}`;
   }
 
@@ -1799,13 +1959,19 @@ export class ClubHomePage implements OnInit, OnDestroy {
    */
   async navigateToCreateEvent() {
     if (!this.clubId) {
-      this.presentToast('Unable to create event: Club ID not available', 'danger');
+      this.presentToast(
+        'Unable to create event: Club ID not available',
+        'danger'
+      );
       return;
     }
 
     try {
       console.log('Navigating to create event with clubId:', this.clubId);
-      const success = await this.router.navigate(['/create-event', this.clubId]);
+      const success = await this.router.navigate([
+        '/create-event',
+        this.clubId,
+      ]);
       if (!success) {
         console.error('Navigation failed');
         this.presentToast('Unable to navigate to create event page', 'danger');
@@ -1816,8 +1982,35 @@ export class ClubHomePage implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Navigate to edit club page with current club ID
+   */
+  async navigateToEditClub() {
+    if (!this.clubId) {
+      this.presentToast('Unable to edit club: Club ID not available', 'danger');
+      return;
+    }
+
+    if (!this.isUserAdmin) {
+      this.presentToast('Access denied: Admin privileges required', 'danger');
+      return;
+    }
+
+    try {
+      console.log('Navigating to edit club with clubId:', this.clubId);
+      const success = await this.router.navigate(['/edit-club', this.clubId]);
+      if (!success) {
+        console.error('Navigation failed');
+        this.presentToast('Unable to navigate to edit club page', 'danger');
+      }
+    } catch (error) {
+      console.error('Error navigating to edit club:', error);
+      this.presentToast('Unable to navigate to edit club page', 'danger');
+    }
+  }
+
   // --- MODAL MANAGEMENT METHODS ---
-  
+
   /**
    * Open members management modal and load member data
    */
@@ -1828,7 +2021,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
     }
 
     this.showMembersModal = true;
-    
+
     // Load admin data when modal opens (if not already loaded)
     if (this.clubMembers.length === 0 && !this.membersLoading) {
       await this.loadAdminData();
@@ -1841,9 +2034,9 @@ export class ClubHomePage implements OnInit, OnDestroy {
   closeMembersModal() {
     this.showMembersModal = false;
   }
-  
+
   // --- ERROR DISPLAY HELPERS ---
-  
+
   /**
    * Get the appropriate error icon for display
    */
@@ -1851,7 +2044,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
     if (!errorInfo) return 'alert-circle-outline';
     return this.errorService.getErrorIcon(errorInfo);
   }
-  
+
   /**
    * Get the appropriate error color for display
    */
@@ -1859,7 +2052,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
     if (!errorInfo) return 'danger';
     return this.errorService.getErrorColor(errorInfo);
   }
-  
+
   /**
    * Get a user-friendly error message
    */
@@ -1867,7 +2060,7 @@ export class ClubHomePage implements OnInit, OnDestroy {
     if (!errorInfo) return 'An unexpected error occurred';
     return this.errorService.createErrorMessage(errorInfo);
   }
-  
+
   /**
    * Check if retry button should be shown for an error
    */

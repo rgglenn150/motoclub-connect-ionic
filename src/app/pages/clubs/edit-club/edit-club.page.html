@@ -1,0 +1,254 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button (click)="onBack()"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Edit Club</ion-title>
+    <ion-buttons slot="end">
+      <ion-button
+        fill="clear"
+        [disabled]="!hasUnsavedChanges || isLoading"
+        (click)="onSave()"
+      >
+        <ion-spinner name="crescent" size="small" *ngIf="isLoading"></ion-spinner>
+        <span *ngIf="!isLoading">Save</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Edit Club</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <!-- Club Logo Section -->
+  <ion-card class="club-logo-section">
+    <ion-card-content>
+      <div class="logo-container">
+        <div class="club-logo-wrapper" (click)="onSelectLogo()">
+          <img
+            [src]="logoImageUrl || 'https://placehold.co/120x120/F59E0B/2D3748?text=' + getClubInitials()"
+            alt="Club Logo"
+            class="club-logo"
+          />
+          <div class="logo-overlay">
+            <ion-icon name="camera"></ion-icon>
+            <p>Change Logo</p>
+          </div>
+        </div>
+        <input
+          #logoInput
+          type="file"
+          accept="image/*"
+          style="display: none"
+          (change)="fileChangeEvent($event)"
+        />
+        <div class="upload-progress" *ngIf="uploadProgress > 0 && uploadProgress < 100">
+          <ion-progress-bar [value]="uploadProgress / 100"></ion-progress-bar>
+          <ion-text color="medium">{{ uploadProgress }}% uploaded</ion-text>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Image Cropper Modal -->
+  <ion-modal [isOpen]="showCropper" (willDismiss)="cancelCrop()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Crop Club Logo</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="cancelCrop()">
+              Cancel
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <div class="cropper-container">
+          <image-cropper
+            [imageChangedEvent]="imageChangedEvent"
+            [maintainAspectRatio]="true"
+            [aspectRatio]="1"
+            [resizeToWidth]="300"
+            [cropperMinWidth]="100"
+            format="png"
+            (imageCropped)="imageCropped($event)"
+            (imageLoaded)="imageLoaded()"
+            (cropperReady)="cropperReady()"
+            (loadImageFailed)="loadImageFailed()"
+          ></image-cropper>
+        </div>
+        <ion-button
+          expand="block"
+          class="apply-crop-button"
+          (click)="applyCrop()"
+          [disabled]="!croppedImage"
+        >
+          Apply Crop
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Form Sections -->
+  <form [formGroup]="editClubForm">
+
+    <!-- Basic Information Section -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Basic Information</ion-card-title>
+        <ion-card-subtitle>Update your club's essential details</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+
+        <!-- Club Name Field -->
+        <ion-item>
+          <ion-input
+            label="Club Name"
+            labelPlacement="stacked"
+            formControlName="clubName"
+            placeholder="Enter club name"
+            (ionInput)="onClubNameInput()"
+            (ionBlur)="onClubNameBlur()"
+          ></ion-input>
+          <ion-note slot="helper" *ngIf="clubNameStatus === 'checking'">
+            <ion-spinner name="crescent" size="small"></ion-spinner>
+            Checking availability...
+          </ion-note>
+          <ion-note slot="helper" *ngIf="clubNameStatus === 'available'" color="success">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            Club name available
+          </ion-note>
+          <ion-note slot="helper" *ngIf="clubNameStatus === 'unavailable'" color="danger">
+            <ion-icon name="close-circle" color="danger"></ion-icon>
+            Club name already taken
+          </ion-note>
+          <ion-note slot="error" *ngIf="editClubForm.get('clubName')?.invalid && editClubForm.get('clubName')?.touched">
+            <span *ngIf="editClubForm.get('clubName')?.errors?.['required']">Club name is required</span>
+            <span *ngIf="editClubForm.get('clubName')?.errors?.['minlength']">Club name must be at least 3 characters</span>
+            <span *ngIf="editClubForm.get('clubName')?.errors?.['maxlength']">Club name cannot exceed 50 characters</span>
+          </ion-note>
+        </ion-item>
+
+        <!-- Description Field -->
+        <ion-item>
+          <ion-textarea
+            label="Description"
+            labelPlacement="stacked"
+            formControlName="description"
+            placeholder="Tell others about your club..."
+            rows="4"
+            maxlength="500"
+            (ionInput)="onDescriptionInput()"
+          ></ion-textarea>
+          <ion-note slot="helper">
+            {{ getDescriptionCharCount() }}/500 characters
+          </ion-note>
+          <ion-note slot="error" *ngIf="editClubForm.get('description')?.invalid && editClubForm.get('description')?.touched">
+            <span *ngIf="editClubForm.get('description')?.errors?.['required']">Description is required</span>
+            <span *ngIf="editClubForm.get('description')?.errors?.['minlength']">Description must be at least 10 characters</span>
+            <span *ngIf="editClubForm.get('description')?.errors?.['maxlength']">Description cannot exceed 500 characters</span>
+          </ion-note>
+        </ion-item>
+
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Location Settings Section -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Location & Privacy</ion-card-title>
+        <ion-card-subtitle>Set your club's location and privacy settings</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+
+        <!-- Location Field -->
+        <div class="location-field-container">
+          <ion-label class="location-label">Location</ion-label>
+          <div class="location-input-wrapper">
+            <ion-icon name="location-outline" class="location-icon"></ion-icon>
+            <app-mapbox-autocomplete
+              formControlName="location"
+              placeholder="Enter club location (city, state)"
+              (locationSelected)="onLocationSelected($event)">
+            </app-mapbox-autocomplete>
+          </div>
+          <ion-note slot="helper" *ngIf="locationHint">
+            {{ locationHint }}
+          </ion-note>
+          <ion-note slot="error" *ngIf="editClubForm.get('location')?.invalid && editClubForm.get('location')?.touched" class="error-note">
+            <span *ngIf="editClubForm.get('location')?.errors?.['required']">Location is required</span>
+            <span *ngIf="editClubForm.get('location')?.errors?.['maxlength']">Location cannot exceed 100 characters</span>
+          </ion-note>
+        </div>
+
+        <!-- Privacy Toggle -->
+        <ion-item>
+          <ion-label>
+            <h3>Private Club</h3>
+            <p>Only members can see club details and events</p>
+          </ion-label>
+          <ion-toggle
+            formControlName="isPrivate"
+            (ionChange)="onPrivacyToggle($event)"
+          ></ion-toggle>
+        </ion-item>
+
+        <div class="privacy-note-container">
+          <ion-note class="privacy-note" [ngClass]="{
+            'private-club': editClubForm.get('isPrivate')?.value,
+            'public-club': !editClubForm.get('isPrivate')?.value
+          }">
+            <ion-icon [name]="editClubForm.get('isPrivate')?.value ? 'lock-closed' : 'globe'"></ion-icon>
+            <span class="privacy-text">
+              {{ editClubForm.get('isPrivate')?.value ? 'Your club is private. Only members can view club details.' : 'Your club is public. Anyone can discover and request to join.' }}
+            </span>
+          </ion-note>
+        </div>
+
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Form Validation Summary -->
+    <ion-card *ngIf="editClubForm.invalid && editClubForm.touched" class="validation-summary">
+      <ion-card-content>
+        <ion-text color="danger">
+          <h4>Please fix the following issues:</h4>
+          <ul>
+            <li *ngIf="editClubForm.get('clubName')?.invalid">Club name is required and must be valid</li>
+            <li *ngIf="editClubForm.get('description')?.invalid">Description is required (10-500 characters)</li>
+            <li *ngIf="editClubForm.get('location')?.invalid">Location is required</li>
+          </ul>
+        </ion-text>
+      </ion-card-content>
+    </ion-card>
+
+  </form>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons" *ngIf="hasUnsavedChanges">
+    <ion-button
+      expand="block"
+      fill="outline"
+      color="medium"
+      (click)="onDiscard()"
+      [disabled]="isLoading"
+    >
+      Discard Changes
+    </ion-button>
+
+    <ion-button
+      expand="block"
+      (click)="onSave()"
+      [disabled]="editClubForm.invalid || isLoading"
+    >
+      <ion-spinner name="crescent" size="small" *ngIf="isLoading"></ion-spinner>
+      <span *ngIf="!isLoading">Save Club</span>
+    </ion-button>
+  </div>
+
+</ion-content>
