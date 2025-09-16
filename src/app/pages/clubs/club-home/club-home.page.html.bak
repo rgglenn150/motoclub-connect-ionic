@@ -419,13 +419,6 @@
             Create Event
           </ion-button>
         </div>
-        <!-- Admin Management Section -->
-        <div *ngIf="isUserAdmin" class="admin-management-section">
-          <ion-button expand="block" color="success" (click)="navigateToEditClub()" class="edit-club-button">
-            <ion-icon name="create-outline" slot="start"></ion-icon>
-            Edit Club Settings
-          </ion-button>
-        </div>
 
         <div class="events-section">
           <ion-card class="asphalt-card" *ngFor="let event of events">

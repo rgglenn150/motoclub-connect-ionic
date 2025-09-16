@@ -33,6 +33,11 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'club-details/:id',
+    loadChildren: () => import('./components/clubs/club-details/club-details.module').then( m => m.ClubDetailsPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'clubs/:id',
     loadChildren: () => import('./pages/clubs/club-home/club-home.module').then( m => m.ClubHomePageModule),
     canActivate: [AuthGuard]
@@ -50,7 +55,7 @@ const routes: Routes = [
   {
     path: 'edit-club/:id',
     loadChildren: () => import('./pages/clubs/edit-club/edit-club.module').then( m => m.EditClubPageModule),
-    canActivate: [AuthGuard, ClubAdminGuard]
+    canActivate: [AuthGuard]
   }
 ];
 @NgModule({

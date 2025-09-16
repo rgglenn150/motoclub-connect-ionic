@@ -3,59 +3,26 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { map } from 'rxjs/operators'; // Import the map operator
+import {
+  Club,
+  ClubUpdateRequest,
+  ClubAvailabilityCheck,
+  JoinRequest,
+  ClubMember,
+  ValidationResult,
+  MultiValidationResult
+} from '../models/club.model';
 
-export interface Geolocation {
-  latitude: number;
-  longitude: number;
-  placeName: string;
-}
-
-export interface Club {
-  _id?: string;
-  id?: string; // For compatibility with frontend routing
-  clubName: string;
-  description: string;
-  location?: string;
-  geolocation?: Geolocation;
-  isPrivate: boolean;
-  members?: any[]; // You can create a more specific interface for members
-  createdBy?: string;
-  createdAt?: string;
-  logoUrl?: string; // For club logo display
-}
-
-export interface JoinRequest {
-  _id: string;
-  user: {
-    _id: string;
-    name: string;
-    email: string;
-    username?: string;
-    firstName?: string;
-    lastName?: string;
-    profilePicture?: string;
-  };
-  club: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-  updatedAt?: string;
-}
-
-export interface ClubMember {
-  _id: string;
-  user: {
-    _id: string;
-    name: string;
-    email: string;
-    username?: string;
-    firstName?: string;
-    lastName?: string;
-    profilePicture?: string;
-  };
-  club: string;
-  role: 'member' | 'admin';
-  joinedAt: string;
-}
+// Re-export for backward compatibility
+export {
+  Club,
+  ClubUpdateRequest,
+  ClubAvailabilityCheck,
+  JoinRequest,
+  ClubMember,
+  ValidationResult,
+  MultiValidationResult
+} from '../models/club.model';
 
 @Injectable({
   providedIn: 'root'
@@ -231,5 +198,186 @@ export class ClubService {
     return this.getClubMembers(clubId).pipe(
       // If it fails, we'll handle it in the component
     );
+  }
+
+  // --- CLUB UPDATE METHODS ---
+
+  /**
+   * Update club information.
+   *
+   * @param clubId - The ID of the club to update
+   * @param clubData - The club data to update
+   * @returns An Observable with the updated club
+   */
+  updateClub(clubId: string, clubData: ClubUpdateRequest): Observable<Club> {
+    return this.http.put<Club>(`${this.baseUrl}/${clubId}/update`, clubData);
+  }
+
+  /**
+   * Update club logo only.
+   *
+   * @param clubId - The ID of the club to update
+   * @param file - The logo file to upload
+   * @returns An Observable with the updated club
+   */
+  updateClubLogo(clubId: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return this.http.put(`${this.baseUrl}/${clubId}/update`, formData);
+  }
+
+  /**
+   * Update club information with logo upload.
+   *
+   * @param clubId - The ID of the club to update
+   * @param clubData - The club data to update
+   * @param logoFile - The logo file to upload
+   * @returns An Observable with the updated club
+   */
+  updateClubWithLogo(clubId: string, clubData: ClubUpdateRequest, logoFile: File): Observable<Club> {
+    const formData = new FormData();
+
+    // Append club data as JSON
+    if (clubData.clubName !== undefined) {
+      formData.append('clubName', clubData.clubName);
+    }
+    if (clubData.description !== undefined) {
+      formData.append('description', clubData.description);
+    }
+    if (clubData.location !== undefined) {
+      formData.append('location', clubData.location);
+    }
+    if (clubData.isPrivate !== undefined) {
+      formData.append('isPrivate', clubData.isPrivate.toString());
+    }
+    if (clubData.geolocation) {
+      formData.append('geolocation', JSON.stringify(clubData.geolocation));
+    }
+
+    // Append logo file
+    formData.append('logo', logoFile);
+
+    return this.http.put<Club>(`${this.baseUrl}/${clubId}/update`, formData);
+  }
+
+  /**
+   * Check if a club name is available.
+   *
+   * @param name - The club name to check
+   * @param excludeId - Optional club ID to exclude from the check (for editing existing club)
+   * @returns An Observable with availability status
+   */
+  checkClubNameAvailability(name: string, excludeId?: string): Observable<ClubAvailabilityCheck> {
+    let url = `${this.baseUrl}/check-name/${encodeURIComponent(name)}`;
+    if (excludeId) {
+      url += `?exclude=${excludeId}`;
+    }
+    return this.http.get<ClubAvailabilityCheck>(url);
+  }
+
+  // --- VALIDATION HELPERS ---
+
+  /**
+   * Validate club name format and requirements.
+   *
+   * @param name - The club name to validate
+   * @returns Validation result with error message if invalid
+   */
+  validateClubName(name: string): ValidationResult {
+    if (!name || name.trim().length === 0) {
+      return { valid: false, error: 'Club name is required' };
+    }
+
+    if (name.trim().length < 3) {
+      return { valid: false, error: 'Club name must be at least 3 characters' };
+    }
+
+    if (name.trim().length > 50) {
+      return { valid: false, error: 'Club name must be less than 50 characters' };
+    }
+
+    // Check for valid characters (alphanumeric, spaces, hyphens, apostrophes)
+    const validNamePattern = /^[a-zA-Z0-9\s\-']+$/;
+    if (!validNamePattern.test(name.trim())) {
+      return { valid: false, error: 'Club name can only contain letters, numbers, spaces, hyphens, and apostrophes' };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Validate club description format and requirements.
+   *
+   * @param description - The club description to validate
+   * @returns Validation result with error message if invalid
+   */
+  validateClubDescription(description: string): ValidationResult {
+    if (!description || description.trim().length === 0) {
+      return { valid: false, error: 'Club description is required' };
+    }
+
+    if (description.trim().length < 10) {
+      return { valid: false, error: 'Club description must be at least 10 characters' };
+    }
+
+    if (description.trim().length > 500) {
+      return { valid: false, error: 'Club description must be less than 500 characters' };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Validate club location format.
+   *
+   * @param location - The club location to validate
+   * @returns Validation result with error message if invalid
+   */
+  validateClubLocation(location?: string): ValidationResult {
+    if (!location || location.trim().length === 0) {
+      return { valid: true }; // Location is optional
+    }
+
+    if (location.trim().length > 100) {
+      return { valid: false, error: 'Location must be less than 100 characters' };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Validate all club update data.
+   *
+   * @param clubData - The club data to validate
+   * @returns Validation result with error messages if invalid
+   */
+  validateClubUpdateData(clubData: ClubUpdateRequest): MultiValidationResult {
+    const errors: string[] = [];
+
+    if (clubData.clubName !== undefined) {
+      const nameValidation = this.validateClubName(clubData.clubName);
+      if (!nameValidation.valid && nameValidation.error) {
+        errors.push(nameValidation.error);
+      }
+    }
+
+    if (clubData.description !== undefined) {
+      const descriptionValidation = this.validateClubDescription(clubData.description);
+      if (!descriptionValidation.valid && descriptionValidation.error) {
+        errors.push(descriptionValidation.error);
+      }
+    }
+
+    if (clubData.location !== undefined) {
+      const locationValidation = this.validateClubLocation(clubData.location);
+      if (!locationValidation.valid && locationValidation.error) {
+        errors.push(locationValidation.error);
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
   }
 }
