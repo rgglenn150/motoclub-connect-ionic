@@ -102,8 +102,13 @@ export class CreateClubPage implements OnInit {
     // Show loading spinner
     this.isLoading = true;
 
-    // Use the Club interface for type safety
-    const clubData: Club = this.createClubForm.value;
+    // Prepare club data manually to ensure proper mapping and include geolocation
+    const clubData: Club = {
+      clubName: this.createClubForm.get('name')?.value,
+      description: this.createClubForm.get('description')?.value,
+      location: this.createClubForm.get('location')?.value,
+      isPrivate: this.createClubForm.get('isPrivate')?.value
+    };
 
     // Add geolocation data if available from Mapbox selection
     if (this.selectedLocation) {
@@ -112,6 +117,9 @@ export class CreateClubPage implements OnInit {
         longitude: this.selectedLocation.longitude,
         placeName: this.selectedLocation.placeName
       };
+      console.log('Geolocation data added to club:', clubData.geolocation);
+    } else {
+      console.log('No geolocation data selected');
     }
 
     console.log('Submitting Club Data:', clubData);

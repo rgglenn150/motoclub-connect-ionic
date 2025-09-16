@@ -24,7 +24,7 @@ export class ClubListComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
     this.clubs$ = this.clubService.getAllClubs();
-
+    
     // Handle loading and error states
     this.clubs$.subscribe({
       next: () => this.isLoading = false,

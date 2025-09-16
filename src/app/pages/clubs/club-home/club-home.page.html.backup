@@ -4,12 +4,6 @@
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
   </ion-toolbar>
-    <ion-buttons slot="end">
-      <!-- Edit Club Button - Only show for admins -->
-      <ion-button *ngIf="isUserAdmin && !isLoading && !statusLoading" (click)="navigateToEditClub()" fill="clear" color="light">
-        <ion-icon slot="icon-only" name="create-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
 
   <!-- Skeleton Loader for Header -->
   <div *ngIf="isLoading || statusLoading" class="club-header-content skeleton-header">
@@ -417,13 +411,6 @@
           <ion-button expand="block" color="brand-amber" (click)="navigateToCreateEvent()" class="create-event-button">
             <ion-icon name="add-outline" slot="start"></ion-icon>
             Create Event
-          </ion-button>
-        </div>
-        <!-- Admin Management Section -->
-        <div *ngIf="isUserAdmin" class="admin-management-section">
-          <ion-button expand="block" color="success" (click)="navigateToEditClub()" class="edit-club-button">
-            <ion-icon name="create-outline" slot="start"></ion-icon>
-            Edit Club Settings
           </ion-button>
         </div>
 
