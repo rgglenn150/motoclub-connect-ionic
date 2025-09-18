@@ -41,7 +41,10 @@
             "optimization": false,
             "namedChunks": true,
             "serviceWorker": true,
-            "ngswConfigPath": "ngsw-config.json"
+            "ngswConfigPath": "ngsw-config.json",
+            "allowedCommonJsDependencies": [
+              "lottie-web"
+            ]
           },
           "configurations": {
             "production": {
@@ -65,6 +68,9 @@
                   "maximumWarning": "2mb",
                   "maximumError": "5mb"
                 }
+              ],
+              "allowedCommonJsDependencies": [
+                "lottie-web"
               ]
             },
             "ci": {
