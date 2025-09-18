@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core'; // Added ChangeDetectionStrategy and ChangeDetectorRef
@@ -9,6 +10,7 @@ import { LocationPreferencesService } from '../../service/location-preferences.s
 import { WeatherData } from '../../models/weather.model';
 import { Subject, takeUntil } from 'rxjs'; // Added Subject and takeUntil
 import { GeolocationService } from 'src/app/service/geolocation.service';
+import { PlacesService } from '../../service/places.service';
 
 // Represents the evaluated verdict for the rider
 interface RidingConditions {
@@ -26,11 +28,12 @@ interface RidingConditions {
   styleUrls: ['./weather-widget2.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush, // Optimize change detection
 })
-export class WeatherWidget2Component implements OnInit {
+export class WeatherWidget2Component implements OnInit, OnDestroy {
   // --- Properties ---
   public isLoading: boolean = true;
   public hasError: boolean = false;
   public errorMessage: string = '';
+  public isGettingLocation: boolean = false; // New property for location loading state
 
   public currentWeather!: WeatherData;
   public ridingConditions!: RidingConditions;
@@ -43,7 +46,8 @@ export class WeatherWidget2Component implements OnInit {
     private weatherService: WeatherService,
     private locationPreferencesService: LocationPreferencesService, // Inject LocationPreferencesService
     private cdr: ChangeDetectorRef, // Inject ChangeDetectorRef
-    private geolocationService: GeolocationService
+    private geolocationService: GeolocationService,
+    private placesService: PlacesService
   ) {}
 
   ngOnInit() {
@@ -65,8 +69,9 @@ export class WeatherWidget2Component implements OnInit {
 
   /**
    * Fetches weather data using the WeatherService and updates component state.
+   * Now includes location services integration for fresh location data.
    */
-  public fetchWeatherData(): void {
+  public async fetchWeatherData(): Promise<void> {
     this.isLoading = true;
     this.hasError = false;
     this.locationName = 'Loading...'; // Reset location name
@@ -75,26 +80,58 @@ export class WeatherWidget2Component implements OnInit {
     const preferences = this.locationPreferencesService.getCurrentPreferences();
     let weatherObservable;
 
-    if (!preferences.useGps && preferences.preferredLocation) {
+    // Check if we should try to get fresh location data
+    if (preferences.useGps) {
+      try {
+        this.isGettingLocation = true;
+        this.cdr.markForCheck();
+
+        console.log('Attempting to get current location...');
+        const currentLocation = await this.placesService.getCurrentLocation();
+
+        if (currentLocation) {
+          console.log('Got current location:', currentLocation);
+          // Use fresh location coordinates
+          weatherObservable = this.weatherService.getCurrentWeather(
+            currentLocation.lat,
+            currentLocation.lng
+          );
+        } else {
+          console.log('Failed to get current location, falling back to service default');
+          // Fallback to weather service default location handling
+          weatherObservable = this.weatherService.getCurrentWeatherForCurrentLocation();
+        }
+      } catch (error) {
+        console.warn('Error getting current location:', error);
+        // Fallback to weather service default location handling
+        weatherObservable = this.weatherService.getCurrentWeatherForCurrentLocation();
+      } finally {
+        this.isGettingLocation = false;
+        this.cdr.markForCheck();
+      }
+    } else if (preferences.preferredLocation) {
+      // Use preferred location from settings
       const coords = preferences.preferredLocation.coordinates;
       weatherObservable = this.weatherService.getCurrentWeather(
         coords.latitude,
         coords.longitude
       );
     } else {
-      // Default to GPS with fallback, or just fallback if GPS is not preferred and no preferred location
-      weatherObservable =
-        this.weatherService.getCurrentWeatherForCurrentLocation(); // Assumes service handles fallback
+      // Default to service's current location handling
+      weatherObservable = this.weatherService.getCurrentWeatherForCurrentLocation();
     }
 
+    // Subscribe to weather data
     weatherObservable.subscribe({
       next: (data) => {
         this.currentWeather = data;
-        console.log('rgdb data ', data.location);
+        console.log('Weather data received:', data.location);
+
+        // Get human-readable address for the location
         this.geolocationService
           .reverseGeocode(data.location.latitude, data.location.longitude)
           .subscribe((address) => {
-            console.log('rgdb address ', address);
+            console.log('Reverse geocoded address:', address);
             if (address) {
               this.locationName = address;
             } else {
@@ -107,11 +144,6 @@ export class WeatherWidget2Component implements OnInit {
             this.cdr.markForCheck();
           });
 
-      /*   this.locationName =
-          data.location.name ||
-          `${data.location.latitude.toFixed(
-            1
-          )}°, ${data.location.longitude.toFixed(1)}°`; */
         this.ridingConditions = this.evaluateRidingConditions(data);
         this.lastUpdated = new Date();
         this.isLoading = false;
@@ -123,6 +155,7 @@ export class WeatherWidget2Component implements OnInit {
           err.message || 'Could not load weather. Please try again.';
         this.hasError = true;
         this.isLoading = false;
+        this.isGettingLocation = false;
         this.cdr.markForCheck();
       },
     });
@@ -218,5 +251,14 @@ export class WeatherWidget2Component implements OnInit {
     if (code >= 85 && code <= 86) return 'snow';
     if (code >= 95 && code <= 99) return 'thunderstorm';
     return 'default'; // A generic fallback icon
+  }
+
+  /**
+   * Public method to manually trigger location refresh
+   * This can be called from the template or other components
+   */
+  public refreshWeatherWithLocation(): void {
+    console.log('User requested weather refresh with fresh location');
+    this.fetchWeatherData();
   }
 }

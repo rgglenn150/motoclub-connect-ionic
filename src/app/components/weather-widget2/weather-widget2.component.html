@@ -2,13 +2,14 @@
   
   <div *ngIf="isLoading" class="state-container loading-container">
     <ion-spinner name="crescent"></ion-spinner>
-    <p>Checking the skies...</p>
+    <p *ngIf="!isGettingLocation">Checking the skies...</p>
+    <p *ngIf="isGettingLocation">Getting your location...</p>
   </div>
 
   <div *ngIf="hasError" class="state-container error-container">
     <ion-icon name="cloud-offline-outline"></ion-icon>
     <p class="error-message">{{ errorMessage }}</p>
-    <ion-button fill="clear" class="retry-button" (click)="fetchWeatherData()">
+    <ion-button fill="clear" class="retry-button" (click)="refreshWeatherWithLocation()">
       <ion-icon slot="start" name="refresh"></ion-icon>
       Retry
     </ion-button>
@@ -18,11 +19,14 @@
     <ion-card-header>
       <div class="header-content">
         <div class="location">
-          <ion-icon name="location-outline" class="location-icon"></ion-icon>
+          <ion-icon name="location-outline" class="location-icon" [class.location-updating]="isGettingLocation"></ion-icon>
           {{ locationName }}
+          <ion-spinner *ngIf="isGettingLocation" name="dots" size="small" class="location-spinner"></ion-spinner>
         </div>
         <div class="last-updated">
-          {{ lastUpdated ? (lastUpdated | date:'shortTime') : '' }}
+          Weather as of {{ lastUpdated ? (lastUpdated | date:'shortTime') : '' }}
+          <ion-icon name="refresh" class="refresh-icon" (click)="refreshWeatherWithLocation()"
+                    [class.refreshing]="isLoading || isGettingLocation"></ion-icon>
         </div>
       </div>
     </ion-card-header>
