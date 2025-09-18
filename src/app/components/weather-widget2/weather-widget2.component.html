@@ -9,27 +9,154 @@
   <div *ngIf="hasError" class="state-container error-container">
     <ion-icon name="cloud-offline-outline"></ion-icon>
     <p class="error-message">{{ errorMessage }}</p>
-    <ion-button fill="clear" class="retry-button" (click)="refreshWeatherWithLocation()">
-      <ion-icon slot="start" name="refresh"></ion-icon>
-      Retry
-    </ion-button>
+
+    <!-- Enhanced error actions -->
+    <div class="error-actions">
+      <ion-button fill="clear" class="retry-button" (click)="refreshWeatherWithLocation()">
+        <ion-icon slot="start" name="refresh"></ion-icon>
+        Retry
+      </ion-button>
+
+      <ion-button
+        *ngIf="shouldShowPermissionRequest()"
+        fill="clear"
+        class="retry-button"
+        (click)="requestLocationPermissions()">
+        <ion-icon slot="start" name="location-outline"></ion-icon>
+        Enable Location
+      </ion-button>
+    </div>
   </div>
 
   <div *ngIf="!isLoading && !hasError && currentWeather && ridingConditions">
     <ion-card-header>
       <div class="header-content">
-        <div class="location">
+        <div class="location" (click)="toggleLocationDetails()">
           <ion-icon name="location-outline" class="location-icon" [class.location-updating]="isGettingLocation"></ion-icon>
           {{ locationName }}
           <ion-spinner *ngIf="isGettingLocation" name="dots" size="small" class="location-spinner"></ion-spinner>
+
+          <!-- Location accuracy badge -->
+          <ion-badge
+            *ngIf="locationMetadata.confidence && !isGettingLocation"
+            [color]="getConfidenceBadgeColor()"
+            class="location-badge">
+            {{ locationMetadata.confidence.toUpperCase() }}
+          </ion-badge>
+
+          <!-- Expandable details icon -->
+          <ion-icon
+            name="chevron-down-outline"
+            class="details-icon"
+            [class.expanded]="showLocationDetails">
+          </ion-icon>
         </div>
         <div class="last-updated">
           Weather as of {{ lastUpdated ? (lastUpdated | date:'shortTime') : '' }}
-          <ion-icon name="refresh" class="refresh-icon" (click)="refreshWeatherWithLocation()"
-                    [class.refreshing]="isLoading || isGettingLocation"></ion-icon>
+
+          <!-- Enhanced refresh options -->
+          <div class="refresh-controls">
+            <ion-button
+              fill="clear"
+              size="small"
+              class="refresh-button"
+              (click)="refreshWithFastLocation()"
+              [disabled]="isLoading || isGettingLocation"
+              title="Quick refresh">
+              <ion-icon name="refresh" slot="icon-only" [class.refreshing]="isLoading || isGettingLocation && locationRefreshType === 'fast'"></ion-icon>
+            </ion-button>
+
+            <ion-button
+              fill="clear"
+              size="small"
+              class="accurate-refresh-button"
+              (click)="refreshWithHighAccuracy()"
+              [disabled]="isLoading || isGettingLocation"
+              title="High accuracy refresh">
+              <ion-icon name="navigate" slot="icon-only" [class.refreshing]="isLoading || isGettingLocation && locationRefreshType === 'accurate'"></ion-icon>
+            </ion-button>
+          </div>
         </div>
       </div>
     </ion-card-header>
+
+    <!-- Enhanced Location Details (Expandable) -->
+    <div *ngIf="showLocationDetails" class="location-details">
+      <div class="location-info-grid">
+
+        <!-- Location Accuracy -->
+        <div class="location-info-item" *ngIf="locationMetadata.accuracy">
+          <ion-icon name="radio-outline" class="info-icon"></ion-icon>
+          <div>
+            <div class="info-label">Accuracy</div>
+            <div class="info-value">{{ getLocationAccuracyText() }}</div>
+          </div>
+        </div>
+
+        <!-- Location Source -->
+        <div class="location-info-item" *ngIf="locationMetadata.source">
+          <ion-icon name="hardware-chip-outline" class="info-icon"></ion-icon>
+          <div>
+            <div class="info-label">Source</div>
+            <div class="info-value">{{ getLocationSourceText() }}</div>
+          </div>
+        </div>
+
+        <!-- Location Age -->
+        <div class="location-info-item" *ngIf="locationMetadata.timestamp">
+          <ion-icon name="time-outline" class="info-icon"></ion-icon>
+          <div>
+            <div class="info-label">Updated</div>
+            <div class="info-value">{{ getLocationAgeText() }}</div>
+          </div>
+        </div>
+
+        <!-- Permission Status -->
+        <div class="location-info-item" *ngIf="locationMetadata.permissionStatus">
+          <ion-icon
+            [name]="locationMetadata.permissionStatus === 'granted' ? 'checkmark-circle-outline' : 'alert-circle-outline'"
+            class="info-icon"
+            [class.permission-granted]="locationMetadata.permissionStatus === 'granted'"
+            [class.permission-denied]="locationMetadata.permissionStatus === 'denied'">
+          </ion-icon>
+          <div>
+            <div class="info-label">Permission</div>
+            <div class="info-value">{{ getPermissionStatusText() }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location Actions -->
+      <div class="location-actions">
+        <!-- Permission Request Button -->
+        <ion-button
+          *ngIf="shouldShowPermissionRequest()"
+          fill="outline"
+          size="small"
+          class="location-action-button"
+          (click)="requestLocationPermissions()">
+          <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
+          Grant Permission
+        </ion-button>
+
+        <!-- Clear Cache Button -->
+        <ion-button
+          fill="outline"
+          size="small"
+          class="location-action-button"
+          (click)="clearLocationCacheAndRefresh()"
+          [disabled]="isLoading || isGettingLocation">
+          <ion-icon name="trash-outline" slot="start"></ion-icon>
+          Clear Cache
+        </ion-button>
+      </div>
+
+      <!-- Service Status -->
+      <div class="service-status" *ngIf="!isLocationServiceAvailable">
+        <ion-icon name="warning-outline" class="warning-icon"></ion-icon>
+        <span>Location services are not available on this device</span>
+      </div>
+    </div>
 
     <ion-card-content>
       <div class="verdict-section">
