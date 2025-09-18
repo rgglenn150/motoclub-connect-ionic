@@ -200,7 +200,7 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
           .subscribe((address) => {
             console.log('Reverse geocoded address:', address);
             if (address) {
-              this.locationName = address;
+              this.locationName = this.extractCityFromAddress(address);
             } else {
               this.locationName =
                 data.location.name ||
@@ -292,44 +292,80 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     const feelsLike =
       weather.temperature.feelsLike ?? weather.temperature.current; // Fallback for feelsLike
     const weatherCode = weather.conditions.code;
-    console.log('rgd. chance of raind ', chanceOfRain, ' weather code ', weatherCode);
+    console.log(
+      'rgd. chance of raind ',
+      chanceOfRain,
+      ' weather code ',
+      weatherCode
+    );
     // POOR conditions: High chance of rain or dangerous weather
-    if (chanceOfRain >= 50 || weatherCode >= 80) {
+    if (chanceOfRain > 40 ) {
       // WMO codes for showers/thunderstorms
 
-      if (weatherCode >= 80) {
-        return {
-          verdict: 'Poor',
-          title: 'Ride With Caution',
-          advice:
-            'High chance of rain and thunderstorm. Wear your raincoat if you must go!',
-          icon: 'umbrella',
-          animatedIconType: this.getAnimatedIconType(weatherCode),
-          colorClass: 'condition-poor',
-        };
-      } else if (weatherCode >= 51 && weatherCode <= 57) {
+      if (weatherCode >= 45 && weatherCode <= 48) {
         return {
           verdict: 'Caution',
           title: 'Ride With Care',
-          advice: 'Slight chance of rain. Bring your raincoat just in case!',
+          advice: 'Roads might be foggy. Be careful!',
+          icon: 'umbrella',
+          animatedIconType: this.getAnimatedIconType(weatherCode),
+          colorClass: 'condition-caution',
+        };
+      } else if (weatherCode >= 51 && weatherCode <= 57) {
+        let intensity = '';
+        if (weatherCode === 51) {
+          intensity = 'Light ';
+        } else if (weatherCode === 53) {
+          intensity = 'Moderate ';
+        } else if (weatherCode === 55) {
+          intensity = 'Dense ';
+        } else if (weatherCode === 56 || weatherCode === 57) {
+          intensity = 'Freezing ';
+        }
+        return {
+          verdict: 'Caution',
+          title: 'Ride With Care',
+          advice:
+            'Slight chance of ' +
+            intensity +
+            ' rain. Bring your raincoat just in case!',
           icon: 'umbrella',
           animatedIconType: this.getAnimatedIconType(weatherCode),
           colorClass: 'condition-caution',
         };
       } else if (weatherCode >= 61 && weatherCode <= 67) {
+        let intensity = '';
+        if (weatherCode === 61) {
+          intensity = 'Slight ';
+        } else if (weatherCode === 63) {
+          intensity = 'Moderate ';
+        } else if (weatherCode === 65) {
+          intensity = 'Heavy ';
+        } else {
+          intensity = 'Freezing ';
+        }
         return {
           verdict: 'Caution',
           title: 'Ride With Care',
-          advice: 'Higher chance of rain. Bring your raincoat if you must go!',
+          advice: intensity + ' rain. Bring your raincoat if you must go!',
           icon: 'umbrella',
           animatedIconType: this.getAnimatedIconType(weatherCode),
           colorClass: 'condition-caution',
         };
       } else if (weatherCode >= 80 && weatherCode <= 82) {
+        let intensity = '';
+        if (weatherCode === 80) {
+          intensity = 'Slight ';
+        } else if (weatherCode === 81) {
+          intensity = 'Moderate ';
+        } else if (weatherCode === 82) {
+          intensity = 'Violent ';
+        }
         return {
           verdict: 'Poor',
           title: 'Ride With Caution',
-          advice: 'Heavy rain expected. Wear your raincoat if you must go!',
+          advice:
+            intensity + ' rain expected. Wear your raincoat if you must go!',
           icon: 'umbrella',
           animatedIconType: this.getAnimatedIconType(weatherCode),
           colorClass: 'condition-poor',
@@ -559,5 +595,34 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
 
     const days = Math.floor(hours / 24);
     return `${days}d ago`;
+  }
+
+  /**
+   * Extract city/area name from full address, removing street details
+   */
+  private extractCityFromAddress(fullAddress: string): string {
+    if (!fullAddress) return '';
+
+    // Split the address by commas
+    const parts = fullAddress.split(',').map(part => part.trim());
+
+    // If only one part, return it as is
+    if (parts.length <= 1) return fullAddress;
+
+    // For addresses with multiple parts, skip the first part (usually street)
+    // and return the second part (usually city/area) or combine relevant parts
+    if (parts.length >= 2) {
+      // Skip the first part (street) and take the second part (city/area)
+      const cityPart = parts[1];
+
+      // If there's a third part and it looks like a region/province, include it
+      if (parts.length >= 3 && parts[2].length <= 20) {
+        return `${cityPart}, ${parts[2]}`;
+      }
+
+      return cityPart;
+    }
+
+    return fullAddress;
   }
 }
