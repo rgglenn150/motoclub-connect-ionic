@@ -10,7 +10,12 @@ import { LocationPreferencesService } from '../../service/location-preferences.s
 import { WeatherData } from '../../models/weather.model';
 import { Subject, takeUntil } from 'rxjs'; // Added Subject and takeUntil
 import { GeolocationService } from 'src/app/service/geolocation.service';
-import { PlacesService } from '../../service/places.service';
+import {
+  PlacesService,
+  EnhancedLocation,
+  LocationOptions,
+  GeolocationError,
+} from '../../service/places.service';
 
 // Represents the evaluated verdict for the rider
 interface RidingConditions {
@@ -20,6 +25,16 @@ interface RidingConditions {
   icon: string; // Ionic icon name
   animatedIconType: string; // Custom animated icon type
   colorClass: string;
+}
+
+// Location metadata for UI display
+interface LocationMetadata {
+  accuracy?: number;
+  confidence?: 'high' | 'medium' | 'low';
+  source?: 'capacitor' | 'browser' | 'cached' | 'default';
+  timestamp?: number;
+  permissionStatus?: 'granted' | 'denied' | 'prompt' | 'unknown';
+  serviceAvailable?: boolean;
 }
 
 @Component({
@@ -40,7 +55,14 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
   public lastUpdated: Date | null = null; // Changed to Date | null
   public locationName: string = 'Loading...'; // Default loading state for location
 
+  // Enhanced location properties
+  public locationMetadata: LocationMetadata = {};
+  public showLocationDetails: boolean = false;
+  public locationRefreshType: 'fast' | 'accurate' = 'fast';
+  public isLocationServiceAvailable: boolean = true;
+
   private destroy$ = new Subject<void>();
+  private enhancedLocation: EnhancedLocation | null = null;
 
   constructor(
     private weatherService: WeatherService,
@@ -50,7 +72,10 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     private placesService: PlacesService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Check location service availability and permissions
+    await this.initializeLocationServices();
+
     // Subscribe to location preferences changes
     this.locationPreferencesService.preferences$
       .pipe(takeUntil(this.destroy$))
@@ -62,6 +87,29 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     this.fetchWeatherData();
   }
 
+  /**
+   * Initialize location services and check availability
+   */
+  private async initializeLocationServices(): Promise<void> {
+    try {
+      // Check if location services are available
+      this.locationMetadata.serviceAvailable =
+        await this.placesService.isLocationServiceAvailable();
+      this.isLocationServiceAvailable = this.locationMetadata.serviceAvailable;
+
+      // Check permission status
+      this.locationMetadata.permissionStatus =
+        await this.placesService.getLocationPermissionStatus();
+
+      // Update UI
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Error initializing location services:', error);
+      this.isLocationServiceAvailable = false;
+      this.locationMetadata.serviceAvailable = false;
+    }
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -69,9 +117,11 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
 
   /**
    * Fetches weather data using the WeatherService and updates component state.
-   * Now includes location services integration for fresh location data.
+   * Now includes enhanced location services integration with detailed metadata.
    */
-  public async fetchWeatherData(): Promise<void> {
+  public async fetchWeatherData(
+    useHighAccuracy: boolean = false
+  ): Promise<void> {
     this.isLoading = true;
     this.hasError = false;
     this.locationName = 'Loading...'; // Reset location name
@@ -86,25 +136,38 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
         this.isGettingLocation = true;
         this.cdr.markForCheck();
 
-        console.log('Attempting to get current location...');
-        const currentLocation = await this.placesService.getCurrentLocation();
+        console.log('Attempting to get enhanced location...');
+
+        // Use enhanced location with appropriate accuracy
+        const currentLocation = useHighAccuracy
+          ? await this.placesService.getHighAccuracyLocation()
+          : await this.placesService.getFastLocation();
 
         if (currentLocation) {
-          console.log('Got current location:', currentLocation);
+          console.log('Got enhanced location:', currentLocation);
+          this.enhancedLocation = currentLocation;
+          this.updateLocationMetadata(currentLocation);
+
           // Use fresh location coordinates
           weatherObservable = this.weatherService.getCurrentWeather(
             currentLocation.lat,
             currentLocation.lng
           );
         } else {
-          console.log('Failed to get current location, falling back to service default');
+          console.log(
+            'Failed to get current location, falling back to service default'
+          );
+          this.handleLocationError('Unable to obtain current location');
           // Fallback to weather service default location handling
-          weatherObservable = this.weatherService.getCurrentWeatherForCurrentLocation();
+          weatherObservable =
+            this.weatherService.getCurrentWeatherForCurrentLocation();
         }
       } catch (error) {
         console.warn('Error getting current location:', error);
+        this.handleLocationError(error as Error);
         // Fallback to weather service default location handling
-        weatherObservable = this.weatherService.getCurrentWeatherForCurrentLocation();
+        weatherObservable =
+          this.weatherService.getCurrentWeatherForCurrentLocation();
       } finally {
         this.isGettingLocation = false;
         this.cdr.markForCheck();
@@ -112,13 +175,17 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     } else if (preferences.preferredLocation) {
       // Use preferred location from settings
       const coords = preferences.preferredLocation.coordinates;
+      this.locationMetadata.source = 'default';
+      this.locationMetadata.confidence = 'high'; // User-selected location
       weatherObservable = this.weatherService.getCurrentWeather(
         coords.latitude,
         coords.longitude
       );
     } else {
       // Default to service's current location handling
-      weatherObservable = this.weatherService.getCurrentWeatherForCurrentLocation();
+      this.locationMetadata.source = 'default';
+      weatherObservable =
+        this.weatherService.getCurrentWeatherForCurrentLocation();
     }
 
     // Subscribe to weather data
@@ -151,14 +218,63 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to fetch weather data:', err);
-        this.errorMessage =
-          err.message || 'Could not load weather. Please try again.';
-        this.hasError = true;
-        this.isLoading = false;
-        this.isGettingLocation = false;
-        this.cdr.markForCheck();
+        this.handleWeatherError(err);
       },
     });
+  }
+
+  /**
+   * Update location metadata from enhanced location
+   */
+  private updateLocationMetadata(location: EnhancedLocation): void {
+    this.locationMetadata = {
+      ...this.locationMetadata,
+      accuracy: location.accuracy,
+      confidence: location.confidence,
+      source: location.source,
+      timestamp: location.timestamp,
+    };
+  }
+
+  /**
+   * Handle location-specific errors with appropriate user feedback
+   */
+  private handleLocationError(error: Error | string): void {
+    const errorMessage = typeof error === 'string' ? error : error.message;
+
+    // Update location metadata with error state
+    this.locationMetadata.confidence = 'low';
+
+    console.warn('Location error:', errorMessage);
+
+    // Don't show location errors as main errors since we fall back to default weather
+    // Just log them for debugging
+  }
+
+  /**
+   * Handle weather service errors with enhanced feedback
+   */
+  private handleWeatherError(error: any): void {
+    console.error('Failed to fetch weather data:', error);
+
+    // Enhanced error messages based on error type
+    let userMessage = 'Could not load weather. Please try again.';
+
+    if (error.message && error.message.includes('location')) {
+      userMessage =
+        'Unable to determine your location. Please check location permissions and try again.';
+    } else if (error.message && error.message.includes('network')) {
+      userMessage =
+        'Network connection error. Please check your internet connection.';
+    } else if (error.status === 403) {
+      userMessage = 'Weather service access denied. Please try again later.';
+    }
+
+    this.errorMessage = userMessage;
+    this.hasError = true;
+    this.isLoading = false;
+    this.isGettingLocation = false;
+    this.cdr.markForCheck();
   }
 
   /**
@@ -176,18 +292,49 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     const feelsLike =
       weather.temperature.feelsLike ?? weather.temperature.current; // Fallback for feelsLike
     const weatherCode = weather.conditions.code;
-
+    console.log('rgd. chance of raind ', chanceOfRain, ' weather code ', weatherCode);
     // POOR conditions: High chance of rain or dangerous weather
-    if (chanceOfRain > 40 || weatherCode >= 80) {
+    if (chanceOfRain >= 50 || weatherCode >= 80) {
       // WMO codes for showers/thunderstorms
-      return {
-        verdict: 'Poor',
-        title: 'Ride With Caution',
-        advice: 'High chance of rain. Grab your raincoat if you must go!',
-        icon: 'umbrella',
-        animatedIconType: this.getAnimatedIconType(weatherCode),
-        colorClass: 'condition-poor',
-      };
+
+      if (weatherCode >= 80) {
+        return {
+          verdict: 'Poor',
+          title: 'Ride With Caution',
+          advice:
+            'High chance of rain and thunderstorm. Wear your raincoat if you must go!',
+          icon: 'umbrella',
+          animatedIconType: this.getAnimatedIconType(weatherCode),
+          colorClass: 'condition-poor',
+        };
+      } else if (weatherCode >= 51 && weatherCode <= 57) {
+        return {
+          verdict: 'Caution',
+          title: 'Ride With Care',
+          advice: 'Slight chance of rain. Bring your raincoat just in case!',
+          icon: 'umbrella',
+          animatedIconType: this.getAnimatedIconType(weatherCode),
+          colorClass: 'condition-caution',
+        };
+      } else if (weatherCode >= 61 && weatherCode <= 67) {
+        return {
+          verdict: 'Caution',
+          title: 'Ride With Care',
+          advice: 'Higher chance of rain. Bring your raincoat if you must go!',
+          icon: 'umbrella',
+          animatedIconType: this.getAnimatedIconType(weatherCode),
+          colorClass: 'condition-caution',
+        };
+      } else if (weatherCode >= 80 && weatherCode <= 82) {
+        return {
+          verdict: 'Poor',
+          title: 'Ride With Caution',
+          advice: 'Heavy rain expected. Wear your raincoat if you must go!',
+          icon: 'umbrella',
+          animatedIconType: this.getAnimatedIconType(weatherCode),
+          colorClass: 'condition-poor',
+        };
+      }
     }
 
     // CAUTION conditions: Strong wind, extreme heat, or fog
@@ -259,6 +406,158 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
    */
   public refreshWeatherWithLocation(): void {
     console.log('User requested weather refresh with fresh location');
+    this.fetchWeatherData(this.locationRefreshType === 'accurate');
+  }
+
+  /**
+   * Refresh with high accuracy location
+   */
+  public refreshWithHighAccuracy(): void {
+    console.log('User requested high accuracy location refresh');
+    this.locationRefreshType = 'accurate';
+    this.fetchWeatherData(true);
+  }
+
+  /**
+   * Refresh with fast location
+   */
+  public refreshWithFastLocation(): void {
+    console.log('User requested fast location refresh');
+    this.locationRefreshType = 'fast';
+    this.fetchWeatherData(false);
+  }
+
+  /**
+   * Clear location cache and refresh
+   */
+  public clearLocationCacheAndRefresh(): void {
+    console.log('Clearing location cache and refreshing');
+    this.placesService.clearLocationCache();
+    this.enhancedLocation = null;
+    this.locationMetadata = {};
     this.fetchWeatherData();
+  }
+
+  /**
+   * Toggle location details display
+   */
+  public toggleLocationDetails(): void {
+    this.showLocationDetails = !this.showLocationDetails;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Request location permissions
+   */
+  public async requestLocationPermissions(): Promise<void> {
+    try {
+      const granted = await this.placesService.requestLocationPermissions();
+
+      if (granted) {
+        this.locationMetadata.permissionStatus = 'granted';
+        this.fetchWeatherData();
+      } else {
+        this.locationMetadata.permissionStatus = 'denied';
+      }
+
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Error requesting location permissions:', error);
+      this.locationMetadata.permissionStatus = 'unknown';
+      this.cdr.markForCheck();
+    }
+  }
+
+  /**
+   * Get location accuracy display text
+   */
+  public getLocationAccuracyText(): string {
+    if (!this.locationMetadata.accuracy) return '';
+
+    const accuracy = this.locationMetadata.accuracy;
+    if (accuracy <= 10) return `±${accuracy.toFixed(0)}m (Excellent)`;
+    if (accuracy <= 50) return `±${accuracy.toFixed(0)}m (Good)`;
+    if (accuracy <= 100) return `±${accuracy.toFixed(0)}m (Fair)`;
+    return `±${accuracy.toFixed(0)}m (Poor)`;
+  }
+
+  /**
+   * Get location source display text
+   */
+  public getLocationSourceText(): string {
+    switch (this.locationMetadata.source) {
+      case 'capacitor':
+        return 'Device GPS';
+      case 'browser':
+        return 'Browser Location';
+      case 'cached':
+        return 'Cached Location';
+      case 'default':
+        return 'Default Location';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  /**
+   * Get confidence badge color
+   */
+  public getConfidenceBadgeColor(): string {
+    switch (this.locationMetadata.confidence) {
+      case 'high':
+        return 'success';
+      case 'medium':
+        return 'warning';
+      case 'low':
+        return 'danger';
+      default:
+        return 'medium';
+    }
+  }
+
+  /**
+   * Get permission status display text
+   */
+  public getPermissionStatusText(): string {
+    switch (this.locationMetadata.permissionStatus) {
+      case 'granted':
+        return 'Location access granted';
+      case 'denied':
+        return 'Location access denied';
+      case 'prompt':
+        return 'Location permission required';
+      default:
+        return 'Location permission unknown';
+    }
+  }
+
+  /**
+   * Check if should show permission request button
+   */
+  public shouldShowPermissionRequest(): boolean {
+    return (
+      this.locationMetadata.permissionStatus === 'prompt' ||
+      this.locationMetadata.permissionStatus === 'denied'
+    );
+  }
+
+  /**
+   * Get location age text
+   */
+  public getLocationAgeText(): string {
+    if (!this.locationMetadata.timestamp) return '';
+
+    const now = Date.now();
+    const age = now - this.locationMetadata.timestamp;
+    const minutes = Math.floor(age / 60000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   }
 }

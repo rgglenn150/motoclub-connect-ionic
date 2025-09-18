@@ -52,6 +52,14 @@
     text-transform: none;
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 16px;
+    margin: 4px;
+  }
+
+  .error-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
   }
 }
 
@@ -68,6 +76,14 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  padding: 4px 8px;
+  border-radius: 8px;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 }
 .location-icon {
   font-size: 16px;
@@ -84,6 +100,24 @@
   --color: #00c6ff;
 }
 
+.location-badge {
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.details-icon {
+  font-size: 14px;
+  margin-left: 4px;
+  transition: transform 0.3s ease-in-out;
+
+  &.expanded {
+    transform: rotate(180deg);
+  }
+}
+
 @keyframes pulse-location {
   0%, 100% {
     opacity: 1;
@@ -98,26 +132,54 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
-.refresh-icon {
-  font-size: 16px;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.8);
-  transition: all 0.2s ease-in-out;
+
+.refresh-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.refresh-button,
+.accurate-refresh-button {
+  --color: rgba(255, 255, 255, 0.8);
+  --background: transparent;
+  --padding-start: 6px;
+  --padding-end: 6px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  height: auto;
+  margin: 0;
+
+  ion-icon {
+    font-size: 16px;
+    transition: all 0.2s ease-in-out;
+
+    &.refreshing {
+      color: #00c6ff;
+      animation: spin-refresh 1s linear infinite;
+    }
+  }
 
   &:hover {
-    color: #ffffff;
-    transform: rotate(180deg);
+    --color: #ffffff;
+
+    ion-icon:not(.refreshing) {
+      transform: rotate(180deg);
+    }
   }
 
-  &:active {
+  &:active ion-icon:not(.refreshing) {
     transform: rotate(360deg);
   }
+}
 
-  &.refreshing {
-    color: #00c6ff;
-    animation: spin-refresh 1s linear infinite;
-    cursor: not-allowed;
+.accurate-refresh-button {
+  --color: #ffc837;
+
+  &:hover {
+    --color: #ffdd57;
   }
 }
 
@@ -217,6 +279,113 @@
   letter-spacing: 0.5px;
 }
 
+// --- ENHANCED LOCATION DETAILS ---
+
+.location-details {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  animation: expand-details 0.3s ease-out;
+}
+
+@keyframes expand-details {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+}
+
+.location-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.location-info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+
+  .info-icon {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
+
+    &.permission-granted {
+      color: #4caf50;
+    }
+
+    &.permission-denied {
+      color: #f44336;
+    }
+  }
+
+  .info-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+
+  .info-value {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    line-height: 1.2;
+    margin-top: 2px;
+  }
+}
+
+.location-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.location-action-button {
+  --color: rgba(255, 255, 255, 0.8);
+  --border-color: rgba(255, 255, 255, 0.3);
+  --background: transparent;
+  font-size: 12px;
+  height: 32px;
+
+  &:hover {
+    --color: #ffffff;
+    --border-color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+.service-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #ffc107;
+
+  .warning-icon {
+    font-size: 16px;
+  }
+}
 
 // --- DYNAMIC COLOR THEMES ---
 
@@ -232,18 +401,38 @@
 .condition-great {
   background: linear-gradient(45deg, #0072ff, #00c6ff);
   .verdict-icon-container .weather-icon svg { filter: drop-shadow(0 0 10px rgba(128, 240, 192, 0.6)); }
+
+  .location-badge[color="success"] {
+    --background: rgba(76, 175, 80, 0.2);
+    --color: #4caf50;
+  }
 }
 
 // Ride with caution
 .condition-caution {
   background: linear-gradient(45deg, #ff8c00, #ffc837);
   .verdict-icon-container .weather-icon svg { filter: drop-shadow(0 0 10px rgba(255, 243, 128, 0.6)); }
+
+  .location-badge[color="warning"] {
+    --background: rgba(255, 193, 7, 0.2);
+    --color: #ffc107;
+  }
 }
 
 // Poor riding conditions
 .condition-poor {
   background: linear-gradient(45deg, #4c5c68, #2e3a42);
   .verdict-icon-container .weather-icon svg { filter: drop-shadow(0 0 10px rgba(135, 206, 235, 0.6)); }
+
+  .location-badge[color="danger"] {
+    --background: rgba(244, 67, 54, 0.2);
+    --color: #f44336;
+  }
+
+  .location-badge[color="medium"] {
+    --background: rgba(158, 158, 158, 0.2);
+    --color: #9e9e9e;
+  }
 }
 
 // Responsive adjustments
@@ -256,5 +445,18 @@
   .metric-item {
     min-width: auto;
     width: 100%;
+  }
+
+  .location-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .refresh-controls {
+    margin-top: 4px;
+  }
+
+  .location-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

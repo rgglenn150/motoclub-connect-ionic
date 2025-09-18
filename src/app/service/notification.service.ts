@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, interval, Subscription } from 'rxjs';
 import { catchError, retry, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -37,7 +37,7 @@ export interface UnreadCountResponse {
 @Injectable({
   providedIn: 'root'
 })
-export class NotificationService {
+export class NotificationService implements OnDestroy {
   private baseUrl = `${environment.apiUrl}/notifications`;
   private unreadCountSubject = new BehaviorSubject<number>(0);
   private notificationsSubject = new BehaviorSubject<Notification[]>([]);
