@@ -71,6 +71,63 @@
 }
 .location-icon {
   font-size: 16px;
+  transition: all 0.3s ease-in-out;
+
+  &.location-updating {
+    color: #00c6ff;
+    animation: pulse-location 1.5s infinite ease-in-out;
+  }
+}
+
+.location-spinner {
+  margin-left: 4px;
+  --color: #00c6ff;
+}
+
+@keyframes pulse-location {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+.last-updated {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.refresh-icon {
+  font-size: 16px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    color: #ffffff;
+    transform: rotate(180deg);
+  }
+
+  &:active {
+    transform: rotate(360deg);
+  }
+
+  &.refreshing {
+    color: #00c6ff;
+    animation: spin-refresh 1s linear infinite;
+    cursor: not-allowed;
+  }
+}
+
+@keyframes spin-refresh {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 // Main Verdict Area
