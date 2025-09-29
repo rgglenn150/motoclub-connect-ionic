@@ -63,6 +63,7 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private enhancedLocation: EnhancedLocation | null = null;
+  public weatherCode: number | null = null;
 
   constructor(
     private weatherService: WeatherService,
@@ -292,85 +293,112 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     const feelsLike =
       weather.temperature.feelsLike ?? weather.temperature.current; // Fallback for feelsLike
     const weatherCode = weather.conditions.code;
+
     console.log(
       'rgd. chance of raind ',
       chanceOfRain,
       ' weather code ',
       weatherCode
     );
+    this.weatherCode = weatherCode; // Store weather code for template use
     // POOR conditions: High chance of rain or dangerous weather
-    if (chanceOfRain > 40 ) {
-      // WMO codes for showers/thunderstorms
 
-      if (weatherCode >= 45 && weatherCode <= 48) {
-        return {
-          verdict: 'Caution',
-          title: 'Ride With Care',
-          advice: 'Roads might be foggy. Be careful!',
-          icon: 'umbrella',
-          animatedIconType: this.getAnimatedIconType(weatherCode),
-          colorClass: 'condition-caution',
-        };
-      } else if (weatherCode >= 51 && weatherCode <= 57) {
-        let intensity = '';
-        if (weatherCode === 51) {
-          intensity = 'Light ';
-        } else if (weatherCode === 53) {
-          intensity = 'Moderate ';
-        } else if (weatherCode === 55) {
-          intensity = 'Dense ';
-        } else if (weatherCode === 56 || weatherCode === 57) {
-          intensity = 'Freezing ';
-        }
-        return {
-          verdict: 'Caution',
-          title: 'Ride With Care',
-          advice:
-            'Slight chance of ' +
-            intensity +
-            ' rain. Bring your raincoat just in case!',
-          icon: 'umbrella',
-          animatedIconType: this.getAnimatedIconType(weatherCode),
-          colorClass: 'condition-caution',
-        };
-      } else if (weatherCode >= 61 && weatherCode <= 67) {
-        let intensity = '';
-        if (weatherCode === 61) {
-          intensity = 'Slight ';
-        } else if (weatherCode === 63) {
-          intensity = 'Moderate ';
-        } else if (weatherCode === 65) {
-          intensity = 'Heavy ';
-        } else {
-          intensity = 'Freezing ';
-        }
-        return {
-          verdict: 'Caution',
-          title: 'Ride With Care',
-          advice: intensity + ' rain. Bring your raincoat if you must go!',
-          icon: 'umbrella',
-          animatedIconType: this.getAnimatedIconType(weatherCode),
-          colorClass: 'condition-caution',
-        };
-      } else if (weatherCode >= 80 && weatherCode <= 82) {
-        let intensity = '';
-        if (weatherCode === 80) {
-          intensity = 'Slight ';
-        } else if (weatherCode === 81) {
-          intensity = 'Moderate ';
-        } else if (weatherCode === 82) {
-          intensity = 'Violent ';
-        }
-        return {
-          verdict: 'Poor',
-          title: 'Ride With Caution',
-          advice:
-            intensity + ' rain expected. Wear your raincoat if you must go!',
-          icon: 'umbrella',
-          animatedIconType: this.getAnimatedIconType(weatherCode),
-          colorClass: 'condition-poor',
-        };
+    // WMO codes for showers/thunderstorms
+    if (weatherCode === 1) {
+      return {
+        verdict: 'Great',
+        title: 'Great Day for a Ride!',
+        advice: 'Weather is mainly clear. Enjoy the open road!',
+        icon: 'sparkles',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-great',
+      };
+    } else if (weatherCode === 2) {
+      return {
+        verdict: 'Great',
+        title: 'Partly Cloudy but Good for Riding!',
+        advice: 'Weather is partly cloudy. Enjoy the open road!',
+        icon: 'sparkles',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-great',
+      };
+    } else if (weatherCode === 3) {
+      return {
+        verdict: 'Great',
+        title: 'Overcast but Still Good for Riding!',
+        advice: 'Weather is cloudy. Enjoy the open road!',
+        icon: 'sparkles',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-great',
+      };
+    } else if (weatherCode >= 45 && weatherCode <= 48) {
+      return {
+        verdict: 'Caution',
+        title: 'Ride With Care',
+        advice: 'Roads might be foggy. Be careful!',
+        icon: 'umbrella',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-caution',
+      };
+    } else if (weatherCode >= 51 && weatherCode <= 57) {
+      let intensity = '';
+      if (weatherCode === 51) {
+        intensity = 'Light ';
+      } else if (weatherCode === 53) {
+        intensity = 'Moderate ';
+      } else if (weatherCode === 55) {
+        intensity = 'Dense ';
+      } else if (weatherCode === 56 || weatherCode === 57) {
+        intensity = 'Freezing ';
       }
+      return {
+        verdict: 'Caution',
+        title: 'Ride With Care',
+        advice:
+          'Slight chance of ' +
+          intensity +
+          ' rain. Bring your raincoat just in case!',
+        icon: 'umbrella',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-caution',
+      };
+    } else if (weatherCode >= 61 && weatherCode <= 67) {
+      let intensity = '';
+      if (weatherCode === 61) {
+        intensity = 'Slight ';
+      } else if (weatherCode === 63) {
+        intensity = 'Moderate ';
+      } else if (weatherCode === 65) {
+        intensity = 'Heavy ';
+      } else {
+        intensity = 'Freezing ';
+      }
+      return {
+        verdict: 'Caution',
+        title: 'Ride With Care',
+        advice: intensity + ' rain. Bring your raincoat if you must go!',
+        icon: 'umbrella',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-caution',
+      };
+    } else if (weatherCode >= 80 && weatherCode <= 82) {
+      let intensity = '';
+      if (weatherCode === 80) {
+        intensity = 'Slight ';
+      } else if (weatherCode === 81) {
+        intensity = 'Moderate ';
+      } else if (weatherCode === 82) {
+        intensity = 'Violent ';
+      }
+      return {
+        verdict: 'Poor',
+        title: 'Ride With Caution',
+        advice:
+          intensity + ' rain expected. Wear your raincoat if you must go!',
+        icon: 'umbrella',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-poor',
+      };
     }
 
     // CAUTION conditions: Strong wind, extreme heat, or fog
@@ -604,7 +632,7 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     if (!fullAddress) return '';
 
     // Split the address by commas
-    const parts = fullAddress.split(',').map(part => part.trim());
+    const parts = fullAddress.split(',').map((part) => part.trim());
 
     // If only one part, return it as is
     if (parts.length <= 1) return fullAddress;

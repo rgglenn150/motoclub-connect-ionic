@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, from, of, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { map } from 'rxjs/operators'; // Import the map operator
+import { map, switchMap, catchError, timeout } from 'rxjs/operators';
+import { PlacesService, EnhancedLocation } from './places.service';
 import {
   Club,
   ClubUpdateRequest,
@@ -10,7 +11,13 @@ import {
   JoinRequest,
   ClubMember,
   ValidationResult,
-  MultiValidationResult
+  MultiValidationResult,
+  NearbyClubsOptions,
+  ClubWithDistance,
+  NearbyClubsResponse,
+  LocationCoordinates,
+  UserLocationInfo,
+  DistanceInfo
 } from '../models/club.model';
 
 // Re-export for backward compatibility
@@ -21,7 +28,13 @@ export {
   JoinRequest,
   ClubMember,
   ValidationResult,
-  MultiValidationResult
+  MultiValidationResult,
+  NearbyClubsOptions,
+  ClubWithDistance,
+  NearbyClubsResponse,
+  LocationCoordinates,
+  UserLocationInfo,
+  DistanceInfo
 } from '../models/club.model';
 
 @Injectable({
@@ -30,7 +43,10 @@ export {
 export class ClubService {
   private baseUrl = `${environment.apiUrl}/club`;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private placesService: PlacesService
+  ) { }
 
   createClub(clubData: Club): Observable<any> {
     return this.http.post(`${this.baseUrl}/create`, clubData);
@@ -52,6 +68,286 @@ export class ClubService {
       .pipe(
         map(response => response.clubs) // Extracts the 'clubs' array from the response
       );
+  }
+
+  /**
+   * Get nearby clubs based on user's current location
+   * @param options - Optional configuration for the nearby search
+   * @returns Observable<NearbyClubsResponse> - Clubs with distance data
+   */
+  getNearbyClubs(options?: NearbyClubsOptions): Observable<NearbyClubsResponse> {
+    const defaultOptions: NearbyClubsOptions = {
+      radius: 50,
+      limit: 20,
+      includePrivate: false,
+      useUserLocation: true,
+      enableHighAccuracy: false,
+      maxLocationAttempts: 3
+    };
+
+    const finalOptions = { ...defaultOptions, ...options };
+
+    // If using user location, get current location first
+    if (finalOptions.useUserLocation) {
+      return this.getUserLocation(finalOptions).pipe(
+        switchMap(location => {
+          if (!location) {
+            // If location acquisition failed, try fallback coordinates
+            if (finalOptions.fallbackCoordinates) {
+              return this.makeNearbyClubsRequest(
+                finalOptions.fallbackCoordinates.latitude,
+                finalOptions.fallbackCoordinates.longitude,
+                finalOptions,
+                'fallback'
+              );
+            } else {
+              return throwError({
+                code: 'LOCATION_UNAVAILABLE',
+                message: 'Unable to determine user location and no fallback coordinates provided',
+                source: 'location'
+              });
+            }
+          }
+
+          return this.makeNearbyClubsRequest(
+            location.lat,
+            location.lng,
+            finalOptions,
+            this.mapLocationSource(location.source)
+          );
+        }),
+        catchError(error => this.handleNearbyClubsError(error, finalOptions))
+      );
+    } else if (finalOptions.fallbackCoordinates) {
+      // Use fallback coordinates directly
+      return this.makeNearbyClubsRequest(
+        finalOptions.fallbackCoordinates.latitude,
+        finalOptions.fallbackCoordinates.longitude,
+        finalOptions,
+        'fallback'
+      );
+    } else {
+      return throwError({
+        code: 'NO_COORDINATES',
+        message: 'No location coordinates provided',
+        source: 'configuration'
+      });
+    }
+  }
+
+  /**
+   * Get user location with fallback strategies
+   */
+  private getUserLocation(options: NearbyClubsOptions): Observable<EnhancedLocation | null> {
+    return from(this.acquireUserLocation(options));
+  }
+
+  /**
+   * Acquire user location with multiple strategies
+   */
+  private async acquireUserLocation(options: NearbyClubsOptions): Promise<EnhancedLocation | null> {
+    try {
+      // Check if location services are available
+      const isLocationServiceAvailable = await this.placesService.isLocationServiceAvailable();
+      if (!isLocationServiceAvailable) {
+        console.warn('Location services not available');
+        return null;
+      }
+
+      // Try to get cached location first for quick response
+      const cachedLocation = this.placesService.getCachedLocation();
+      if (cachedLocation && cachedLocation.confidence !== 'low') {
+        console.log('Using cached location for nearby clubs');
+        return cachedLocation;
+      }
+
+      let location: EnhancedLocation | null = null;
+
+      // Try high accuracy if requested
+      if (options.enableHighAccuracy) {
+        try {
+          location = await this.placesService.getHighAccuracyLocation(50); // 50m accuracy
+          if (location) {
+            console.log('High accuracy location acquired');
+            return location;
+          }
+        } catch (error) {
+          console.warn('High accuracy location failed:', error);
+        }
+      }
+
+      // Fallback to fast location
+      try {
+        location = await this.placesService.getFastLocation(200); // 200m accuracy
+        if (location) {
+          console.log('Fast location acquired');
+          return location;
+        }
+      } catch (error) {
+        console.warn('Fast location failed:', error);
+      }
+
+      // Last resort: use cached location even if expired
+      if (cachedLocation) {
+        console.log('Using expired cached location as last resort');
+        return cachedLocation;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Location acquisition failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Make the actual HTTP request to the nearby clubs API
+   */
+  private makeNearbyClubsRequest(
+    latitude: number,
+    longitude: number,
+    options: NearbyClubsOptions,
+    locationSource: 'gps' | 'fallback' | 'cached'
+  ): Observable<NearbyClubsResponse> {
+    // Build query parameters
+    let params = new HttpParams()
+      .set('latitude', latitude.toString())
+      .set('longitude', longitude.toString())
+      .set('radius', (options.radius || 50).toString())
+      .set('limit', (options.limit || 20).toString())
+      .set('includePrivate', (options.includePrivate || false).toString());
+
+    // Make the API call with timeout
+    return this.http.get<any>(`${this.baseUrl}/nearby`, { params }).pipe(
+      timeout(10000), // 10 second timeout
+      map(response => this.transformNearbyClubsResponse(response, locationSource)),
+      catchError(error => {
+        console.error('Nearby clubs API error:', error);
+        return throwError({
+          code: 'API_ERROR',
+          message: 'Failed to fetch nearby clubs',
+          source: 'api',
+          originalError: error
+        });
+      })
+    );
+  }
+
+  /**
+   * Transform the backend response to match frontend interfaces
+   */
+  private transformNearbyClubsResponse(
+    response: any,
+    locationSource: 'gps' | 'fallback' | 'cached'
+  ): NearbyClubsResponse {
+    const clubs: ClubWithDistance[] = (response.clubs || []).map((club: any) => ({
+      ...club,
+      distance: {
+        value: club.distance || 0,
+        unit: 'km' as const,
+        formatted: this.formatDistance(club.distance || 0)
+      },
+      memberCount: club.memberCount || 0
+    }));
+
+    return {
+      clubs,
+      userLocation: {
+        latitude: response.userLocation?.latitude || 0,
+        longitude: response.userLocation?.longitude || 0,
+        accuracy: response.userLocation?.accuracy || 0,
+        source: locationSource
+      },
+      searchRadius: response.searchRadius || 50,
+      totalCount: response.total || clubs.length,
+      message: response.message
+    };
+  }
+
+  /**
+   * Format distance for display
+   */
+  private formatDistance(distanceKm: number): string {
+    if (distanceKm < 1) {
+      const meters = Math.round(distanceKm * 1000);
+      return `${meters}m`;
+    } else if (distanceKm < 10) {
+      return `${distanceKm.toFixed(1)}km`;
+    } else {
+      return `${Math.round(distanceKm)}km`;
+    }
+  }
+
+  /**
+   * Handle errors from nearby clubs operation
+   */
+  private handleNearbyClubsError(error: any, options: NearbyClubsOptions): Observable<NearbyClubsResponse> {
+    console.error('Nearby clubs error:', error);
+
+    // If we have fallback coordinates and the error is location-related, try fallback
+    if (options.fallbackCoordinates &&
+        (error.code === 'LOCATION_UNAVAILABLE' || error.source === 'location')) {
+      console.log('Trying fallback coordinates due to location error');
+      return this.makeNearbyClubsRequest(
+        options.fallbackCoordinates.latitude,
+        options.fallbackCoordinates.longitude,
+        options,
+        'fallback'
+      );
+    }
+
+    // Return empty results for graceful degradation
+    const fallbackResponse: NearbyClubsResponse = {
+      clubs: [],
+      userLocation: options.fallbackCoordinates ? {
+        latitude: options.fallbackCoordinates.latitude,
+        longitude: options.fallbackCoordinates.longitude,
+        accuracy: 0,
+        source: 'fallback'
+      } : {
+        latitude: 0,
+        longitude: 0,
+        accuracy: 0,
+        source: 'fallback'
+      },
+      searchRadius: options.radius || 50,
+      totalCount: 0,
+      message: this.getErrorMessage(error)
+    };
+
+    return of(fallbackResponse);
+  }
+
+  /**
+   * Get user-friendly error message
+   */
+  private getErrorMessage(error: any): string {
+    switch (error.code) {
+      case 'LOCATION_UNAVAILABLE':
+        return 'Unable to determine your location. Please check location permissions.';
+      case 'API_ERROR':
+        return 'Unable to fetch nearby clubs. Please try again later.';
+      case 'NO_COORDINATES':
+        return 'Location coordinates required for nearby search.';
+      default:
+        return 'Unable to find nearby clubs. Please try again.';
+    }
+  }
+
+  /**
+   * Map PlacesService location source to our interface
+   */
+  private mapLocationSource(source: string): 'gps' | 'fallback' | 'cached' {
+    switch (source) {
+      case 'capacitor':
+      case 'browser':
+        return 'gps';
+      case 'cached':
+        return 'cached';
+      case 'default':
+      default:
+        return 'fallback';
+    }
   }
 
   /**
