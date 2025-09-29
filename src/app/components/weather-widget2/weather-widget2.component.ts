@@ -63,6 +63,7 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private enhancedLocation: EnhancedLocation | null = null;
+  public weatherCode: number | null = null;
 
   constructor(
     private weatherService: WeatherService,
@@ -292,17 +293,45 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     const feelsLike =
       weather.temperature.feelsLike ?? weather.temperature.current; // Fallback for feelsLike
     const weatherCode = weather.conditions.code;
+
     console.log(
       'rgd. chance of raind ',
       chanceOfRain,
       ' weather code ',
       weatherCode
     );
+    this.weatherCode = weatherCode; // Store weather code for template use
     // POOR conditions: High chance of rain or dangerous weather
 
     // WMO codes for showers/thunderstorms
-
-    if (weatherCode >= 45 && weatherCode <= 48) {
+    if (weatherCode === 1) {
+      return {
+        verdict: 'Great',
+        title: 'Great Day for a Ride!',
+        advice: 'Weather is mainly clear. Enjoy the open road!',
+        icon: 'sparkles',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-great',
+      };
+    } else if (weatherCode === 2) {
+      return {
+        verdict: 'Great',
+        title: 'Partly Cloudy but Good for Riding!',
+        advice: 'Weather is partly cloudy. Enjoy the open road!',
+        icon: 'sparkles',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-great',
+      };
+    } else if (weatherCode === 3) {
+      return {
+        verdict: 'Great',
+        title: 'Overcast but Still Good for Riding!',
+        advice: 'Weather is cloudy. Enjoy the open road!',
+        icon: 'sparkles',
+        animatedIconType: this.getAnimatedIconType(weatherCode),
+        colorClass: 'condition-great',
+      };
+    } else if (weatherCode >= 45 && weatherCode <= 48) {
       return {
         verdict: 'Caution',
         title: 'Ride With Care',
