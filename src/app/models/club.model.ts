@@ -159,3 +159,63 @@ export enum JoinRequestStatus {
   APPROVED = 'approved',
   REJECTED = 'rejected'
 }
+
+/**
+ * Location coordinates interface
+ */
+export interface LocationCoordinates {
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Options for nearby clubs search
+ */
+export interface NearbyClubsOptions {
+  radius?: number;
+  limit?: number;
+  includePrivate?: boolean;
+  useUserLocation?: boolean;
+  fallbackCoordinates?: LocationCoordinates;
+  enableHighAccuracy?: boolean;
+  maxLocationAttempts?: number;
+}
+
+/**
+ * Distance information for nearby clubs
+ */
+export interface DistanceInfo {
+  value: number;
+  unit: 'km' | 'miles';
+  formatted: string;
+}
+
+/**
+ * Club with distance information for nearby search results
+ */
+export interface ClubWithDistance extends Club {
+  distance: DistanceInfo;
+  memberCount: number;
+  bearing?: number;
+}
+
+/**
+ * User location information with source tracking
+ */
+export interface UserLocationInfo {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  source: 'gps' | 'fallback' | 'cached';
+}
+
+/**
+ * Response structure for nearby clubs API call
+ */
+export interface NearbyClubsResponse {
+  clubs: ClubWithDistance[];
+  userLocation: UserLocationInfo;
+  searchRadius: number;
+  totalCount: number;
+  message?: string;
+}
