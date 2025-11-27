@@ -325,7 +325,7 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     } else if (weatherCode === 3) {
       return {
         verdict: 'Great',
-        title: 'Overcast but Still Good for Riding!',
+        title: 'Cloudy but Still Good for Riding!',
         advice: 'Weather is cloudy. Enjoy the open road!',
         icon: 'sparkles',
         animatedIconType: this.getAnimatedIconType(weatherCode),
