@@ -59,7 +59,7 @@
     "@babel/core": "^7.28.4",
     "@capacitor/cli": "6.1.2",
     "@ionic/angular-toolkit": "^11.0.1",
-    "@playwright/test": "^1.55.0",
+    "@playwright/test": "^1.57.0",
     "@types/google.maps": "^3.58.1",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.13.0",
