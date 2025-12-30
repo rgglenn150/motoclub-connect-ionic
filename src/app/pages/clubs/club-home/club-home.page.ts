@@ -20,6 +20,7 @@ import {
 } from '../../../service/network.service';
 import { ErrorService, ErrorInfo } from '../../../service/error.service';
 import { UserStateService } from '../../../service/user-state.service';
+import { EventService, Event } from '../../../service/event.service';
 import { Subscription } from 'rxjs';
 import { switchMap, tap, finalize } from 'rxjs/operators';
 
@@ -44,15 +45,6 @@ interface Member {
   name: string;
   role: 'Admin' | 'Member';
   avatarUrl: string;
-}
-
-interface ClubEvent {
-  type: 'RIDE' | 'MEETING' | 'EVENT';
-  date: string;
-  title: string;
-  imageUrl: string;
-  location: string;
-  attendeeCount: number;
 }
 
 interface PinnedPost {
@@ -192,36 +184,21 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
       "Heads up, everyone! We're having a mandatory maintenance day this Saturday. Please come down to help clean and prep for the new season. Pizza and drinks on us!",
   };
 
-  upcomingRide: ClubEvent = {
-    type: 'RIDE',
-    date: '2025-08-24T09:00:00Z',
-    title: 'Coastal Sunrise Cruise',
-    imageUrl: 'https://placehold.co/200x200/F59E0B/000000?text=RIDE',
-    location: 'Shell Gas Station, Oton',
-    attendeeCount: 18,
-  };
-
   // Members data will be loaded from the API when the members tab is viewed
   membersForPublicView: ClubMember[] = []; // For non-admin users
   membersDataLoading: boolean = false; // Loading state for member data
   memberError: string | null = null; // Error state for member loading
 
-  events: ClubEvent[] = [
-    this.upcomingRide, // Include the upcoming ride in the events list
-    {
-      type: 'MEETING',
-      date: '2025-09-01T19:00:00Z',
-      title: 'Monthly Club Meeting',
-      imageUrl: 'https://placehold.co/200x200/4A5568/FFFFFF?text=MEET',
-      location: 'Clubhouse Garage',
-      attendeeCount: 25,
-    },
-  ];
+  // Real events data from API
+  clubEvents: Event[] = [];
+  eventsLoading: boolean = false;
+  eventsError: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private clubService: ClubService,
+    private eventService: EventService,
     private toastController: ToastController,
     private loadingController: LoadingController,
     private alertController: AlertController,
@@ -237,6 +214,10 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
 
   ionViewWillEnter() {
     this.refreshClubPageData();
+    // Reload events when navigating back to the page
+    if (this.clubId) {
+      this.loadClubEvents();
+    }
   }
 
   /**
@@ -811,6 +792,11 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
       if (this.isUserAdmin) {
         this.loadAdminData();
       }
+    }
+
+    // Load events when events tab is selected
+    if (this.selectedTab === 'events') {
+      this.loadClubEvents();
     }
   }
 
@@ -1952,6 +1938,82 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
           .slice(0, 2)
       : '??';
     return `https://placehold.co/80x80/718096/FFFFFF?text=${initials}`;
+  }
+
+  // --- EVENTS MANAGEMENT METHODS ---
+
+  /**
+   * Load events for the current club
+   */
+  async loadClubEvents() {
+    if (!this.clubId || this.eventsLoading) return;
+
+    try {
+      this.eventsLoading = true;
+      this.eventsError = null;
+
+      this.eventService.getEventsByClub(this.clubId).subscribe({
+        next: (events) => {
+          this.clubEvents = events;
+          this.eventsLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading club events:', error);
+          this.eventsError = 'Failed to load events';
+          this.eventsLoading = false;
+        },
+      });
+    } catch (error) {
+      console.error('Exception in loadClubEvents:', error);
+      this.eventsError = 'Failed to load events';
+      this.eventsLoading = false;
+    }
+  }
+
+  /**
+   * Handle pull-to-refresh for events tab
+   */
+  async handleRefreshEvents(event: any) {
+    if (!this.clubId) {
+      event.target.complete();
+      return;
+    }
+
+    try {
+      await this.eventService.refreshClubEvents(this.clubId);
+      this.presentToast('Events refreshed successfully', 'success');
+    } catch (error) {
+      console.error('Error refreshing events:', error);
+      this.presentToast('Failed to refresh events', 'danger');
+    } finally {
+      event.target.complete();
+    }
+  }
+
+  /**
+   * Get event type display text
+   */
+  getEventTypeDisplay(eventType: string): string {
+    const typeMap: { [key: string]: string } = {
+      ride: 'RIDE',
+      meeting: 'MEETING',
+      meetup: 'MEETUP',
+      event: 'EVENT',
+    };
+    return typeMap[eventType] || eventType.toUpperCase();
+  }
+
+  /**
+   * Format event date for display
+   */
+  formatEventDate(date: Date | string): string {
+    const eventDate = new Date(date);
+    const options: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    };
+    return eventDate.toLocaleDateString('en-US', options);
   }
 
   /**

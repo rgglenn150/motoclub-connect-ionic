@@ -59,6 +59,7 @@ export class CreateEventPage implements OnInit {
       location: ['', [Validators.required, Validators.maxLength(200)]], // Direct FormControl
       startDate: ['', Validators.required],
       endDate: [''], // Made optional - no validators
+      isPrivate: [true]  // defaults to private
     });
 
     console.log('Form created successfully:', this.createEventForm);
@@ -197,7 +198,8 @@ export class CreateEventPage implements OnInit {
       endTime: this.endDateTime || undefined, // Only include endTime if provided
       location: this.createEventForm.get('location')?.value,
       eventType: this.createEventForm.get('eventType')?.value,
-      club: this.clubId
+      club: this.clubId,
+      isPrivate: this.createEventForm.get('isPrivate')?.value
     };
 
     // Add geolocation data if available from Mapbox selection
