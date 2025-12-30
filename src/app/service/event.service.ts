@@ -22,8 +22,8 @@ export interface Event {
   location?: string;
   geolocation?: Geolocation;
   eventType: 'ride' | 'meeting' | 'meetup' | 'event';
-  club: string; // ObjectId as string
-  createdBy?: string; // ObjectId as string
+  club: string | { _id?: string; clubName?: string }; // Can be ObjectId or populated club object
+  createdBy?: string | { _id?: string; username?: string; name?: string }; // Can be ObjectId or populated user object
   imageUrl?: string;
   imagePublicId?: string;
   isPrivate?: boolean;
@@ -194,7 +194,10 @@ export class EventService {
         tap(updatedEvent => {
           // Refresh the club's events after updating
           if (updatedEvent.club) {
-            this.refreshClubEvents(updatedEvent.club);
+            const clubId = typeof updatedEvent.club === 'string' ? updatedEvent.club : updatedEvent.club._id;
+            if (clubId) {
+              this.refreshClubEvents(clubId);
+            }
           }
         }),
         catchError(error => {
