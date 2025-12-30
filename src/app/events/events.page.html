@@ -62,7 +62,7 @@
         <ion-card-title>{{event.name}}</ion-card-title>
         <ion-card-subtitle>
           <ion-icon name="business-outline" size="small"></ion-icon>
-          {{event.club?.clubName || 'Club'}}
+          {{getClubName(event.club)}}
         </ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
@@ -81,7 +81,7 @@
 
           <p class="event-organizer" *ngIf="event.createdBy">
             <ion-icon name="person-outline" size="small"></ion-icon>
-            Organized by: {{event.createdBy.username || event.createdBy.name || 'Unknown'}}
+            Organized by: {{getCreatorName(event.createdBy)}}
           </p>
 
           <p class="event-type">

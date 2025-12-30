@@ -73,4 +73,25 @@ export class EventsPage implements OnInit, ViewWillEnter {
     });
     toast.present();
   }
+
+  /**
+   * Get the name of the event creator
+   * @param createdBy - The createdBy field (can be string or populated user object)
+   * @returns The username or name of the creator, or 'Unknown'
+   */
+  getCreatorName(createdBy: string | { _id?: string; username?: string; name?: string } | undefined): string {
+    if (!createdBy) return 'Unknown';
+    if (typeof createdBy === 'string') return 'Unknown';
+    return createdBy.username || createdBy.name || 'Unknown';
+  }
+
+  /**
+   * Get the name of the club
+   * @param club - The club field (can be string or populated club object)
+   * @returns The club name or 'Unknown Club'
+   */
+  getClubName(club: string | { _id?: string; clubName?: string }): string {
+    if (typeof club === 'string') return 'Unknown Club';
+    return club.clubName || 'Unknown Club';
+  }
 }
