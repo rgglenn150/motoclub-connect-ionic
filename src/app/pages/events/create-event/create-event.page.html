@@ -71,6 +71,24 @@
         </ion-select>
       </ion-item>
 
+      <!-- Event Privacy Toggle -->
+      <ion-item class="asphalt-input-item privacy-toggle-item" lines="none">
+        <ion-icon name="eye-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-label>
+          <h3>Event Visibility</h3>
+          <p class="privacy-description">
+            {{ createEventForm.get('isPrivate')?.value ?
+               'Private - Only visible to club members' :
+               'Public - Visible to all members in their events feed' }}
+          </p>
+        </ion-label>
+        <ion-toggle
+          formControlName="isPrivate"
+          [checked]="true"
+          slot="end">
+        </ion-toggle>
+      </ion-item>
+
       <!-- Start Date & Time -->
       <div class="date-field-container">
         <ion-item class="asphalt-datetime-item" lines="none">

@@ -1,12 +1,20 @@
-<ion-header  class="asphalt-header">
+<ion-header class="asphalt-header">
   <ion-toolbar>
-    <ion-title>Events</ion-title>
+    <ion-title>My Events</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- Skeleton loader -->
-  <div *ngIf="loading">
+  <!-- Pull-to-Refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content
+      pullingText="Pull to refresh events"
+      refreshingText="Refreshing events...">
+    </ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading && !errorMessage">
     <ion-list>
       <ion-card *ngFor="let i of [1, 2, 3]" class="ion-animated ion-fade-in-up asphalt-secondary rounded-xl">
         <ion-skeleton-text animated style="width: 100%; height: 160px;"></ion-skeleton-text>
@@ -28,27 +36,78 @@
     </ion-list>
   </div>
 
-  <!-- Events list -->
-  <ion-list *ngIf="!loading && events.length > 0">
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="ion-text-center ion-padding-top">
+    <ion-card class="asphalt-secondary rounded-xl">
+      <ion-card-content>
+        <ion-icon name="alert-circle-outline" color="danger" style="font-size: 4em;"></ion-icon>
+        <h2>Error Loading Events</h2>
+        <p>{{ errorMessage }}</p>
+        <ion-button expand="block" color="brand-amber" (click)="retryLoadEvents()">
+          <ion-icon slot="start" name="refresh-outline"></ion-icon>
+          Retry
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Events List -->
+  <ion-list *ngIf="!isLoading && !errorMessage && events.length > 0">
     <ion-card *ngFor="let event of events" class="ion-animated ion-fade-in-up asphalt-secondary rounded-xl">
-      <img src="https://picsum.photos/800/400?random={{event.id}}" alt="Event Image">
+      <img
+        [src]="event.imageUrl || 'https://picsum.photos/800/400?random=' + event._id"
+        alt="Event Image"
+        onerror="this.src='https://placehold.co/800x400/2D3748/FFFFFF?text=Event+Image'">
       <ion-card-header>
         <ion-card-title>{{event.name}}</ion-card-title>
-        <ion-card-subtitle>{{event.club.clubName}}</ion-card-subtitle>
+        <ion-card-subtitle>
+          <ion-icon name="business-outline" size="small"></ion-icon>
+          {{event.club?.clubName || 'Club'}}
+        </ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
-        <p>{{event.description}}</p>
-        <p>{{event.startTime | date:'short'}} - {{event.endTime | date:'short'}}</p>
-        <p>{{event.location}}</p>
-        <p>Organized by: {{event.createdBy.username}}</p>
+        <p class="event-description">{{event.description}}</p>
+
+        <div class="event-details">
+          <p class="event-time">
+            <ion-icon name="calendar-outline" size="small"></ion-icon>
+            {{event.startTime | date:'MMM d, y, h:mm a'}} - {{event.endTime | date:'h:mm a'}}
+          </p>
+
+          <p class="event-location" *ngIf="event.location">
+            <ion-icon name="location-outline" size="small"></ion-icon>
+            {{event.location}}
+          </p>
+
+          <p class="event-organizer" *ngIf="event.createdBy">
+            <ion-icon name="person-outline" size="small"></ion-icon>
+            Organized by: {{event.createdBy.username || event.createdBy.name || 'Unknown'}}
+          </p>
+
+          <p class="event-type">
+            <ion-icon name="pricetag-outline" size="small"></ion-icon>
+            {{event.eventType | titlecase}}
+          </p>
+        </div>
       </ion-card-content>
     </ion-card>
   </ion-list>
 
-  <!-- No events message -->
-  <div *ngIf="!loading && events.length === 0" class="ion-text-center ion-padding-top">
-    <ion-icon name="sad-outline" style="font-size: 4em;"></ion-icon>
-    <h2>No Events Found</h2>
-    <p>There are currently no events scheduled. Please check back later.</p>
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && !errorMessage && events.length === 0" class="ion-text-center ion-padding-top">
+    <ion-card class="asphalt-secondary rounded-xl">
+      <ion-card-content>
+        <ion-icon name="calendar-outline" style="font-size: 5em; color: var(--ion-color-medium);"></ion-icon>
+        <h2>No Events Yet</h2>
+        <p>You don't have any upcoming events from your clubs.</p>
+        <p class="ion-margin-top">
+          <small>Events from clubs you're a member of will appear here.</small>
+        </p>
+        <ion-button expand="block" color="brand-amber" routerLink="/clubs" class="ion-margin-top">
+          <ion-icon slot="start" name="people-outline"></ion-icon>
+          Browse Clubs
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
   </div>
 </ion-content>
