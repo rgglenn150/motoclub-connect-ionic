@@ -3,6 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
+export interface UserLocation {
+  latitude: number;
+  longitude: number;
+  updatedAt?: string;
+}
+
 export interface UserProfile {
   _id: string;
   firstName: string;
@@ -13,6 +19,7 @@ export interface UserProfile {
   isEmailVerified?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  lastLocation?: UserLocation;
 }
 
 export interface UpdateProfileData {
@@ -70,5 +77,13 @@ export class UserService {
 
   checkEmailAvailability(email: string): Observable<AvailabilityCheck> {
     return this.http.get<AvailabilityCheck>(`${this.apiUrl}/check-email/${encodeURIComponent(email)}`);
+  }
+
+  getUserLocation(): Observable<UserLocation> {
+    return this.http.get<UserLocation>(`${this.apiUrl}/me/location`);
+  }
+
+  updateUserLocation(latitude: number, longitude: number): Observable<UserLocation> {
+    return this.http.put<UserLocation>(`${this.apiUrl}/me/location`, { latitude, longitude });
   }
 }
