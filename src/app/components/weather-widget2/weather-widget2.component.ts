@@ -775,29 +775,15 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
 
   /**
    * Open device location settings
-   * Works on Android and iOS native apps, shows message on web
+   * Shows instruction to user as direct settings access is limited
+   * Triggers permission request which may prompt settings on some platforms
    */
   public async openLocationSettings(): Promise<void> {
-    try {
-      const platform = Capacitor.getPlatform();
-      console.log('Opening location settings for platform:', platform);
-
-      if (platform === 'android' || platform === 'ios') {
-        // Dynamically import App plugin for native platforms
-        const { App } = await import('@capacitor/app');
-
-        // On both Android and iOS, app-settings: opens the app's settings page
-        // where users can enable location permissions
-        await App.openUrl({ url: 'app-settings:' });
-      } else {
-        // For web, we can't open system settings
-        // Just log a message - the user will see the "Try Again" button
-        console.log('Location settings cannot be opened on web platform');
-      }
-    } catch (error) {
-      console.error('Error opening location settings:', error);
-      // Fallback: Just log - user will need to manually enable location
-    }
+    // Note: Direct access to location settings is restricted by OS
+    // The "Try Again" button will request permissions which may prompt settings
+    console.log('User requested to open location settings');
+    // The requestLocationPermissions method will handle the actual permission request
+    await this.requestLocationPermissions();
     this.cdr.markForCheck();
   }
 }
