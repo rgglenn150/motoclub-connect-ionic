@@ -100,39 +100,42 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
   }
 
   /**
-   * Check if location services are unavailable and try to get saved location from DB
+   * Always fetch saved location from DB as a fallback option
+   * This ensures we have a fallback even when GPS permission is granted but GPS fails
    */
   private async checkForSavedLocationFallback(): Promise<void> {
-    const isServiceAvailable = this.locationMetadata.serviceAvailable;
-    const permissionStatus = this.locationMetadata.permissionStatus;
+    console.log('Checking for saved location in database...');
 
-    // If location is not available or permission is denied/prompt, try to get saved location
-    if (!isServiceAvailable || permissionStatus === 'denied' || permissionStatus === 'prompt') {
-      console.log('GPS unavailable or permission not granted, checking for saved location...');
+    try {
+      const savedLocationData = await this.userService.getUserLocation().toPromise();
 
-      try {
-        const savedLocationData = await this.userService.getUserLocation().toPromise();
-
-        if (savedLocationData && savedLocationData.latitude && savedLocationData.longitude) {
-          console.log('Found saved location in database:', savedLocationData);
-          this.savedLocation = {
-            latitude: savedLocationData.latitude,
-            longitude: savedLocationData.longitude,
-            updatedAt: savedLocationData.updatedAt ? new Date(savedLocationData.updatedAt) : undefined,
-          };
-          this.showEnableLocationPrompt = false;
-        } else {
-          console.log('No saved location found in database');
+      if (savedLocationData && savedLocationData.latitude && savedLocationData.longitude) {
+        console.log('Found saved location in database:', savedLocationData);
+        this.savedLocation = {
+          latitude: savedLocationData.latitude,
+          longitude: savedLocationData.longitude,
+          updatedAt: savedLocationData.updatedAt ? new Date(savedLocationData.updatedAt) : undefined,
+        };
+        this.showEnableLocationPrompt = false;
+      } else {
+        console.log('No saved location found in database');
+        // Only show enable prompt if we have no GPS permission AND no saved location
+        const permissionStatus = this.locationMetadata.permissionStatus;
+        if (permissionStatus === 'denied' || permissionStatus === 'prompt') {
           this.showEnableLocationPrompt = true;
         }
-      } catch (error) {
-        console.warn('Error fetching saved location from database:', error);
-        // If we can't get saved location and GPS is unavailable, show enable location prompt
+      }
+    } catch (error) {
+      console.warn('Error fetching saved location from database:', error);
+      // Only show enable prompt if we have no GPS permission AND couldn't get saved location
+      const permissionStatus = this.locationMetadata.permissionStatus;
+      const isServiceAvailable = this.locationMetadata.serviceAvailable;
+      if (!isServiceAvailable || permissionStatus === 'denied' || permissionStatus === 'prompt') {
         this.showEnableLocationPrompt = true;
       }
-
-      this.cdr.markForCheck();
     }
+
+    this.cdr.markForCheck();
   }
 
   /**
