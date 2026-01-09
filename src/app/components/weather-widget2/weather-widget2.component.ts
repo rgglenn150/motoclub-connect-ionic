@@ -16,6 +16,8 @@ import {
   LocationOptions,
   GeolocationError,
 } from '../../service/places.service';
+import { UserService, UserLocation } from '../../service/user.service';
+import { Capacitor } from '@capacitor/core';
 
 // Represents the evaluated verdict for the rider
 interface RidingConditions {
@@ -65,17 +67,26 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
   private enhancedLocation: EnhancedLocation | null = null;
   public weatherCode: number | null = null;
 
+  // Saved location fallback properties
+  public showEnableLocationPrompt: boolean = false;
+  public savedLocation: { latitude: number; longitude: number; updatedAt?: Date } | null = null;
+  private readonly LOCATION_UPDATE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours in ms
+
   constructor(
     private weatherService: WeatherService,
     private locationPreferencesService: LocationPreferencesService, // Inject LocationPreferencesService
     private cdr: ChangeDetectorRef, // Inject ChangeDetectorRef
     private geolocationService: GeolocationService,
-    private placesService: PlacesService
+    private placesService: PlacesService,
+    private userService: UserService
   ) {}
 
   async ngOnInit() {
     // Check location service availability and permissions
     await this.initializeLocationServices();
+
+    // Check if GPS is unavailable/denied and try to get saved location from DB
+    await this.checkForSavedLocationFallback();
 
     // Subscribe to location preferences changes
     this.locationPreferencesService.preferences$
@@ -86,6 +97,42 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
       });
 
     this.fetchWeatherData();
+  }
+
+  /**
+   * Check if location services are unavailable and try to get saved location from DB
+   */
+  private async checkForSavedLocationFallback(): Promise<void> {
+    const isServiceAvailable = this.locationMetadata.serviceAvailable;
+    const permissionStatus = this.locationMetadata.permissionStatus;
+
+    // If location is not available or permission is denied/prompt, try to get saved location
+    if (!isServiceAvailable || permissionStatus === 'denied' || permissionStatus === 'prompt') {
+      console.log('GPS unavailable or permission not granted, checking for saved location...');
+
+      try {
+        const savedLocationData = await this.userService.getUserLocation().toPromise();
+
+        if (savedLocationData && savedLocationData.latitude && savedLocationData.longitude) {
+          console.log('Found saved location in database:', savedLocationData);
+          this.savedLocation = {
+            latitude: savedLocationData.latitude,
+            longitude: savedLocationData.longitude,
+            updatedAt: savedLocationData.updatedAt ? new Date(savedLocationData.updatedAt) : undefined,
+          };
+          this.showEnableLocationPrompt = false;
+        } else {
+          console.log('No saved location found in database');
+          this.showEnableLocationPrompt = true;
+        }
+      } catch (error) {
+        console.warn('Error fetching saved location from database:', error);
+        // If we can't get saved location and GPS is unavailable, show enable location prompt
+        this.showEnableLocationPrompt = true;
+      }
+
+      this.cdr.markForCheck();
+    }
   }
 
   /**
@@ -119,17 +166,22 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
   /**
    * Fetches weather data using the WeatherService and updates component state.
    * Now includes enhanced location services integration with detailed metadata.
+   * Also supports saved location fallback when GPS is unavailable.
    */
   public async fetchWeatherData(
     useHighAccuracy: boolean = false
   ): Promise<void> {
     this.isLoading = true;
     this.hasError = false;
+    this.showEnableLocationPrompt = false; // Reset the prompt when fetching
     this.locationName = 'Loading...'; // Reset location name
     this.cdr.markForCheck();
 
     const preferences = this.locationPreferencesService.getCurrentPreferences();
     let weatherObservable;
+    let gpsLocationObtained = false;
+    let obtainedLatitude: number | null = null;
+    let obtainedLongitude: number | null = null;
 
     // Check if we should try to get fresh location data
     if (preferences.useGps) {
@@ -149,6 +201,11 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
           this.enhancedLocation = currentLocation;
           this.updateLocationMetadata(currentLocation);
 
+          // Mark that we successfully obtained GPS location
+          gpsLocationObtained = true;
+          obtainedLatitude = currentLocation.lat;
+          obtainedLongitude = currentLocation.lng;
+
           // Use fresh location coordinates
           weatherObservable = this.weatherService.getCurrentWeather(
             currentLocation.lat,
@@ -156,19 +213,16 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
           );
         } else {
           console.log(
-            'Failed to get current location, falling back to service default'
+            'Failed to get current location, checking for saved location fallback...'
           );
-          this.handleLocationError('Unable to obtain current location');
-          // Fallback to weather service default location handling
-          weatherObservable =
-            this.weatherService.getCurrentWeatherForCurrentLocation();
+          // Try saved location fallback
+          weatherObservable = this.getSavedLocationWeather();
         }
       } catch (error) {
         console.warn('Error getting current location:', error);
         this.handleLocationError(error as Error);
-        // Fallback to weather service default location handling
-        weatherObservable =
-          this.weatherService.getCurrentWeatherForCurrentLocation();
+        // Try saved location fallback
+        weatherObservable = this.getSavedLocationWeather();
       } finally {
         this.isGettingLocation = false;
         this.cdr.markForCheck();
@@ -187,6 +241,11 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
       this.locationMetadata.source = 'default';
       weatherObservable =
         this.weatherService.getCurrentWeatherForCurrentLocation();
+    }
+
+    // If we got GPS location, check if we should save it to the database
+    if (gpsLocationObtained && obtainedLatitude !== null && obtainedLongitude !== null) {
+      this.maybeSaveLocationToDatabase(obtainedLatitude, obtainedLongitude);
     }
 
     // Subscribe to weather data
@@ -652,5 +711,93 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     }
 
     return fullAddress;
+  }
+
+  /**
+   * Get weather using saved location as fallback
+   * Returns the weather observable or sets showEnableLocationPrompt if no saved location
+   */
+  private getSavedLocationWeather() {
+    if (this.savedLocation) {
+      console.log('Using saved location for weather:', this.savedLocation);
+      this.locationMetadata.source = 'cached';
+      this.locationMetadata.confidence = 'medium';
+      return this.weatherService.getCurrentWeather(
+        this.savedLocation.latitude,
+        this.savedLocation.longitude
+      );
+    } else {
+      console.log('No saved location available, showing enable location prompt');
+      this.showEnableLocationPrompt = true;
+      this.isLoading = false;
+      this.cdr.markForCheck();
+      // Return default weather as fallback
+      return this.weatherService.getCurrentWeatherForCurrentLocation();
+    }
+  }
+
+  /**
+   * Save location to database if it has been more than 12 hours since last update
+   */
+  private maybeSaveLocationToDatabase(latitude: number, longitude: number): void {
+    const now = new Date();
+    const lastUpdateTime = this.savedLocation?.updatedAt;
+
+    // Check if we should update: no previous save or more than 12 hours old
+    const shouldUpdate =
+      !lastUpdateTime ||
+      now.getTime() - lastUpdateTime.getTime() > this.LOCATION_UPDATE_INTERVAL;
+
+    if (shouldUpdate) {
+      console.log('Saving location to database (12+ hours since last update or first save)');
+      this.userService.updateUserLocation(latitude, longitude).subscribe({
+        next: (response) => {
+          console.log('Location saved to database:', response);
+          // Update local saved location with new timestamp
+          this.savedLocation = {
+            latitude,
+            longitude,
+            updatedAt: response.updatedAt ? new Date(response.updatedAt) : new Date(),
+          };
+        },
+        error: (error) => {
+          console.warn('Failed to save location to database:', error);
+          // Don't break the widget if save fails - just log the error
+        },
+      });
+    } else {
+      console.log(
+        'Skipping location save - less than 12 hours since last update:',
+        lastUpdateTime
+      );
+    }
+  }
+
+  /**
+   * Open device location settings
+   * Works on Android and iOS native apps, shows message on web
+   */
+  public async openLocationSettings(): Promise<void> {
+    try {
+      const platform = Capacitor.getPlatform();
+      console.log('Opening location settings for platform:', platform);
+
+      if (platform === 'android' || platform === 'ios') {
+        // Dynamically import App plugin for native platforms
+        const { App } = await import('@capacitor/app');
+
+        // On both Android and iOS, app-settings: opens the app's settings page
+        // where users can enable location permissions
+        await App.openUrl({ url: 'app-settings:' });
+      } else {
+        // For web, we can't open system settings
+        // Just log a message - the user will see the "Try Again" button
+        console.log('Location settings cannot be opened on web platform');
+      }
+    } catch (error) {
+      console.error('Error opening location settings:', error);
+      // Fallback: Just log - user will need to manually enable location
+    }
+    this.cdr.markForCheck();
   }
 }

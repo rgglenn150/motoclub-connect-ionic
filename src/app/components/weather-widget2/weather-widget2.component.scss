@@ -63,6 +63,43 @@
   }
 }
 
+// Enable Location Prompt State
+.enable-location-container {
+  .location-prompt-icon {
+    font-size: 64px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 16px;
+  }
+
+  .location-prompt-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: #ffffff;
+  }
+
+  .location-prompt-message {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 20px 0;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .enable-location-button {
+    --background: rgba(255, 255, 255, 0.2);
+    --color: #ffffff;
+    --border-radius: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .skip-button {
+    --color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+  }
+}
+
 // Header
 .header-content {
   display: flex;
@@ -399,7 +436,7 @@
 
 // Great riding conditions
 .condition-great {
-  background: linear-gradient(45deg, #0072ff, #00c6ff);
+  background: linear-gradient(135deg, #2c3e50, #4a5568);
   .verdict-icon-container .weather-icon svg { filter: drop-shadow(0 0 10px rgba(128, 240, 192, 0.6)); }
 
   .location-badge[color="success"] {

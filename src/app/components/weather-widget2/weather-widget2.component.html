@@ -6,7 +6,7 @@
     <p *ngIf="isGettingLocation">Getting your location...</p>
   </div>
 
-  <div *ngIf="hasError" class="state-container error-container">
+  <div *ngIf="hasError && !showEnableLocationPrompt" class="state-container error-container">
     <ion-icon name="cloud-offline-outline"></ion-icon>
     <p class="error-message">{{ errorMessage }}</p>
 
@@ -28,7 +28,22 @@
     </div>
   </div>
 
-  <div *ngIf="!isLoading && !hasError && currentWeather && ridingConditions">
+  <!-- Enable Location Prompt State -->
+  <div *ngIf="showEnableLocationPrompt && !isLoading && !hasError" class="state-container enable-location-container">
+    <ion-icon name="location-outline" class="location-prompt-icon"></ion-icon>
+    <h3 class="location-prompt-title">Enable Location</h3>
+    <p class="location-prompt-message">Turn on location services to see your local riding weather conditions.</p>
+    <ion-button fill="solid" class="enable-location-button" (click)="openLocationSettings()">
+      <ion-icon slot="start" name="settings-outline"></ion-icon>
+      Open Settings
+    </ion-button>
+    <ion-button fill="clear" class="skip-button" (click)="requestLocationPermissions()">
+      <ion-icon slot="start" name="locate-outline"></ion-icon>
+      Try Again
+    </ion-button>
+  </div>
+
+  <div *ngIf="!isLoading && !hasError && !showEnableLocationPrompt && currentWeather && ridingConditions">
     <ion-card-header>
       <div class="header-content">
         <div class="location" (click)="toggleLocationDetails()">
@@ -164,7 +179,7 @@
           <app-weather-svg-icon [iconType]="ridingConditions.animatedIconType" size="medium" [animated]="true"></app-weather-svg-icon>
         </div>
         <h2 class="verdict-title">{{ ridingConditions.title }}</h2>
-        <p class="verdict-advice">{{ ridingConditions.advice }} {{weatherCode}}</p>
+        <p class="verdict-advice">{{ ridingConditions.advice }} </p>
       </div>
 
       <div class="divider"></div>
