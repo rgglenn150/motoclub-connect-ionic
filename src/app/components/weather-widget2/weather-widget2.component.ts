@@ -688,6 +688,52 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
   }
 
   /**
+   * Get saved location age text
+   * Shows when the saved location was last updated in the database
+   */
+  public getSavedLocationAgeText(): string {
+    if (!this.savedLocation?.updatedAt) return '';
+
+    const now = Date.now();
+    const savedTime = this.savedLocation.updatedAt.getTime();
+    const age = now - savedTime;
+    const minutes = Math.floor(age / 60000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    const days = Math.floor(hours / 24);
+    if (days === 1) return '1 day ago';
+    if (days < 7) return `${days} days ago`;
+
+    const weeks = Math.floor(days / 7);
+    if (weeks === 1) return '1 week ago';
+    if (weeks < 4) return `${weeks} weeks ago`;
+
+    const months = Math.floor(days / 30);
+    return `${months} month${months > 1 ? 's' : ''} ago`;
+  }
+
+  /**
+   * Check if we should show the saved location timestamp
+   * Only show when using saved/cached location (not fresh GPS)
+   */
+  public shouldShowSavedLocationAge(): boolean {
+    return (
+      !this.isLoading &&
+      !this.hasError &&
+      !this.showEnableLocationPrompt &&
+      this.savedLocation !== null &&
+      this.savedLocation.updatedAt !== undefined &&
+      (this.locationMetadata.source === 'cached' ||
+       this.locationMetadata.source === 'default')
+    );
+  }
+
+  /**
    * Extract city/area name from full address, removing street details
    */
   private extractCityFromAddress(fullAddress: string): string {

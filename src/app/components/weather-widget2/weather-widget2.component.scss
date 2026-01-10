@@ -316,6 +316,29 @@
   letter-spacing: 0.5px;
 }
 
+// Last Updated Timestamp
+.last-updated-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px 0;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+  .update-icon {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .update-text {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.3px;
+    font-weight: 400;
+  }
+}
+
 // --- ENHANCED LOCATION DETAILS ---
 
 .location-details {

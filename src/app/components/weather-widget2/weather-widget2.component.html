@@ -211,6 +211,13 @@
         </div>
 
       </div>
+
+      <!-- Last Updated Timestamp -->
+      <div *ngIf="shouldShowSavedLocationAge()" class="last-updated-section">
+        <ion-icon name="time-outline" class="update-icon"></ion-icon>
+        <span class="update-text">Location saved {{ getSavedLocationAgeText() }}</span>
+      </div>
+
     </ion-card-content>
   </div>
 
