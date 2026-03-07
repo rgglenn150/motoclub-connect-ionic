@@ -1,0 +1,170 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Import Official Members</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="closeModal()">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Import Progress Section -->
+  <div *ngIf="isImporting" class="import-progress-section">
+    <div class="progress-container">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <h3>Importing Members...</h3>
+      <p>{{ importProgress }}% complete</p>
+      <ion-progress-bar [value]="importProgress / 100" color="primary"></ion-progress-bar>
+    </div>
+  </div>
+
+  <!-- Import Result Section -->
+  <div *ngIf="importResult && !isImporting" class="import-result-section">
+    <!-- Success State -->
+    <div *ngIf="isImportSuccessful" class="result-success">
+      <ion-icon name="checkmark-circle" color="success" size="large"></ion-icon>
+      <h3>Import Complete!</h3>
+      <p>{{ importResult.results.successful }} members imported successfully</p>
+    </div>
+
+    <!-- Partial Success State -->
+    <div *ngIf="hasImportErrors" class="result-partial">
+      <ion-icon name="warning" color="warning" size="large"></ion-icon>
+      <h3>Import Partially Complete</h3>
+      <p>{{ importResult.results.successful }} successful, {{ importResult.results.failed }} failed</p>
+
+      <!-- Show errors -->
+      <div *ngIf="importResult.results.errors.length > 0" class="errors-list">
+        <h4>Errors:</h4>
+        <div *ngFor="let error of importResult.results.errors" class="error-item">
+          <ion-icon name="alert-circle" color="danger"></ion-icon>
+          <span>Row {{ error.row }}: {{ error.error }}</span>
+        </div>
+      </div>
+    </div>
+
+    <ion-button expand="block" color="primary" (click)="completeImport()">
+      Done
+    </ion-button>
+  </div>
+
+  <!-- Import Form Section -->
+  <div *ngIf="!isImporting && !importResult">
+    <!-- Template Download Section -->
+    <ion-card class="template-section">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="download-outline"></ion-icon>
+          CSV Template
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>Download the CSV template to get started. Make sure your file follows the same format.</p>
+        <ion-button expand="block" fill="outline" (click)="downloadTemplate()">
+          <ion-icon name="download-outline" slot="start"></ion-icon>
+          Download Template
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- File Upload Section -->
+    <ion-card class="upload-section">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="document-outline"></ion-icon>
+          Upload CSV File
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <!-- Drop Zone -->
+        <div
+          class="drop-zone"
+          [class.active]="fileDropActive"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onFileDrop($event)">
+          <input
+            type="file"
+            accept=".csv"
+            (change)="onFileSelected($event)"
+            class="file-input">
+          <ion-icon name="cloud-upload-outline" size="large"></ion-icon>
+          <p>Drag & drop your CSV file here</p>
+          <p class="drop-zone-subtitle">or click to browse</p>
+        </div>
+
+        <!-- Selected File Display -->
+        <div *ngIf="selectedFile" class="selected-file">
+          <div class="file-info">
+            <ion-icon name="document-text-outline" size="large"></ion-icon>
+            <div class="file-details">
+              <h4>{{ fileName }}</h4>
+              <p>{{ fileSize }}</p>
+            </div>
+          </div>
+          <ion-button fill="clear" color="danger" (click)="removeFile()">
+            <ion-icon name="close-circle"></ion-icon>
+          </ion-button>
+        </div>
+
+        <!-- Error Display -->
+        <div *ngIf="importError" class="error-display">
+          <ion-icon name="alert-circle" color="danger"></ion-icon>
+          <span>{{ importError }}</span>
+        </div>
+
+        <!-- Import Button -->
+        <ion-button
+          expand="block"
+          color="brand-amber"
+          [disabled]="!canStartImport"
+          (click)="startImport()">
+          <ion-icon name="upload-outline" slot="start"></ion-icon>
+          Start Import
+        </ion-button>
+
+        <!-- Offline Warning -->
+        <div *ngIf="!networkStatus.online" class="offline-warning">
+          <ion-icon name="cloud-offline-outline" color="warning"></ion-icon>
+          <span>You are offline. Please check your connection to import.</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Help Section -->
+    <ion-card class="help-section">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="information-circle-outline"></ion-icon>
+          CSV Format Requirements
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>Your CSV file should include the following columns:</p>
+        <ul class="requirements-list">
+          <li><code>firstName</code> - <strong>Required</strong>. Member's first name</li>
+          <li><code>lastName</code> - Optional. Member's last name</li>
+          <li><code>officialNumber</code> - Optional. Unique member number (auto-generated if not provided)</li>
+          <li><code>address</code> - Optional. Member's address</li>
+          <li><code>plateNumber</code> - Optional. Vehicle plate number</li>
+          <li><code>description</code> - Optional. Additional notes</li>
+        </ul>
+        <p class="help-note">
+          <ion-icon name="bulb"></ion-icon>
+          Only <strong>firstName</strong> is required. Official numbers will be automatically assigned if left empty.
+        </p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>
+
+<ion-footer *ngIf="!isImporting && !importResult">
+  <ion-toolbar>
+    <ion-button expand="block" fill="clear" (click)="cancelImport()">
+      <ion-icon name="close-outline" slot="start"></ion-icon>
+      Cancel
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

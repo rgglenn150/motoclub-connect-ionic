@@ -1,0 +1,244 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/official-members"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Official Member Details</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="closeModal()">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <p>Loading member details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="hasError && !loading" class="error-container">
+    <ion-icon name="alert-circle-outline" color="danger" size="large"></ion-icon>
+    <h3>Unable to Load Member</h3>
+    <p>{{ error }}</p>
+    <ion-button color="primary" (click)="loadMemberDetail()">
+      <ion-icon slot="start" name="refresh"></ion-icon>
+      Try Again
+    </ion-button>
+  </div>
+
+  <!-- Main Content -->
+  <ng-container *ngIf="!loading && !error && member">
+    <!-- Member Photo and Basic Info -->
+    <div class="member-header">
+      <div class="photo-container">
+        <img [src]="getMemberPhoto()" [alt]="member.firstName + ' ' + member.lastName" class="member-photo" />
+        <ion-badge [color]="getActiveStatus().color" class="status-badge">
+          {{ getActiveStatus().text }}
+        </ion-badge>
+      </div>
+
+      <div class="member-basic-info">
+        <h1 class="member-name">{{ member.firstName }} {{ member.lastName }}</h1>
+        <p class="member-number">Official #{{ member.officialNumber }}</p>
+
+        <div class="claim-status">
+          <ion-badge [color]="getClaimStatus().color" class="claim-badge">
+            <ion-icon [name]="getClaimStatus().text === 'Claimed' ? 'checkmark-circle' : 'radio-button-off'"></ion-icon>
+            {{ getClaimStatus().text }}
+          </ion-badge>
+          <span *ngIf="member.claimedBy" class="claimed-by">
+            by {{ getClaimedByDisplayName() }}
+            <span class="claimed-username">{{ getClaimedByUsername() }}</span>
+          </span>
+        </div>
+
+        <div *ngIf="member.plateNumber" class="plate-number">
+          <ion-icon name="car-sport-outline"></ion-icon>
+          <span>{{ member.plateNumber }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ID Card Section -->
+    <ion-card class="asphalt-card id-card-section">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="card-outline"></ion-icon>
+          Official ID Card
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="id-card-description">Generate and download an official ID card for this member.</p>
+        <ion-button
+          expand="block"
+          color="primary"
+          (click)="generateIDCard()"
+          [disabled]="idCardLoading || !networkStatus.online">
+          <ion-spinner *ngIf="idCardLoading" name="crescent" slot="start"></ion-spinner>
+          <ion-icon *ngIf="!idCardLoading" name="download-outline" slot="start"></ion-icon>
+          {{ idCardLoading ? 'Generating...' : 'Generate ID Card' }}
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Member Details Section -->
+    <ion-card class="asphalt-card">
+      <ion-card-header>
+        <div class="section-header">
+          <ion-card-title>
+            <ion-icon name="person-outline"></ion-icon>
+            Member Information
+          </ion-card-title>
+          <ion-button *ngIf="isAdmin && !isEditing" fill="clear" size="small" (click)="enterEditMode()">
+            <ion-icon name="create-outline" slot="start"></ion-icon>
+            Edit
+          </ion-button>
+        </div>
+      </ion-card-header>
+      <ion-card-content>
+        <!-- View Mode -->
+        <div *ngIf="!isEditing" class="member-details">
+          <ion-item lines="none" class="detail-item">
+            <ion-label>
+              <h3>Full Name</h3>
+              <p>{{ member.firstName }} {{ member.lastName }}</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item lines="none" class="detail-item">
+            <ion-label>
+              <h3>Official Number</h3>
+              <p>{{ member.officialNumber }}</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item *ngIf="member.plateNumber" lines="none" class="detail-item">
+            <ion-label>
+              <h3>Plate Number</h3>
+              <p>{{ member.plateNumber }}</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item *ngIf="member.address" lines="none" class="detail-item">
+            <ion-label>
+              <h3>Address</h3>
+              <p>{{ member.address }}</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item *ngIf="member.description" lines="none" class="detail-item">
+            <ion-label>
+              <h3>Description</h3>
+              <p>{{ member.description }}</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item lines="none" class="detail-item">
+            <ion-label>
+              <h3>Status</h3>
+              <p><ion-badge [color]="getActiveStatus().color">{{ getActiveStatus().text }}</ion-badge></p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item lines="none" class="detail-item">
+            <ion-label>
+              <h3>Member Since</h3>
+              <p>{{ member.createdAt | date:'mediumDate' }}</p>
+            </ion-label>
+          </ion-item>
+        </div>
+
+        <!-- Edit Mode -->
+        <div *ngIf="isEditing" class="edit-form">
+          <ion-item>
+            <ion-label position="stacked">First Name</ion-label>
+            <ion-input type="text" [(ngModel)]="editFormData.firstName"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Last Name</ion-label>
+            <ion-input type="text" [(ngModel)]="editFormData.lastName"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Official Number</ion-label>
+            <ion-input type="text" [(ngModel)]="editFormData.officialNumber"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Plate Number</ion-label>
+            <ion-input type="text" [(ngModel)]="editFormData.plateNumber"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Address</ion-label>
+            <ion-textarea [(ngModel)]="editFormData.address" rows="2"></ion-textarea>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Description</ion-label>
+            <ion-textarea [(ngModel)]="editFormData.description" rows="3"></ion-textarea>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Active Status</ion-label>
+            <ion-toggle [(ngModel)]="editFormData.isActive"></ion-toggle>
+          </ion-item>
+
+          <div class="edit-actions">
+            <ion-button fill="outline" (click)="cancelEdit()">
+              Cancel
+            </ion-button>
+            <ion-button color="primary" (click)="saveChanges()">
+              Save Changes
+            </ion-button>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Claim Section (for members) -->
+    <ion-card *ngIf="canClaim && !isEditing" class="asphalt-card claim-section">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="person-add-outline"></ion-icon>
+          Claim This Profile
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="claim-description">
+          Is this you? Claim this official member profile to link it to your account.
+        </p>
+        <ion-button
+          expand="block"
+          color="brand-amber"
+          (click)="claimMember()"
+          [disabled]="isClaiming || !networkStatus.online">
+          <ion-spinner *ngIf="isClaiming" name="crescent" slot="start"></ion-spinner>
+          <ion-icon *ngIf="!isClaiming" name="person-check-outline" slot="start"></ion-icon>
+          {{ isClaiming ? 'Submitting...' : 'Claim Profile' }}
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
+  <!-- Network Status Indicator -->
+  <app-network-indicator
+    position="bottom"
+    [showWhenOnline]="false"
+    [compact]="true">
+  </app-network-indicator>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-button expand="block" fill="clear" (click)="closeModal()">
+      <ion-icon name="close-outline" slot="start"></ion-icon>
+      Close
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

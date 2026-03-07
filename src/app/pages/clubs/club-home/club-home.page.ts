@@ -39,6 +39,7 @@ interface Club {
   members?: any[];
   createdBy?: string;
   createdAt?: string;
+  officialMembersVisibility?: 'public' | 'admins' | 'members';
 }
 
 interface Member {
@@ -1250,6 +1251,7 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
    * This method handles both admin and non-admin member loading
    */
   async loadMembersForDisplay() {
+    console.log('loadMembersForDisplay called - clubId:', this.clubId, 'loading:', this.membersDataLoading);
     if (!this.clubId || this.membersDataLoading) return;
 
     try {
@@ -1260,6 +1262,7 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
       // The API will return appropriate data based on user permissions
       this.clubService.getClubMembers(this.clubId).subscribe({
         next: (members) => {
+          console.log('API returned members:', members);
           this.membersForPublicView = members;
           this.membersDataLoading = false;
 
@@ -1270,6 +1273,8 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
         },
         error: (error) => {
           console.error('Error loading members via API:', error);
+          console.log('Error status:', error.status);
+          console.log('Falling back to loadMembersFromClubData()');
 
           // If API fails (likely due to permissions), try to extract from club data
           this.loadMembersFromClubData();
@@ -1286,32 +1291,37 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
    */
   private loadMembersFromClubData() {
     try {
-      if (this.club.members && this.club.members.length > 0) {
+      console.log('loadMembersFromClubData - club:', this.club);
+      console.log('loadMembersFromClubData - club.members:', this.club?.members);
+
+      if (this.club?.members && this.club.members.length > 0) {
         // Map club.members to the expected format
-        this.membersForPublicView = this.club.members.map((member: any) => ({
-          _id:
-            member._id || member.id || `member-${Date.now()}-${Math.random()}`,
-          user: {
-            _id: member.user?._id || member._id || member.id,
-            name:
-              member.user?.name || member.name || member.username || 'Member',
-            email: member.user?.email || member.email || '',
-            profilePicture:
-              member.user?.profilePicture || member.profilePicture,
-          },
-          club: this.clubId!,
-          role:
-            member.role ||
-            (member.roles &&
-            member.roles.includes &&
-            member.roles.includes('admin')
-              ? 'admin'
-              : 'member'),
-          joinedAt:
-            member.joinedDate || member.joinedAt || new Date().toISOString(),
-        }));
+        this.membersForPublicView = this.club.members.map((member: any) => {
+          const firstName = member.user?.firstName || member.firstName || '';
+          const lastName = member.user?.lastName || member.lastName || '';
+          const username = member.user?.username || member.username || '';
+          const displayName = (firstName && lastName) ? `${firstName} ${lastName}`.trim() : (firstName || lastName || username || 'Member');
+
+          return {
+            _id: member._id || member.id || `member-${Date.now()}-${Math.random()}`,
+            user: {
+              _id: member.user?._id || member._id || member.id,
+              name: displayName,
+              firstName: firstName,
+              lastName: lastName,
+              username: username,
+              email: member.user?.email || member.email || '',
+              profilePhoto: member.user?.profilePhoto || member.profilePhoto || '',
+            },
+            club: this.clubId!,
+            role: member.role || (member.roles && member.roles.includes && member.roles.includes('admin') ? 'admin' : 'member'),
+            joinedAt: member.joinedDate || member.joinedAt || new Date().toISOString(),
+          };
+        });
+        console.log('loadMembersFromClubData - membersForPublicView:', this.membersForPublicView);
       } else {
         // No member data available - show empty state
+        console.log('loadMembersFromClubData - No members found in club object');
         this.membersForPublicView = [];
       }
     } catch (error) {
@@ -2069,6 +2079,43 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
       console.error('Error navigating to edit club:', error);
       this.presentToast('Unable to navigate to edit club page', 'danger');
     }
+  }
+
+  // --- NAVIGATION METHODS ---
+
+  /**
+   * Navigate to official members page
+   */
+  async navigateToOfficialMembers() {
+    if (!this.clubId) {
+      this.presentToast('Unable to navigate: Club ID not available', 'danger');
+      return;
+    }
+
+    try {
+      console.log('Navigating to official members with clubId:', this.clubId);
+      const success = await this.router.navigate(['/official-members', this.clubId]);
+      if (!success) {
+        console.error('Navigation failed');
+        this.presentToast('Unable to navigate to official members page', 'danger');
+      }
+    } catch (error) {
+      console.error('Error navigating to official members:', error);
+      this.presentToast('Unable to navigate to official members page', 'danger');
+    }
+  }
+
+  /**
+   * Check if official members tab should be shown
+   * Show if user is admin OR if club has official members (for now, always show for admins)
+   */
+  get canViewOfficialMembers(): boolean {
+    if (!this.club) return false;
+    const visibility = this.club.officialMembersVisibility || 'members';
+    if (visibility === 'public') return true;
+    if (visibility === 'admins') return this.isUserAdmin;
+    if (visibility === 'members') return this.isUserMember || this.isUserAdmin;
+    return false;
   }
 
   // --- MODAL MANAGEMENT METHODS ---

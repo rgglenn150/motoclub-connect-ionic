@@ -1,0 +1,154 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button [defaultHref]="'/clubs/' + clubId"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Claim Requests</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="navigateToOfficialMembers()">
+        <ion-icon name="people-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- Pull to Refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="refreshRequests($event)">
+    <ion-refresher-content
+      pullingIcon="chevron-down-circle-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Loading State -->
+  <div *ngIf="loading && !isRefreshing" class="loading-container">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <p>Loading claim requests...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <ion-icon name="alert-circle-outline" color="danger" size="large"></ion-icon>
+    <h3>Unable to Load Claim Requests</h3>
+    <p>{{ error }}</p>
+    <ion-button color="primary" (click)="loadClaimRequests()">
+      <ion-icon slot="start" name="refresh"></ion-icon>
+      Try Again
+    </ion-button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="isEmpty" class="empty-state">
+    <ion-icon name="checkmark-circle-outline" color="success" size="large"></ion-icon>
+    <h3>No Pending Requests</h3>
+    <p>All claim requests have been processed.</p>
+    <ion-button color="primary" fill="outline" (click)="navigateToOfficialMembers()">
+      <ion-icon slot="start" name="people-outline"></ion-icon>
+      View Official Members
+    </ion-button>
+  </div>
+
+  <!-- Claim Requests List -->
+  <ng-container *ngIf="!loading && !error && claimRequests.length > 0">
+    <!-- Summary Header -->
+    <div class="summary-header">
+      <div class="summary-info">
+        <ion-icon name="documents-outline"></ion-icon>
+        <div class="summary-text">
+          <h3>{{ claimRequests.length }} Pending Requests</h3>
+          <p>Review and process member claims</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Request Cards -->
+    <ion-card *ngFor="let request of claimRequests" class="request-card asphalt-card">
+      <ion-card-header>
+        <div class="request-header">
+          <div class="requester-info">
+            <ion-avatar class="requester-avatar">
+              <img [src]="getUserAvatar(request.user)" [alt]="getUserDisplayName(request.user)" />
+            </ion-avatar>
+            <div class="requester-details">
+              <h3>{{ getUserDisplayName(request.user) }}</h3>
+              <p class="requester-username">@{{ request.user?.username || 'username' }}</p>
+            </div>
+          </div>
+          <ion-badge color="warning" class="status-badge">
+            <ion-icon name="time-outline"></ion-icon>
+            Pending
+          </ion-badge>
+        </div>
+      </ion-card-header>
+
+      <ion-card-content>
+        <div class="claim-details">
+          <div class="claim-item">
+            <ion-icon name="person-outline"></ion-icon>
+            <div class="claim-item-content">
+              <span class="claim-label">Claiming</span>
+              <span class="claim-value">{{ getMemberDisplayName(request.officialMember) }}</span>
+              <span class="claim-subtitle">Official #{{ getMemberNumber(request.officialMember) }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="request.verificationNotes" class="verification-notes">
+            <ion-icon name="text-outline"></ion-icon>
+            <div class="notes-content">
+              <span class="notes-label">Verification Notes:</span>
+              <p>{{ request.verificationNotes }}</p>
+            </div>
+          </div>
+
+          <div class="request-meta">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>Requested {{ request.createdAt | date:'mediumDate' }}</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="request-actions">
+          <ion-button
+            expand="block"
+            fill="outline"
+            color="danger"
+            (click)="rejectRequest(request)"
+            [disabled]="isRequestProcessing(request._id) || !networkStatus.online">
+            <ion-spinner *ngIf="isRequestProcessing(request._id)" name="crescent" slot="start"></ion-spinner>
+            <ion-icon *ngIf="!isRequestProcessing(request._id)" name="close-outline" slot="start"></ion-icon>
+            {{ isRequestProcessing(request._id) ? 'Processing...' : 'Reject' }}
+          </ion-button>
+
+          <ion-button
+            expand="block"
+            color="success"
+            (click)="approveRequest(request)"
+            [disabled]="isRequestProcessing(request._id) || !networkStatus.online">
+            <ion-spinner *ngIf="isRequestProcessing(request._id)" name="crescent" slot="start"></ion-spinner>
+            <ion-icon *ngIf="!isRequestProcessing(request._id)" name="checkmark-outline" slot="start"></ion-icon>
+            {{ isRequestProcessing(request._id) ? 'Processing...' : 'Approve' }}
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
+  <!-- Network Status Indicator -->
+  <app-network-indicator
+    position="bottom"
+    [showWhenOnline]="false"
+    [compact]="true">
+  </app-network-indicator>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-button expand="block" fill="clear" (click)="navigateBack()">
+      <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
+      Back to Club
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

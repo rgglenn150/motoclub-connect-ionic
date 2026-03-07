@@ -51,6 +51,21 @@ const routes: Routes = [
     path: 'edit-club/:id',
     loadChildren: () => import('./pages/clubs/edit-club/edit-club.module').then( m => m.EditClubPageModule),
     canActivate: [AuthGuard, ClubAdminGuard]
+  },
+  {
+    path: 'official-members/:clubId',
+    loadChildren: () => import('./pages/official-members/official-members.module').then( m => m.OfficialMembersPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'official-member-detail/:clubId/:memberId',
+    loadChildren: () => import('./pages/official-members/official-member-detail/official-member-detail.module').then( m => m.OfficialMemberDetailPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'claim-requests/:clubId',
+    loadChildren: () => import('./pages/claim-requests/claim-requests.module').then( m => m.ClaimRequestsPageModule),
+    canActivate: [AuthGuard, ClubAdminGuard]
   }
 ];
 @NgModule({

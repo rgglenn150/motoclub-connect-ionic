@@ -1,0 +1,284 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button [defaultHref]="clubId ? '/clubs/' + clubId : '/home'"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Official Members</ion-title>
+    <ion-buttons slot="end">
+      <!-- Visibility Badge -->
+      <ion-badge [color]="getVisibilityBadgeColor()" class="visibility-badge">
+        {{ getVisibilityDisplay() }}
+      </ion-badge>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Admin Controls -->
+  <ion-toolbar *ngIf="isAdmin" class="admin-toolbar">
+    <ion-buttons slot="start">
+      <ion-button fill="clear" color="light" (click)="openAddMemberModal()" class="admin-action-btn">
+        <ion-icon slot="start" name="person-add-outline"></ion-icon>
+        <span class="btn-text">Add</span>
+      </ion-button>
+      <ion-button fill="clear" color="light" (click)="openImportModal()" class="admin-action-btn">
+        <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
+        <span class="btn-text">Import</span>
+      </ion-button>
+      <ion-button
+        fill="clear"
+        color="light"
+        (click)="exportToCSV()"
+        [disabled]="!networkStatus.online || operationLocks.export"
+        class="admin-action-btn">
+        <ion-icon slot="start" name="cloud-download-outline"></ion-icon>
+        <span class="btn-text">Export</span>
+      </ion-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" color="brand-amber" (click)="navigateToClaimRequests()" class="claim-requests-btn">
+        <ion-icon slot="start" name="clipboard-outline"></ion-icon>
+        <span>Claims</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Club Name Header -->
+  <div *ngIf="clubName && isAdmin" class="club-name-header">
+    <ion-icon name="shield-checkmark-outline"></ion-icon>
+    <span>{{ clubName }}</span>
+  </div>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- Pull to Refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="refreshMembers($event)">
+    <ion-refresher-content
+      pullingIcon="chevron-down-circle-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Loading State -->
+  <div *ngIf="loading && !isRefreshing" class="loading-container">
+    <ion-spinner name="crescent" color="brand-amber"></ion-spinner>
+    <p>Loading official members...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <div class="error-content">
+      <ion-icon name="alert-circle-outline" color="danger" class="error-icon"></ion-icon>
+      <div class="error-details">
+        <h3>Unable to Load Members</h3>
+        <p>{{ error }}</p>
+      </div>
+    </div>
+    <ion-button color="brand-amber" (click)="loadMembers()">
+      <ion-icon slot="start" name="refresh"></ion-icon>
+      Try Again
+    </ion-button>
+  </div>
+
+  <!-- Access Denied State -->
+  <div *ngIf="!canViewMembers() && !loading && !error" class="access-denied-container">
+    <div class="access-content">
+      <ion-icon name="lock-closed-outline" color="warning" class="lock-icon"></ion-icon>
+      <h3>Access Restricted</h3>
+      <p>This member list is only visible to {{ visibility === 'admins' ? 'administrators' : 'members' }}.</p>
+    </div>
+    <ion-button *ngIf="!isAdmin" color="brand-amber" (click)="navigateBack()">
+      <ion-icon slot="start" name="arrow-back"></ion-icon>
+      Go Back
+    </ion-button>
+  </div>
+
+  <!-- Main Content -->
+  <ng-container *ngIf="canViewMembers() && !loading && !error">
+
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section">
+      <!-- Search Bar -->
+      <ion-searchbar
+        [(ngModel)]="searchQuery"
+        (ionInput)="searchMembers($event.detail.value || '')"
+        (ionClear)="clearFilters()"
+        placeholder="Search by name or number..."
+        animated="true"
+        class="member-searchbar">
+      </ion-searchbar>
+
+      <!-- Filter Chips -->
+      <div class="filter-chips">
+        <ion-chip
+          [color]="filters.isActive !== undefined ? 'brand-amber' : 'medium'"
+          [outline]="filters.isActive === undefined"
+          (click)="toggleActiveFilter()">
+          <ion-icon [name]="filters.isActive === true ? 'checkmark-circle' : filters.isActive === false ? 'close-circle' : 'filter-outline'"></ion-icon>
+          <ion-label>{{ getActiveFilterText() }}</ion-label>
+        </ion-chip>
+
+        <ion-chip
+          [color]="filters.isClaimed !== undefined ? 'brand-amber' : 'medium'"
+          [outline]="filters.isClaimed === undefined"
+          (click)="toggleClaimedFilter()">
+          <ion-icon [name]="filters.isClaimed === true ? 'person-circle' : filters.isClaimed === false ? 'person-outline' : 'people-outline'"></ion-icon>
+          <ion-label>{{ getClaimedFilterText() }}</ion-label>
+        </ion-chip>
+
+        <ion-chip
+          *ngIf="hasActiveFilters"
+          color="danger"
+          (click)="clearFilters()">
+          <ion-icon name="close-circle"></ion-icon>
+          <ion-label>Clear</ion-label>
+        </ion-chip>
+      </div>
+    </div>
+
+    <!-- Members Count Info -->
+    <div class="members-count-section" *ngIf="pagination.total > 0">
+      <ion-icon name="people" color="brand-amber"></ion-icon>
+      <span>{{ pagination.total }} Official Member{{ pagination.total !== 1 ? 's' : '' }}</span>
+    </div>
+
+    <!-- Members List -->
+    <div *ngIf="members.length > 0" class="members-list">
+      <ion-card
+        *ngFor="let member of members; let i = index"
+        class="member-card"
+        [class.inactive-member]="!member.isActive"
+        (click)="openMemberDetail(member._id)">
+
+        <!-- Member Card Content -->
+        <div class="member-card-content">
+          <!-- Avatar Section -->
+          <div class="member-avatar-section">
+            <ion-avatar class="member-avatar">
+              <img [src]="getMemberPhoto(member)" [alt]="member.firstName + ' ' + member.lastName">
+            </ion-avatar>
+            <div class="member-number-badge">
+              <span>#{{ member.officialNumber }}</span>
+            </div>
+          </div>
+
+          <!-- Member Info Section -->
+          <div class="member-info-section">
+            <div class="member-name-row">
+              <h2 class="member-name">{{ member.firstName }} {{ member.lastName }}</h2>
+              <ion-badge [color]="getActiveStatus(member).color" class="status-badge">
+                {{ getActiveStatus(member).text }}
+              </ion-badge>
+            </div>
+
+            <div class="member-details">
+              <div class="detail-item" *ngIf="member.plateNumber">
+                <ion-icon name="car-sport-outline" color="brand-amber"></ion-icon>
+                <span>{{ member.plateNumber }}</span>
+              </div>
+
+              <div class="detail-item claim-status">
+                <ion-icon
+                  [name]="member.claimedBy ? 'checkmark-done-circle' : 'ellipse-outline'"
+                  [color]="getClaimStatus(member).color">
+                </ion-icon>
+                <span [class.claimed]="member.claimedBy">
+                  {{ getClaimStatus(member).text }}
+                  <span *ngIf="member.claimedBy && getClaimedByUsername(member)" class="claimed-by">
+                    by {{ getClaimedByUsername(member) }}
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions Section -->
+          <div class="member-actions-section">
+            <!-- View Detail Button -->
+            <ion-button
+              fill="clear"
+              color="primary"
+              size="small"
+              (click)="openMemberDetail(member._id); $event.stopPropagation()">
+              <ion-icon slot="icon-only" name="eye-outline"></ion-icon>
+            </ion-button>
+
+            <!-- Delete Button (Admin Only) -->
+            <ion-button
+              *ngIf="isAdmin"
+              fill="clear"
+              color="danger"
+              size="small"
+              [disabled]="isMemberProcessing(member._id) || !networkStatus.online"
+              (click)="deleteMember(member); $event.stopPropagation()">
+              <ion-spinner *ngIf="isMemberProcessing(member._id)" name="crescent" size="small"></ion-spinner>
+              <ion-icon *ngIf="!isMemberProcessing(member._id)" slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </ion-card>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="isEmpty" class="empty-container">
+      <div class="empty-content">
+        <div class="empty-icon-wrapper">
+          <ion-icon name="people-outline" class="empty-icon"></ion-icon>
+        </div>
+        <h3>No Members Found</h3>
+        <p *ngIf="hasActiveFilters">
+          Try adjusting your search or filters to find what you're looking for.
+        </p>
+        <p *ngIf="!hasActiveFilters">
+          This club doesn't have any official members yet.
+          <span *ngIf="isAdmin">Add members to get started!</span>
+        </p>
+      </div>
+      <div class="empty-actions">
+        <ion-button *ngIf="hasActiveFilters" color="medium" fill="outline" (click)="clearFilters()">
+          <ion-icon slot="start" name="refresh"></ion-icon>
+          Clear Filters
+        </ion-button>
+        <ion-button *ngIf="isAdmin && !hasActiveFilters" color="brand-amber" (click)="openAddMemberModal()">
+          <ion-icon slot="start" name="person-add-outline"></ion-icon>
+          Add First Member
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div *ngIf="members.length > 0 && pagination.pages > 1" class="pagination-section">
+      <ion-card class="pagination-card">
+        <div class="pagination-content">
+          <div class="pagination-info">
+            <ion-icon name="document-text-outline" color="brand-amber"></ion-icon>
+            <span>{{ getPageInfoDisplay() }}</span>
+          </div>
+
+          <div class="pagination-buttons">
+            <ion-button
+              [disabled]="!hasPreviousPage || loading"
+              fill="outline"
+              color="medium"
+              size="small"
+              (click)="loadPreviousPage()">
+              <ion-icon slot="start" name="chevron-back-outline"></ion-icon>
+              Previous
+            </ion-button>
+
+            <ion-button
+              [disabled]="!hasNextPage || loading"
+              fill="solid"
+              color="brand-amber"
+              size="small"
+              (click)="loadNextPage()">
+              Next
+              <ion-icon slot="end" name="chevron-forward-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </ion-card>
+    </div>
+
+  </ng-container>
+</ion-content>

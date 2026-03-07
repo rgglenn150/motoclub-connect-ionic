@@ -147,13 +147,13 @@
   <ng-container *ngIf="canViewContent && !isLoading && !hasError; else privateView">
     <ion-segment [value]="selectedTab" (ionChange)="segmentChanged($event)">
       <ion-segment-button value="feed">
-        <ion-label>Feed</ion-label>
+        <ion-icon name="newspaper"></ion-icon>
       </ion-segment-button>
       <ion-segment-button value="members">
-        <ion-label>Members</ion-label>
+        <ion-icon name="people"></ion-icon>
       </ion-segment-button>
       <ion-segment-button value="events">
-        <ion-label>Events</ion-label>
+        <ion-icon name="calendar"></ion-icon>
       </ion-segment-button>
     </ion-segment>
 
@@ -326,11 +326,18 @@
             <ion-card-header>
               <div class="section-header">
                 <ion-card-title>Club Members ({{ club.memberCount }})</ion-card-title>
-                <ion-button *ngIf="isUserAdmin" fill="clear" color="brand-amber" size="small"
-                  (click)="openMembersModal()" class="manage-members-button">
-                  <ion-icon name="settings-outline" slot="start"></ion-icon>
-                  Manage Members
-                </ion-button>
+                <div class="header-buttons">
+                  <ion-button *ngIf="isUserAdmin" fill="clear" color="brand-amber" size="small"
+                    (click)="openMembersModal()" class="manage-members-button">
+                    <ion-icon name="settings-outline" slot="start"></ion-icon>
+                    Manage Members
+                  </ion-button>
+                  <ion-button *ngIf="canViewOfficialMembers" fill="clear" color="brand-amber" size="small"
+                    (click)="navigateToOfficialMembers()" class="official-members-button">
+                    <ion-icon name="id-card" slot="start"></ion-icon>
+                    Official Members
+                  </ion-button>
+                </div>
               </div>
             </ion-card-header>
             <ion-card-content class="members-list">

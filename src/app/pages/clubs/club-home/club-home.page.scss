@@ -255,6 +255,11 @@ ion-segment-button {
     font-size: 0.9rem;
     padding: 12px 0;
     transition: all 0.3s ease;
+    min-width: 80px;
+
+    ion-icon {
+        font-size: 1.5rem;
+    }
 }
 
 /* Pinned Announcement Card Styling */
@@ -1399,31 +1404,38 @@ ion-action-sheet.dark-theme-action-sheet {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   ion-card-title {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     ion-icon {
       color: var(--ion-color-brand-amber);
       font-size: 1.2rem;
     }
   }
-  
-  .manage-members-button {
+
+  .header-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .manage-members-button,
+  .official-members-button {
     --border-radius: 8px;
     --padding-start: 12px;
     --padding-end: 12px;
     min-height: 32px;
     font-size: 0.85rem;
     font-weight: 600;
-    
+
     ion-icon {
       font-size: 0.9rem;
     }
   }
-  
+
   ion-badge {
     font-size: 0.8rem;
     font-weight: 600;
