@@ -21,6 +21,7 @@ import {
 import { ErrorService, ErrorInfo } from '../../../service/error.service';
 import { UserStateService } from '../../../service/user-state.service';
 import { EventService, Event } from '../../../service/event.service';
+import { CollectionService, Collection } from '../../../service/collection.service';
 import { Subscription } from 'rxjs';
 import { switchMap, tap, finalize } from 'rxjs/operators';
 
@@ -102,7 +103,7 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
   private subscriptions: Subscription[] = [];
 
   // This variable controls which tab is currently active.
-  selectedTab: 'feed' | 'members' | 'events' = 'feed';
+  selectedTab: 'feed' | 'members' | 'events' | 'tools' = 'feed';
 
   // User's membership status in this club - dynamically determined via API
   userStatus: 'admin' | 'member' | 'pending' | 'not-member' = 'not-member';
@@ -195,6 +196,13 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
   eventsLoading: boolean = false;
   eventsError: string | null = null;
 
+  // --- COLLECTIONS STATE ---
+  collections: Collection[] = [];
+  collectionsLoading = false;
+  showAddCollectionModal = false;
+  collectionForm: { name: string; description: string; targetAmount: number | null } = { name: '', description: '', targetAmount: null };
+  isSavingCollection = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -206,7 +214,8 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
     private actionSheetController: ActionSheetController,
     private networkService: NetworkService,
     private errorService: ErrorService,
-    private userStateService: UserStateService
+    private userStateService: UserStateService,
+    private collectionService: CollectionService
   ) {}
 
   ngOnInit() {
@@ -219,6 +228,9 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
     if (this.clubId) {
       this.loadClubEvents();
     }
+    if (this.clubId && this.selectedTab === 'tools') {
+      this.loadCollections();
+    }
   }
 
   /**
@@ -230,8 +242,8 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
 
     // Check for tab query parameter
     const tabParam = this.route.snapshot.queryParamMap.get('tab');
-    if (tabParam && ['feed', 'members', 'events'].includes(tabParam)) {
-      this.selectedTab = tabParam as 'feed' | 'members' | 'events';
+    if (tabParam && ['feed', 'members', 'events', 'tools'].includes(tabParam)) {
+      this.selectedTab = tabParam as 'feed' | 'members' | 'events' | 'tools';
     }
 
     // Subscribe to network status changes
@@ -798,6 +810,11 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
     // Load events when events tab is selected
     if (this.selectedTab === 'events') {
       this.loadClubEvents();
+    }
+
+    // Load collections when tools tab is selected
+    if (this.selectedTab === 'tools') {
+      this.loadCollections();
     }
   }
 
@@ -2176,5 +2193,48 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
   shouldShowRetryButton(errorInfo?: ErrorInfo): boolean {
     if (!errorInfo) return false;
     return this.errorService.shouldShowRetry(errorInfo);
+  }
+
+  // --- COLLECTION METHODS ---
+
+  loadCollections() {
+    if (!this.clubId) return;
+    this.collectionsLoading = true;
+    this.collectionService.getCollections(this.clubId).subscribe({
+      next: (res) => {
+        this.collections = res.collections;
+        this.collectionsLoading = false;
+      },
+      error: () => { this.collectionsLoading = false; }
+    });
+  }
+
+  openAddCollectionModal() {
+    this.collectionForm = { name: '', description: '', targetAmount: null };
+    this.showAddCollectionModal = true;
+  }
+
+  closeAddCollectionModal() {
+    this.showAddCollectionModal = false;
+  }
+
+  saveCollection() {
+    if (!this.clubId || !this.collectionForm.name.trim()) return;
+    this.isSavingCollection = true;
+    const data: any = { club: this.clubId, name: this.collectionForm.name.trim() };
+    if (this.collectionForm.description.trim()) data.description = this.collectionForm.description.trim();
+    if (this.collectionForm.targetAmount) data.targetAmount = this.collectionForm.targetAmount;
+    this.collectionService.createCollection(data).subscribe({
+      next: (res) => {
+        this.collections.unshift(res.collection);
+        this.isSavingCollection = false;
+        this.closeAddCollectionModal();
+      },
+      error: () => { this.isSavingCollection = false; }
+    });
+  }
+
+  navigateToCollection(collectionId: string) {
+    this.router.navigate(['/clubs', this.clubId, 'collection', collectionId]);
   }
 }

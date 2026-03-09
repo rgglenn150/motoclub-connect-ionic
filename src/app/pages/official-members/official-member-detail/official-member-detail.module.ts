@@ -5,12 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 
 import { OfficialMemberDetailPage } from './official-member-detail.page';
+import { NetworkIndicatorModule } from '../../../components/network-indicator/network-indicator.module';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
-    IonicModule
+    IonicModule,
+    NetworkIndicatorModule
   ],
   declarations: [OfficialMemberDetailPage]
 })

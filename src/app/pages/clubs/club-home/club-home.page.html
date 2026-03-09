@@ -155,6 +155,9 @@
       <ion-segment-button value="events">
         <ion-icon name="calendar"></ion-icon>
       </ion-segment-button>
+      <ion-segment-button value="tools">
+        <ion-icon name="construct"></ion-icon>
+      </ion-segment-button>
     </ion-segment>
 
     <div [ngSwitch]="selectedTab">
@@ -488,6 +491,64 @@
         </div>
       </div>
 
+      <div *ngSwitchCase="'tools'" class="tools-section">
+        <!-- Add Collection button (admin only) -->
+        <div *ngIf="isUserAdmin" class="add-payment-section">
+          <ion-button expand="block" color="brand-amber" (click)="openAddCollectionModal()">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            New Collection
+          </ion-button>
+        </div>
+
+        <!-- Collections loading skeleton -->
+        <div *ngIf="collectionsLoading" class="payments-skeleton">
+          <ion-card *ngFor="let i of [1,2,3]" class="payment-card-skeleton">
+            <ion-card-content>
+              <ion-skeleton-text animated style="width: 60%; height: 18px; margin-bottom: 8px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 40%; height: 14px; margin-bottom: 4px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 30%; height: 24px;"></ion-skeleton-text>
+            </ion-card-content>
+          </ion-card>
+        </div>
+
+        <!-- Collections list -->
+        <div *ngIf="!collectionsLoading">
+          <ion-card *ngFor="let c of collections" class="collection-card" (click)="navigateToCollection(c._id)">
+            <ion-card-content>
+              <div class="collection-header">
+                <span class="collection-name">{{ c.name }}</span>
+                <ion-badge [color]="c.status === 'open' ? 'success' : 'medium'">
+                  {{ c.status === 'open' ? 'Open' : 'Closed' }}
+                </ion-badge>
+              </div>
+              <p *ngIf="c.description" class="collection-description">{{ c.description }}</p>
+              <div class="collection-stats">
+                <div class="stat">
+                  <span class="stat-value">{{ c.totalCollected | currency:'PHP':'symbol' }}</span>
+                  <span class="stat-label">Collected</span>
+                </div>
+                <div class="stat" *ngIf="c.targetAmount">
+                  <span class="stat-value">{{ c.targetAmount | currency:'PHP':'symbol' }}</span>
+                  <span class="stat-label">Target</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ c.paymentCount }}</span>
+                  <span class="stat-label">Payments</span>
+                </div>
+              </div>
+            </ion-card-content>
+            <ion-ripple-effect></ion-ripple-effect>
+          </ion-card>
+
+          <div *ngIf="collections.length === 0" class="empty-state">
+            <ion-icon name="wallet-outline" color="medium"></ion-icon>
+            <h4>No collections yet.</h4>
+            <p *ngIf="isUserAdmin">Create a collection to start tracking payments.</p>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   </ng-container>
 
@@ -591,6 +652,41 @@
           </ion-card>
 
         </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Add Collection Modal -->
+  <ion-modal [isOpen]="showAddCollectionModal" (willDismiss)="closeAddCollectionModal()" class="add-collection-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>New Collection</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeAddCollectionModal()">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-label position="stacked">Name *</ion-label>
+          <ion-input [(ngModel)]="collectionForm.name" placeholder="e.g. Annual Dues 2025"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Description</ion-label>
+          <ion-textarea [(ngModel)]="collectionForm.description" placeholder="Optional description" rows="3"></ion-textarea>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Target Amount (optional)</ion-label>
+          <ion-input type="number" [(ngModel)]="collectionForm.targetAmount" placeholder="0.00"></ion-input>
+        </ion-item>
+
+        <ion-button expand="block" color="brand-amber" [disabled]="isSavingCollection || !collectionForm.name.trim()" (click)="saveCollection()" style="margin-top: 24px;">
+          <ion-spinner *ngIf="isSavingCollection" name="crescent"></ion-spinner>
+          <span *ngIf="!isSavingCollection">Create Collection</span>
+        </ion-button>
       </ion-content>
     </ng-template>
   </ion-modal>
