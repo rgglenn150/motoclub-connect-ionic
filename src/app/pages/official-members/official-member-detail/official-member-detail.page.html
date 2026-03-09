@@ -20,7 +20,7 @@
   </div>
 
   <!-- Error State -->
-  <div *ngIf="hasError && !loading" class="error-container">
+  <div *ngIf="error && !loading" class="error-container">
     <ion-icon name="alert-circle-outline" color="danger" size="large"></ion-icon>
     <h3>Unable to Load Member</h3>
     <p>{{ error }}</p>

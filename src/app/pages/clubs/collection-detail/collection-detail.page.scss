@@ -1,0 +1,221 @@
+:host {
+  --ion-background-color: #1A202C;
+  --ion-text-color: #F7FAFC;
+  --ion-card-background: #2D3748;
+  --ion-item-background: #2D3748;
+  --ion-toolbar-background: #2D3748;
+  --ion-toolbar-color: #F7FAFC;
+}
+
+ion-header ion-toolbar {
+  --background: #2D3748;
+  --color: #F7FAFC;
+  --border-color: #4A5568;
+
+  ion-title { color: #F7FAFC; font-weight: 600; }
+  ion-buttons ion-button { --color: #F7FAFC; }
+  ion-back-button { --color: #F7FAFC; }
+}
+
+ion-content {
+  --background: #1A202C;
+}
+
+ion-card {
+  --background: #2D3748;
+  --color: #F7FAFC;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.amber-btn {
+  --background: #F59E0B;
+  --background-activated: #d88b0a;
+  --background-hover: #f6a823;
+  --color: #000000;
+}
+
+.collection-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--ion-card-background);
+  margin: 12px 16px;
+  padding: 16px;
+  border-radius: 12px;
+
+  .summary-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+
+    strong {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f59e0b;
+    }
+
+    span {
+      font-size: 11px;
+      color: var(--ion-color-medium);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .summary-divider {
+    width: 1px;
+    height: 36px;
+    background: #4A5568;
+  }
+}
+
+.add-payment-section {
+  padding: 4px 16px 8px;
+}
+
+.payment-card {
+  margin: 8px 16px;
+  border-radius: 12px;
+
+  .payment-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .payment-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ion-text-color);
+  }
+
+  .payment-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f59e0b;
+  }
+
+  .payment-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
+  .payment-ref {
+    font-size: 12px;
+    color: var(--ion-color-medium);
+  }
+
+  .status-badge {
+    font-size: 11px;
+    &.clickable { cursor: pointer; }
+  }
+
+  .payment-extra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .payment-extra-item {
+    font-size: 12px;
+    color: var(--ion-color-medium);
+  }
+
+  .payment-desc {
+    width: 100%;
+    font-style: italic;
+  }
+
+  .receipt-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 8px;
+  }
+
+  .payment-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+}
+
+.receipt-upload-area {
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .receipt-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid var(--ion-color-light-shade);
+  }
+
+  .extracting-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ion-color-medium);
+    font-size: 14px;
+    justify-content: center;
+  }
+}
+
+.add-payment-modal {
+  --height: 90%;
+  --border-radius: 16px;
+
+  ion-header ion-toolbar {
+    --background: #2D3748;
+    --color: #F7FAFC;
+    --border-color: #4A5568;
+
+    ion-title { color: #F7FAFC; font-weight: 600; }
+    ion-buttons ion-button { --color: #F7FAFC; }
+  }
+
+  ion-content {
+    --background: #1A202C;
+    --color: #F7FAFC;
+
+    ion-item {
+      --background: #2D3748;
+      --color: #F7FAFC;
+      --border-color: #4A5568;
+      margin-bottom: 12px;
+      border-radius: 8px;
+
+      ion-label { color: #A0AEC0 !important; }
+      ion-input { --color: #F7FAFC; --placeholder-color: #718096; }
+      ion-textarea { --color: #F7FAFC; --placeholder-color: #718096; }
+    }
+
+    .receipt-upload-area {
+      ion-button { --color: #A0AEC0; --border-color: #4A5568; }
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--ion-color-medium);
+
+  ion-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  h4 { margin: 0 0 8px; }
+  p { margin: 0; font-size: 14px; }
+}

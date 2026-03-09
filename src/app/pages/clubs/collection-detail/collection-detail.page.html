@@ -1,0 +1,154 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ collection?.name || 'Collection' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="loadPayments(); $event.target.complete()">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Collection summary -->
+  <div class="collection-summary" *ngIf="collection">
+    <div class="summary-stat">
+      <strong>{{ totalCollected | currency:'PHP':'symbol' }}</strong>
+      <span>Total Collected</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-stat">
+      <strong>{{ payments.length }}</strong>
+      <span>Payments</span>
+    </div>
+    <ng-container *ngIf="collection.targetAmount">
+      <div class="summary-divider"></div>
+      <div class="summary-stat">
+        <strong>{{ collection.targetAmount | currency:'PHP':'symbol' }}</strong>
+        <span>Target</span>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Add Payment button (admin only) -->
+  <div *ngIf="isAdmin" class="add-payment-section">
+    <ion-button expand="block" (click)="openAddPaymentModal()" class="amber-btn">
+      <ion-icon name="add-outline" slot="start"></ion-icon>
+      Add Payment
+    </ion-button>
+  </div>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="paymentsLoading" class="payments-skeleton">
+    <ion-card *ngFor="let i of [1,2,3]" class="payment-card-skeleton">
+      <ion-card-content>
+        <ion-skeleton-text animated style="width: 60%; height: 18px; margin-bottom: 8px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 40%; height: 24px; margin-bottom: 4px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 50%; height: 14px;"></ion-skeleton-text>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Payments list -->
+  <div *ngIf="!paymentsLoading">
+    <ion-card *ngFor="let p of payments" class="payment-card">
+      <ion-card-content>
+        <div class="payment-info">
+          <span class="payment-name">{{ p.name }}</span>
+          <span class="payment-amount">{{ p.amount | currency:'PHP':'symbol' }}</span>
+        </div>
+        <div class="payment-meta-row">
+          <span class="payment-ref">Ref: {{ p.referenceNumber }}</span>
+          <ion-badge
+            [color]="p.status === 'confirmed' ? 'success' : p.status === 'rejected' ? 'danger' : 'warning'"
+            class="status-badge"
+            [class.clickable]="isAdmin"
+            (click)="isAdmin && changeStatus(p)">
+            {{ p.status | titlecase }}
+          </ion-badge>
+        </div>
+        <div class="payment-extra" *ngIf="p.phoneNumber || p.transactionDate || p.description">
+          <span *ngIf="p.phoneNumber" class="payment-extra-item">{{ p.phoneNumber }}</span>
+          <span *ngIf="p.transactionDate" class="payment-extra-item">{{ p.transactionDate | date:'MMM d, y, h:mm a' }}</span>
+          <span *ngIf="p.description" class="payment-extra-item payment-desc">{{ p.description }}</span>
+        </div>
+        <img *ngIf="p.receiptUrl" [src]="p.receiptUrl" class="receipt-thumb" alt="Receipt" />
+        <div *ngIf="isAdmin" class="payment-actions">
+          <ion-button fill="clear" color="danger" size="small" (click)="deletePayment(p)">
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <div *ngIf="payments.length === 0" class="empty-state">
+      <ion-icon name="cash-outline" color="medium"></ion-icon>
+      <h4>No payments yet.</h4>
+      <p *ngIf="isAdmin">Tap "Add Payment" to record the first payment.</p>
+    </div>
+  </div>
+
+  <!-- Add Payment Modal -->
+  <ion-modal [isOpen]="showAddPaymentModal" (willDismiss)="closeAddPaymentModal()" class="add-payment-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Add Payment</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeAddPaymentModal()">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-label position="stacked">Name</ion-label>
+          <ion-input [(ngModel)]="paymentForm.name" placeholder="Payer name"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Amount</ion-label>
+          <ion-input type="number" [(ngModel)]="paymentForm.amount" placeholder="0.00"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Reference Number</ion-label>
+          <ion-input [(ngModel)]="paymentForm.referenceNumber" placeholder="Ref #"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Phone Number</ion-label>
+          <ion-input [(ngModel)]="paymentForm.phoneNumber" placeholder="e.g. 09XX XXX XXXX" type="tel"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Transaction Date &amp; Time</ion-label>
+          <ion-input [(ngModel)]="paymentForm.transactionDate" type="datetime-local"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Description</ion-label>
+          <ion-input [(ngModel)]="paymentForm.description" placeholder="Optional note"></ion-input>
+        </ion-item>
+
+        <div class="receipt-upload-area">
+          <img *ngIf="receiptPreviewUrl" [src]="receiptPreviewUrl" class="receipt-preview" alt="Receipt preview" />
+          <div *ngIf="isExtractingReceipt" class="extracting-indicator">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>Reading receipt...</span>
+          </div>
+          <ion-button expand="block" fill="outline" (click)="receiptInput.click()">
+            <ion-icon name="camera-outline" slot="start"></ion-icon>
+            Upload Receipt
+          </ion-button>
+          <input #receiptInput type="file" accept="image/*" hidden (change)="onReceiptSelected($event)" />
+        </div>
+
+        <ion-button expand="block" class="amber-btn" [disabled]="isSavingPayment" (click)="savePayment()" style="margin-top: 16px;">
+          <ion-spinner *ngIf="isSavingPayment" name="crescent"></ion-spinner>
+          <span *ngIf="!isSavingPayment">Save Payment</span>
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>

@@ -74,7 +74,7 @@
             </ion-avatar>
             <div class="requester-details">
               <h3>{{ getUserDisplayName(request.user) }}</h3>
-              <p class="requester-username">@{{ request.user?.username || 'username' }}</p>
+              <p class="requester-username">{{ '@' + ($any(request.user)?.username || 'username') }}</p>
             </div>
           </div>
           <ion-badge color="warning" class="status-badge">
