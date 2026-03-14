@@ -22,14 +22,20 @@ export class CollectionDetailPage implements OnInit {
   paymentsLoading = false;
 
   isAdmin = false;
+  isMember = false;
+  accessDenied = false;
 
   // Add payment modal
   showAddPaymentModal = false;
-  paymentForm: { name: string; amount: number | null; referenceNumber: string; phoneNumber: string; description: string; transactionDate: string } = { name: '', amount: null, referenceNumber: '', phoneNumber: '', description: '', transactionDate: '' };
+  paymentForm: { name: string; accountName: string; amount: number | null; referenceNumber: string; phoneNumber: string; description: string; transactionDate: string } = { name: '', accountName: '', amount: null, referenceNumber: '', phoneNumber: '', description: '', transactionDate: '' };
   receiptFile: File | null = null;
   receiptPreviewUrl: string | null = null;
   isExtractingReceipt = false;
   isSavingPayment = false;
+
+  get clubName(): string | null {
+    return this.collection?.clubName || null;
+  }
 
   get totalCollected(): number {
     return this.payments.reduce((s, p) => s + p.amount, 0);
@@ -55,9 +61,12 @@ export class CollectionDetailPage implements OnInit {
   }
 
   private checkAdminStatus() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     this.clubService.getMembershipStatus(this.clubId).subscribe({
       next: (res: any) => {
         this.isAdmin = res.status === 'admin';
+        this.isMember = res.status === 'member' || res.status === 'admin';
       },
       error: () => {}
     });
@@ -69,6 +78,9 @@ export class CollectionDetailPage implements OnInit {
       next: (res) => {
         this.collection = res.collections.find(c => c._id === this.collectionId) || null;
         this.collectionLoading = false;
+        if (!this.collection) {
+          this.accessDenied = true;
+        }
       },
       error: () => { this.collectionLoading = false; }
     });
@@ -96,7 +108,7 @@ export class CollectionDetailPage implements OnInit {
   }
 
   openAddPaymentModal() {
-    this.paymentForm = { name: '', amount: null, referenceNumber: '', phoneNumber: '', description: '', transactionDate: this.nowLocalDatetime() };
+    this.paymentForm = { name: '', accountName: '', amount: null, referenceNumber: '', phoneNumber: '', description: '', transactionDate: this.nowLocalDatetime() };
     this.receiptFile = null;
     this.receiptPreviewUrl = null;
     this.showAddPaymentModal = true;
@@ -119,7 +131,7 @@ export class CollectionDetailPage implements OnInit {
     this.isExtractingReceipt = true;
     this.paymentService.extractReceipt(file).subscribe({
       next: (data) => {
-        if (data.name) this.paymentForm.name = data.name;
+        if (data.name) this.paymentForm.accountName = data.name;
         if (data.amount) this.paymentForm.amount = data.amount;
         if (data.referenceNumber) this.paymentForm.referenceNumber = data.referenceNumber;
         if (data.phoneNumber) this.paymentForm.phoneNumber = data.phoneNumber;
@@ -139,11 +151,12 @@ export class CollectionDetailPage implements OnInit {
   }
 
   savePayment() {
-    if (!this.paymentForm.name || !this.paymentForm.amount || !this.paymentForm.referenceNumber) return;
+    if (!this.paymentForm.name?.trim() || !this.paymentForm.amount || !this.paymentForm.referenceNumber) return;
     this.isSavingPayment = true;
     const formData = new FormData();
     formData.append('collection', this.collectionId);
     formData.append('name', this.paymentForm.name);
+    if (this.paymentForm.accountName) formData.append('accountName', this.paymentForm.accountName);
     formData.append('amount', String(this.paymentForm.amount));
     formData.append('referenceNumber', this.paymentForm.referenceNumber);
     if (this.paymentForm.phoneNumber) formData.append('phoneNumber', this.paymentForm.phoneNumber);
@@ -187,6 +200,35 @@ export class CollectionDetailPage implements OnInit {
               next: (res) => { payment.status = res.payment.status; },
               error: async () => {
                 const toast = await this.toastController.create({ message: 'Failed to update status', duration: 2000, color: 'danger' });
+                await toast.present();
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  async deleteCollection() {
+    const alert = await this.alertController.create({
+      header: 'Delete Collection',
+      message: `Delete "${this.collection?.name}"? This will also remove all associated payments and cannot be undone.`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: () => {
+            this.collectionService.deleteCollection(this.collectionId).subscribe({
+              next: async () => {
+                const toast = await this.toastController.create({ message: 'Collection deleted', duration: 2000, color: 'success', position: 'top' });
+                await toast.present();
+                this.router.navigate(['/clubs', this.clubId], { queryParams: { tab: 'tools' } });
+              },
+              error: async (err) => {
+                const msg = err?.error?.message || 'Failed to delete collection.';
+                const toast = await this.toastController.create({ message: msg, duration: 3000, color: 'danger', position: 'top' });
                 await toast.present();
               }
             });

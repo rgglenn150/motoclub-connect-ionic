@@ -1,3 +1,15 @@
+.club-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 16px 6px;
+  color: #F7FAFC;
+  font-size: 17px;
+  font-weight: 600;
+
+  ion-icon { font-size: 20px; color: #F59E0B; }
+}
+
 :host {
   --ion-background-color: #1A202C;
   --ion-text-color: #F7FAFC;
@@ -19,6 +31,31 @@ ion-header ion-toolbar {
 
 ion-content {
   --background: #1A202C;
+}
+
+.visibility-row {
+  padding: 12px 16px 0;
+
+  .visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+
+    &.public {
+      --background: #2F855A;
+      --color: #F0FFF4;
+    }
+
+    &.members-only {
+      --background: #744210;
+      --color: #FFFBEB;
+    }
+
+    ion-icon { font-size: 12px; }
+  }
 }
 
 ion-card {
@@ -171,6 +208,14 @@ ion-card {
   }
 }
 
+.required-star {
+  color: #FC8181;
+}
+
+.item-invalid {
+  --border-color: #FC8181;
+}
+
 .add-payment-modal {
   --height: 90%;
   --border-radius: 16px;
@@ -203,6 +248,39 @@ ion-card {
     .receipt-upload-area {
       ion-button { --color: #A0AEC0; --border-color: #4A5568; }
     }
+  }
+}
+
+.access-denied-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  color: #F7FAFC;
+
+  ion-icon {
+    font-size: 64px;
+    color: #F59E0B;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: #A0AEC0;
+    margin-bottom: 24px;
+  }
+
+  .amber-btn {
+    --background: #F59E0B;
+    --background-activated: #d88b0a;
+    --color: #000000;
   }
 }
 

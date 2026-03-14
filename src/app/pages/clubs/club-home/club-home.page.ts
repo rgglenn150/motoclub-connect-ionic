@@ -200,7 +200,7 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
   collections: Collection[] = [];
   collectionsLoading = false;
   showAddCollectionModal = false;
-  collectionForm: { name: string; description: string; targetAmount: number | null } = { name: '', description: '', targetAmount: null };
+  collectionForm: { name: string; description: string; targetAmount: number | null; visibility: 'public' | 'members_only' } = { name: '', description: '', targetAmount: null, visibility: 'members_only' };
   isSavingCollection = false;
 
   constructor(
@@ -2210,7 +2210,7 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   openAddCollectionModal() {
-    this.collectionForm = { name: '', description: '', targetAmount: null };
+    this.collectionForm = { name: '', description: '', targetAmount: null, visibility: 'members_only' };
     this.showAddCollectionModal = true;
   }
 
@@ -2224,6 +2224,7 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
     const data: any = { club: this.clubId, name: this.collectionForm.name.trim() };
     if (this.collectionForm.description.trim()) data.description = this.collectionForm.description.trim();
     if (this.collectionForm.targetAmount) data.targetAmount = this.collectionForm.targetAmount;
+    data.visibility = this.collectionForm.visibility;
     this.collectionService.createCollection(data).subscribe({
       next: (res) => {
         this.collections.unshift(res.collection);

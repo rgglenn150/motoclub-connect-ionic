@@ -3,13 +3,16 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-  </ion-toolbar>
     <ion-buttons slot="end">
       <!-- Edit Club Button - Only show for admins -->
       <ion-button *ngIf="isUserAdmin && !isLoading && !statusLoading" (click)="navigateToEditClub()" fill="clear" color="light">
         <ion-icon slot="icon-only" name="create-outline"></ion-icon>
       </ion-button>
+      <ion-button routerLink="/tabs/home" routerDirection="root" fill="clear" color="light">
+        <ion-icon slot="icon-only" name="home-outline"></ion-icon>
+      </ion-button>
     </ion-buttons>
+  </ion-toolbar>
 
   <!-- Skeleton Loader for Header -->
   <div *ngIf="isLoading || statusLoading" class="club-header-content skeleton-header">
@@ -681,6 +684,13 @@
         <ion-item>
           <ion-label position="stacked">Target Amount (optional)</ion-label>
           <ion-input type="number" [(ngModel)]="collectionForm.targetAmount" placeholder="0.00"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Visibility</ion-label>
+          <ion-select [(ngModel)]="collectionForm.visibility" interface="popover">
+            <ion-select-option value="members_only">Members Only</ion-select-option>
+            <ion-select-option value="public">Public</ion-select-option>
+          </ion-select>
         </ion-item>
 
         <ion-button expand="block" color="brand-amber" [disabled]="isSavingCollection || !collectionForm.name.trim()" (click)="saveCollection()" style="margin-top: 24px;">

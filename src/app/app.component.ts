@@ -27,8 +27,11 @@ export class AppComponent implements OnInit, OnDestroy {
     // Initialize user state from localStorage
     this.authService.initializeUserState();
     
+    const isCollectionRoute = /^\/clubs\/[^/]+\/collection\/[^/]+/.test(window.location.pathname);
     if (!token || token === 'undefined') {
-      this.router.navigate(['/login']);
+      if (!isCollectionRoute) {
+        this.router.navigate(['/login']);
+      }
     } else {
       // Start notification polling if user is logged in
       this.initializeNotifications();

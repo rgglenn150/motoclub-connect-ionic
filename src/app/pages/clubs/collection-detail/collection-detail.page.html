@@ -6,6 +6,14 @@
       </ion-button>
     </ion-buttons>
     <ion-title>{{ collection?.name || 'Collection' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button *ngIf="isAdmin" fill="clear" color="danger" (click)="deleteCollection()">
+        <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+      </ion-button>
+      <ion-button routerLink="/tabs/home" routerDirection="root" fill="clear">
+        <ion-icon slot="icon-only" name="home-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -13,6 +21,32 @@
   <ion-refresher slot="fixed" (ionRefresh)="loadPayments(); $event.target.complete()">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
+
+  <!-- Members Only / access denied state -->
+  <ng-container *ngIf="!collectionLoading && !collection">
+    <div class="access-denied-container">
+      <ion-icon name="lock-closed-outline"></ion-icon>
+      <h2>Members Only</h2>
+      <p>This collection is only visible to club members.</p>
+      <ion-button fill="solid" class="amber-btn" [routerLink]="['/clubs', clubId]">
+        Back to Club
+      </ion-button>
+    </div>
+  </ng-container>
+
+  <!-- Club name -->
+  <div class="club-name-row" *ngIf="clubName">
+    <ion-icon name="people-circle-outline"></ion-icon>
+    <span>{{ clubName }}</span>
+  </div>
+
+  <!-- Visibility badge -->
+  <div class="visibility-row" *ngIf="collection">
+    <ion-badge [class]="collection.visibility === 'public' ? 'visibility-badge public' : 'visibility-badge members-only'">
+      <ion-icon [name]="collection.visibility === 'public' ? 'globe-outline' : 'lock-closed-outline'"></ion-icon>
+      {{ collection.visibility === 'public' ? 'Public' : 'Members Only' }}
+    </ion-badge>
+  </div>
 
   <!-- Collection summary -->
   <div class="collection-summary" *ngIf="collection">
@@ -34,8 +68,8 @@
     </ng-container>
   </div>
 
-  <!-- Add Payment button (admin only) -->
-  <div *ngIf="isAdmin" class="add-payment-section">
+  <!-- Add Payment button -->
+  <div *ngIf="isAdmin || collection?.visibility === 'public'" class="add-payment-section">
     <ion-button expand="block" (click)="openAddPaymentModal()" class="amber-btn">
       <ion-icon name="add-outline" slot="start"></ion-icon>
       Add Payment
@@ -71,7 +105,8 @@
             {{ p.status | titlecase }}
           </ion-badge>
         </div>
-        <div class="payment-extra" *ngIf="p.phoneNumber || p.transactionDate || p.description">
+        <div class="payment-extra" *ngIf="p.accountName || p.phoneNumber || p.transactionDate || p.description">
+          <span *ngIf="p.accountName" class="payment-extra-item">Acct: {{ p.accountName }}</span>
           <span *ngIf="p.phoneNumber" class="payment-extra-item">{{ p.phoneNumber }}</span>
           <span *ngIf="p.transactionDate" class="payment-extra-item">{{ p.transactionDate | date:'MMM d, y, h:mm a' }}</span>
           <span *ngIf="p.description" class="payment-extra-item payment-desc">{{ p.description }}</span>
@@ -88,7 +123,7 @@
     <div *ngIf="payments.length === 0" class="empty-state">
       <ion-icon name="cash-outline" color="medium"></ion-icon>
       <h4>No payments yet.</h4>
-      <p *ngIf="isAdmin">Tap "Add Payment" to record the first payment.</p>
+      <p *ngIf="isAdmin || collection?.visibility === 'public'">Tap "Add Payment" to record the first payment.</p>
     </div>
   </div>
 
@@ -106,16 +141,33 @@
         </ion-toolbar>
       </ion-header>
       <ion-content class="ion-padding">
-        <ion-item>
-          <ion-label position="stacked">Name</ion-label>
-          <ion-input [(ngModel)]="paymentForm.name" placeholder="Payer name"></ion-input>
+        <div class="receipt-upload-area">
+          <img *ngIf="receiptPreviewUrl" [src]="receiptPreviewUrl" class="receipt-preview" alt="Receipt preview" />
+          <div *ngIf="isExtractingReceipt" class="extracting-indicator">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>Reading receipt...</span>
+          </div>
+          <ion-button expand="block" fill="outline" (click)="receiptInput.click()">
+            <ion-icon name="camera-outline" slot="start"></ion-icon>
+            Upload Receipt
+          </ion-button>
+          <input #receiptInput type="file" accept="image/*" hidden (change)="onReceiptSelected($event)" />
+        </div>
+
+        <ion-item [class.item-invalid]="!paymentForm.name?.trim()">
+          <ion-label position="stacked">Name <span class="required-star">*</span></ion-label>
+          <ion-input [(ngModel)]="paymentForm.name" placeholder="Required"></ion-input>
         </ion-item>
         <ion-item>
-          <ion-label position="stacked">Amount</ion-label>
+          <ion-label position="stacked">Account Name</ion-label>
+          <ion-input [(ngModel)]="paymentForm.accountName" placeholder="Auto-filled from receipt"></ion-input>
+        </ion-item>
+        <ion-item [class.item-invalid]="!paymentForm.amount">
+          <ion-label position="stacked">Amount <span class="required-star">*</span></ion-label>
           <ion-input type="number" [(ngModel)]="paymentForm.amount" placeholder="0.00"></ion-input>
         </ion-item>
-        <ion-item>
-          <ion-label position="stacked">Reference Number</ion-label>
+        <ion-item [class.item-invalid]="!paymentForm.referenceNumber?.trim()">
+          <ion-label position="stacked">Reference Number <span class="required-star">*</span></ion-label>
           <ion-input [(ngModel)]="paymentForm.referenceNumber" placeholder="Ref #"></ion-input>
         </ion-item>
         <ion-item>
@@ -131,20 +183,7 @@
           <ion-input [(ngModel)]="paymentForm.description" placeholder="Optional note"></ion-input>
         </ion-item>
 
-        <div class="receipt-upload-area">
-          <img *ngIf="receiptPreviewUrl" [src]="receiptPreviewUrl" class="receipt-preview" alt="Receipt preview" />
-          <div *ngIf="isExtractingReceipt" class="extracting-indicator">
-            <ion-spinner name="crescent"></ion-spinner>
-            <span>Reading receipt...</span>
-          </div>
-          <ion-button expand="block" fill="outline" (click)="receiptInput.click()">
-            <ion-icon name="camera-outline" slot="start"></ion-icon>
-            Upload Receipt
-          </ion-button>
-          <input #receiptInput type="file" accept="image/*" hidden (change)="onReceiptSelected($event)" />
-        </div>
-
-        <ion-button expand="block" class="amber-btn" [disabled]="isSavingPayment" (click)="savePayment()" style="margin-top: 16px;">
+        <ion-button expand="block" class="amber-btn" [disabled]="isSavingPayment || !paymentForm.name?.trim() || !paymentForm.amount || !paymentForm.referenceNumber?.trim()" (click)="savePayment()" style="margin-top: 16px;">
           <ion-spinner *ngIf="isSavingPayment" name="crescent"></ion-spinner>
           <span *ngIf="!isSavingPayment">Save Payment</span>
         </ion-button>
