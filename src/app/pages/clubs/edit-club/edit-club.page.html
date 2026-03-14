@@ -13,6 +13,9 @@
         <ion-spinner name="crescent" size="small" *ngIf="isLoading"></ion-spinner>
         <span *ngIf="!isLoading">Save</span>
       </ion-button>
+      <ion-button routerLink="/tabs/home" routerDirection="root" fill="clear">
+        <ion-icon slot="icon-only" name="home-outline"></ion-icon>
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>

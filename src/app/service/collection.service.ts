@@ -6,9 +6,11 @@ import { environment } from 'src/environments/environment';
 export interface Collection {
   _id: string;
   club: string;
+  clubName?: string;
   name: string;
   description?: string;
   targetAmount?: number;
+  visibility: 'public' | 'members_only';
   status: 'open' | 'closed';
   paymentCount: number;
   totalCollected: number;
@@ -25,7 +27,7 @@ export class CollectionService {
     return this.http.get<{ collections: Collection[] }>(`${this.baseUrl}/club/${clubId}`);
   }
 
-  createCollection(data: { club: string; name: string; description?: string; targetAmount?: number }): Observable<{ collection: Collection }> {
+  createCollection(data: { club: string; name: string; description?: string; targetAmount?: number; visibility?: 'public' | 'members_only' }): Observable<{ collection: Collection }> {
     return this.http.post<{ collection: Collection }>(`${this.baseUrl}/create`, data);
   }
 

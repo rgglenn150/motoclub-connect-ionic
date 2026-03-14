@@ -5,13 +5,16 @@
     </ion-buttons>
     <ion-title>Edit Profile</ion-title>
     <ion-buttons slot="end">
-      <ion-button 
-        fill="clear" 
+      <ion-button
+        fill="clear"
         [disabled]="!hasChanges || isLoading"
         (click)="saveChanges()"
       >
         <ion-spinner name="crescent" size="small" *ngIf="isLoading"></ion-spinner>
         <span *ngIf="!isLoading">Save</span>
+      </ion-button>
+      <ion-button routerLink="/tabs/home" routerDirection="root" fill="clear">
+        <ion-icon slot="icon-only" name="home-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>

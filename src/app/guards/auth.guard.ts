@@ -19,6 +19,9 @@ export class AuthGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> | Promise<boolean> | boolean {
+    if (/^\/clubs\/[^/]+\/collection\/[^/]+/.test(state.url)) {
+      return true;
+    }
     return this.checkAuth(state.url);
   }
 

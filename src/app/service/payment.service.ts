@@ -8,6 +8,7 @@ export interface Payment {
   collection: string;
   club: string;
   name: string;
+  accountName?: string;
   amount: number;
   referenceNumber: string;
   phoneNumber?: string;
