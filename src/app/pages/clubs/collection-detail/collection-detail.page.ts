@@ -55,8 +55,9 @@ export class CollectionDetailPage implements OnInit {
   ngOnInit() {
     this.clubId = this.route.snapshot.paramMap.get('clubId') || '';
     this.collectionId = this.route.snapshot.paramMap.get('collectionId') || '';
+    const autoOpenPayment = window.location.pathname.endsWith('/payment');
     this.checkAdminStatus();
-    this.loadCollection();
+    this.loadCollection(autoOpenPayment);
     this.loadPayments();
   }
 
@@ -72,7 +73,7 @@ export class CollectionDetailPage implements OnInit {
     });
   }
 
-  loadCollection() {
+  loadCollection(autoOpenPayment = false) {
     this.collectionLoading = true;
     this.collectionService.getCollections(this.clubId).subscribe({
       next: (res) => {
@@ -80,6 +81,8 @@ export class CollectionDetailPage implements OnInit {
         this.collectionLoading = false;
         if (!this.collection) {
           this.accessDenied = true;
+        } else if (autoOpenPayment) {
+          this.openAddPaymentModal();
         }
       },
       error: () => { this.collectionLoading = false; }

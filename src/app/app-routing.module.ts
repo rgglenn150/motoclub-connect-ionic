@@ -42,6 +42,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/clubs/collection-detail/collection-detail.module').then(m => m.CollectionDetailPageModule),
   },
   {
+    path: 'clubs/:clubId/collection/:collectionId/payment',
+    loadChildren: () => import('./pages/clubs/collection-detail/collection-detail.module').then(m => m.CollectionDetailPageModule),
+  },
+  {
     path: 'notifications',
     loadChildren: () => import('./pages/notifications/notifications.module').then( m => m.NotificationsPageModule),
     canActivate: [AuthGuard]
