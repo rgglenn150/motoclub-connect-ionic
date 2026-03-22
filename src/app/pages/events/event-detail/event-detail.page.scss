@@ -1,0 +1,367 @@
+// ============================================================
+// DARK THEME — per CLAUDE.md mandatory pattern
+// ============================================================
+:host {
+  --ion-background-color: #1A202C;
+  --ion-text-color: #F7FAFC;
+  --ion-card-background: #2D3748;
+  --ion-item-background: #2D3748;
+  --ion-toolbar-background: transparent;
+  --ion-toolbar-color: #F7FAFC;
+}
+
+ion-content {
+  --background: #1A202C;
+}
+
+// ============================================================
+// TRANSPARENT HEADER — overlays the hero
+// ============================================================
+.transparent-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+
+  &::after {
+    display: none;
+  }
+}
+
+.transparent-toolbar {
+  --background: transparent;
+  --border-color: transparent;
+  --box-shadow: none;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #F7FAFC;
+  margin-left: 8px;
+  margin-top: 4px;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 20px;
+  }
+}
+
+// ============================================================
+// HERO SECTION
+// ============================================================
+.hero-section {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  background: linear-gradient(135deg, #2D3748 0%, #1A202C 100%);
+  overflow: hidden;
+
+  // Subtle texture overlay on gradient backgrounds
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.015) 0px,
+        rgba(255, 255, 255, 0.015) 1px,
+        transparent 1px,
+        transparent 12px
+      );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0.35) 45%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
+    z-index: 2;
+  }
+
+  .hero-icon-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+
+    ion-icon {
+      font-size: 90px;
+      color: rgba(245, 158, 11, 0.12);
+    }
+  }
+
+  .event-type-chip {
+    position: absolute;
+    top: 60px; // below the back button / safe area
+    right: 16px;
+    background: #F59E0B;
+    color: #000000;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    padding: 5px 12px;
+    border-radius: 20px;
+    z-index: 10;
+    text-transform: uppercase;
+  }
+
+  .hero-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 20px 24px;
+    z-index: 10;
+  }
+
+  .status-chip {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+
+    &.upcoming {
+      background: rgba(245, 158, 11, 0.18);
+      color: #F59E0B;
+      border: 1px solid rgba(245, 158, 11, 0.6);
+    }
+
+    &.today {
+      background: rgba(72, 187, 120, 0.18);
+      color: #48BB78;
+      border: 1px solid rgba(72, 187, 120, 0.6);
+    }
+
+    &.past {
+      background: rgba(113, 128, 150, 0.18);
+      color: #718096;
+      border: 1px solid rgba(113, 128, 150, 0.5);
+    }
+  }
+
+  .event-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #F7FAFC;
+    line-height: 1.15;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+}
+
+// ============================================================
+// INFO SECTIONS
+// ============================================================
+.info-section {
+  padding: 20px 16px 40px;
+
+  .info-card {
+    background: #2D3748;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(74, 85, 104, 0.5);
+
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+
+      .info-icon {
+        width: 38px;
+        height: 38px;
+        background: rgba(245, 158, 11, 0.12);
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+
+        ion-icon {
+          color: #F59E0B;
+          font-size: 18px;
+        }
+      }
+
+      .info-text {
+        flex: 1;
+        padding-top: 1px;
+
+        .label {
+          font-size: 10px;
+          color: #718096;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          font-weight: 700;
+          margin-bottom: 3px;
+        }
+
+        .value {
+          font-size: 15px;
+          color: #F7FAFC;
+          font-weight: 600;
+          line-height: 1.4;
+        }
+
+        .value-sub {
+          font-size: 13px;
+          color: #A0AEC0;
+          margin-top: 2px;
+          line-height: 1.4;
+        }
+      }
+    }
+  }
+
+  .description-card {
+    background: #2D3748;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(74, 85, 104, 0.5);
+
+    .desc-label {
+      font-size: 10px;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .desc-text {
+      font-size: 15px;
+      color: #CBD5E0;
+      line-height: 1.7;
+      margin: 0;
+      white-space: pre-wrap;
+    }
+  }
+
+  .visibility-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 4px;
+    color: #718096;
+    font-size: 13px;
+
+    ion-icon {
+      font-size: 15px;
+      color: #4A5568;
+    }
+  }
+}
+
+// ============================================================
+// LOADING SKELETON
+// ============================================================
+.skeleton-hero {
+  height: 300px;
+  background: #2D3748;
+  overflow: hidden;
+}
+
+.skeleton-content {
+  padding: 20px 16px;
+}
+
+.skeleton-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #2D3748;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(74, 85, 104, 0.4);
+}
+
+// ============================================================
+// ERROR STATE
+// ============================================================
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px 40px;
+  text-align: center;
+  min-height: 60vh;
+
+  .error-icon-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+
+    ion-icon {
+      font-size: 36px;
+      color: #F59E0B;
+    }
+  }
+
+  .error-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #F7FAFC;
+    margin: 0 0 8px;
+  }
+
+  .error-message {
+    font-size: 14px;
+    color: #A0AEC0;
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+
+  .error-back-btn {
+    background: #F59E0B;
+    color: #000000;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 10px;
+    padding: 12px 32px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+}

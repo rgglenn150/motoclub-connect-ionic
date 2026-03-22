@@ -1,0 +1,178 @@
+<ion-header class="ion-no-border transparent-header" translucent="true">
+  <ion-toolbar class="transparent-toolbar">
+    <ion-buttons slot="start">
+      <button class="back-btn" (click)="goBack()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen="true">
+
+  <!-- ==================== LOADING STATE ==================== -->
+  <ng-container *ngIf="isLoading">
+    <div class="skeleton-hero">
+      <ion-skeleton-text animated style="width: 100%; height: 100%;"></ion-skeleton-text>
+    </div>
+    <div class="skeleton-content">
+      <ion-skeleton-text animated style="width: 70%; height: 22px; margin-bottom: 12px; border-radius: 6px;"></ion-skeleton-text>
+      <div class="skeleton-card">
+        <ion-skeleton-text animated style="width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;"></ion-skeleton-text>
+        <div style="flex: 1;">
+          <ion-skeleton-text animated style="width: 40%; height: 11px; margin-bottom: 6px; border-radius: 4px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 75%; height: 15px; border-radius: 4px;"></ion-skeleton-text>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <ion-skeleton-text animated style="width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;"></ion-skeleton-text>
+        <div style="flex: 1;">
+          <ion-skeleton-text animated style="width: 30%; height: 11px; margin-bottom: 6px; border-radius: 4px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 60%; height: 15px; border-radius: 4px;"></ion-skeleton-text>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <ion-skeleton-text animated style="width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;"></ion-skeleton-text>
+        <div style="flex: 1;">
+          <ion-skeleton-text animated style="width: 25%; height: 11px; margin-bottom: 6px; border-radius: 4px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 55%; height: 15px; border-radius: 4px;"></ion-skeleton-text>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ==================== ERROR STATE ==================== -->
+  <ng-container *ngIf="!isLoading && error">
+    <div class="error-state">
+      <div class="error-icon-wrap">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+      </div>
+      <h3 class="error-title">Failed to Load</h3>
+      <p class="error-message">{{ error }}</p>
+      <button class="error-back-btn" (click)="goBack()">Go Back</button>
+    </div>
+  </ng-container>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <ng-container *ngIf="!isLoading && !error && event">
+
+    <!-- HERO SECTION -->
+    <div class="hero-section">
+
+      <!-- Background image if available -->
+      <img
+        *ngIf="event.imageUrl"
+        [src]="event.imageUrl"
+        alt="{{ event.name }}"
+        class="hero-bg"
+      />
+
+      <!-- Gradient overlay (always rendered) -->
+      <div class="hero-overlay"></div>
+
+      <!-- Placeholder icon when no image -->
+      <div class="hero-icon-placeholder" *ngIf="!event.imageUrl">
+        <ion-icon [name]="getEventTypeIcon(event.eventType)"></ion-icon>
+      </div>
+
+      <!-- Event type chip top-right -->
+      <div class="event-type-chip">{{ getEventTypeLabel(event.eventType) }}</div>
+
+      <!-- Title + status at bottom of hero -->
+      <div class="hero-content">
+        <span class="status-chip" [ngClass]="getEventStatus()">
+          <ng-container [ngSwitch]="getEventStatus()">
+            <ng-container *ngSwitchCase="'upcoming'">UPCOMING</ng-container>
+            <ng-container *ngSwitchCase="'today'">TODAY</ng-container>
+            <ng-container *ngSwitchCase="'past'">PAST</ng-container>
+          </ng-container>
+        </span>
+        <h1 class="event-title">{{ event.name }}</h1>
+      </div>
+    </div>
+    <!-- END HERO -->
+
+    <!-- INFO SECTIONS -->
+    <div class="info-section">
+
+      <!-- Date & Time -->
+      <div class="info-card">
+        <div class="info-row">
+          <div class="info-icon">
+            <ion-icon name="calendar-outline"></ion-icon>
+          </div>
+          <div class="info-text">
+            <div class="label">Date &amp; Time</div>
+            <div class="value">{{ event.startTime | date:'EEEE, MMMM d, yyyy' }}</div>
+            <div class="value-sub" *ngIf="event.endTime">
+              {{ event.startTime | date:'h:mm a' }}
+              &ndash;
+              {{ event.endTime | date:'h:mm a' }}
+            </div>
+            <div class="value-sub" *ngIf="!event.endTime">
+              {{ event.startTime | date:'h:mm a' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="info-card" *ngIf="event.location">
+        <div class="info-row">
+          <div class="info-icon">
+            <ion-icon name="location-outline"></ion-icon>
+          </div>
+          <div class="info-text">
+            <div class="label">Location</div>
+            <div class="value">{{ event.location }}</div>
+            <div class="value-sub" *ngIf="event.geolocation?.placeName && event.geolocation?.placeName !== event.location">
+              {{ event.geolocation?.placeName }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Club -->
+      <div class="info-card" *ngIf="getClubName(event.club)">
+        <div class="info-row">
+          <div class="info-icon">
+            <ion-icon name="shield-outline"></ion-icon>
+          </div>
+          <div class="info-text">
+            <div class="label">Club</div>
+            <div class="value">{{ getClubName(event.club) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Organizer -->
+      <div class="info-card" *ngIf="getCreatorName(event.createdBy)">
+        <div class="info-row">
+          <div class="info-icon">
+            <ion-icon name="person-outline"></ion-icon>
+          </div>
+          <div class="info-text">
+            <div class="label">Organizer</div>
+            <div class="value">{{ getCreatorName(event.createdBy) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="description-card" *ngIf="event.description">
+        <div class="desc-label">About This Event</div>
+        <p class="desc-text">{{ event.description }}</p>
+      </div>
+
+      <!-- Visibility badge -->
+      <div class="visibility-row" *ngIf="event.isPrivate !== undefined">
+        <ion-icon [name]="event.isPrivate ? 'lock-closed-outline' : 'globe-outline'"></ion-icon>
+        <span>{{ event.isPrivate ? 'Private Event' : 'Public Event' }}</span>
+      </div>
+
+    </div>
+    <!-- END INFO SECTIONS -->
+
+  </ng-container>
+
+</ion-content>
