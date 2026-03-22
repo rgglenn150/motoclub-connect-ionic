@@ -74,7 +74,12 @@ const routes: Routes = [
     path: 'claim-requests/:clubId',
     loadChildren: () => import('./pages/claim-requests/claim-requests.module').then( m => m.ClaimRequestsPageModule),
     canActivate: [AuthGuard, ClubAdminGuard]
-  }
+  },
+  {
+    path: 'event/:id',
+    loadChildren: () => import('./pages/events/event-detail/event-detail.module').then(m => m.EventDetailPageModule),
+    canActivate: [AuthGuard]
+  },
 ];
 @NgModule({
   imports: [
