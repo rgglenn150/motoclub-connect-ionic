@@ -1,3 +1,33 @@
+<!-- Search Bar -->
+<ion-searchbar
+  class="club-searchbar"
+  placeholder="Search clubs..."
+  [debounce]="0"
+  (ionInput)="onSearchInput($event)"
+  animated="true"
+  mode="ios"
+></ion-searchbar>
+
+<!-- Segment Tabs -->
+<ion-segment
+  [value]="activeSegment"
+  (ionChange)="onSegmentChange($event)"
+  class="club-segment"
+  mode="ios"
+>
+  <ion-segment-button value="all">
+    <ion-label>All Clubs</ion-label>
+  </ion-segment-button>
+  <ion-segment-button value="my">
+    <ion-label>My Clubs</ion-label>
+  </ion-segment-button>
+</ion-segment>
+
+<!-- Results count -->
+<div class="results-count" *ngIf="!isLoading && !error && clubs.length > 0">
+  <span>{{ total }} club{{ total !== 1 ? 's' : '' }} found</span>
+</div>
+
 <!-- Loading Skeleton -->
 <div *ngIf="isLoading">
   <ion-list>
@@ -18,7 +48,6 @@
         <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
       </div>
     </ion-card>
-
   </ion-list>
 </div>
 
@@ -31,42 +60,50 @@
 
 <!-- Club List -->
 <div *ngIf="!isLoading && !error">
-  <ng-container *ngIf="(clubs$ | async) as clubs">
-    <ion-list *ngIf="clubs.length > 0; else noClubsTemplate">
-      <ion-card *ngFor="let club of clubs" class="asphalt-card" [routerLink]="['/clubs', club._id || club.id]">
-        <div class="card-header-row">
-          <div class="card-text">
-            <ion-card-title>{{ club.clubName }}</ion-card-title>
-            <ion-card-subtitle>{{ club.location || 'Location not specified' }}</ion-card-subtitle>
-          </div>
-          <img class="club-thumbnail" [src]="club.logoUrl || ('https://picsum.photos/100/100?random=' + (club._id || club.id))"
-            alt="Club Logo" />
+  <ion-list *ngIf="clubs.length > 0; else noClubsTemplate">
+    <ion-card *ngFor="let club of clubs" class="asphalt-card" [routerLink]="['/clubs', club._id || club.id]">
+      <div class="card-header-row">
+        <div class="card-text">
+          <ion-card-title>{{ club.clubName }}</ion-card-title>
+          <ion-card-subtitle>{{ club.location || 'Location not specified' }}</ion-card-subtitle>
         </div>
-
-        <ion-card-content>
-          {{ club.description }}
-        </ion-card-content>
-
-        <div class="card-footer">
-          <div class="footer-item">
-            <ion-icon name="people-outline"></ion-icon>
-            <span>{{ club.members?.length || 0 }} Members</span>
-          </div>
-          <div class="footer-item">
-            <ion-icon [name]="club.isPrivate ? 'lock-closed-outline' : 'lock-open-outline'"></ion-icon>
-            <span>{{ club.isPrivate ? 'Private' : 'Public' }}</span>
-          </div>
-        </div>
-      </ion-card>
-    </ion-list>
-
-    <!-- Template for when there are no clubs -->
-    <ng-template #noClubsTemplate>
-      <div class="ion-text-center empty-state">
-        <ion-icon name="sad-outline"></ion-icon>
-        <p>No clubs found.</p>
-        <p>Why not be the first to create one?</p>
+        <img class="club-thumbnail" [src]="club.logoUrl || ('https://picsum.photos/100/100?random=' + (club._id || club.id))"
+          alt="Club Logo" />
       </div>
-    </ng-template>
-  </ng-container>
+
+      <ion-card-content>
+        {{ club.description }}
+      </ion-card-content>
+
+      <div class="card-footer">
+        <div class="footer-item">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>{{ club.memberCount ?? club.members?.length ?? 0 }} Members</span>
+        </div>
+        <div class="footer-item">
+          <ion-icon [name]="club.isPrivate ? 'lock-closed-outline' : 'lock-open-outline'"></ion-icon>
+          <span>{{ club.isPrivate ? 'Private' : 'Public' }}</span>
+        </div>
+      </div>
+    </ion-card>
+  </ion-list>
+
+  <!-- Template for when there are no clubs -->
+  <ng-template #noClubsTemplate>
+    <div class="ion-text-center empty-state">
+      <ion-icon name="sad-outline"></ion-icon>
+      <p *ngIf="searchTerm">No clubs match "{{ searchTerm }}"</p>
+      <p *ngIf="!searchTerm && activeSegment === 'my'">You haven't joined any clubs yet.</p>
+      <p *ngIf="!searchTerm && activeSegment === 'all'">No clubs found.</p>
+      <p *ngIf="!searchTerm && activeSegment === 'all'">Why not be the first to create one?</p>
+    </div>
+  </ng-template>
+
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll threshold="150px" (ionInfinite)="loadMore($event)">
+    <ion-infinite-scroll-content
+      loadingSpinner="crescent"
+      loadingText="Loading more clubs...">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
 </div>

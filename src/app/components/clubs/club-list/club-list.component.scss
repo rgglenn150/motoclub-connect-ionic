@@ -1,3 +1,43 @@
+/* Search bar styling */
+.club-searchbar {
+  --background: #374151;
+  --color: #F7FAFC;
+  --placeholder-color: #718096;
+  --icon-color: #A0AEC0;
+  --clear-button-color: #A0AEC0;
+  --border-radius: 12px;
+  padding: 0 0 8px 0;
+
+  &.searchbar-has-focus {
+    --border-color: #F59E0B;
+  }
+}
+
+/* Segment tabs styling */
+.club-segment {
+  --background: #374151;
+  margin-bottom: 12px;
+  border-radius: 10px;
+
+  ion-segment-button {
+    --color: #A0AEC0;
+    --color-checked: #000000;
+    --indicator-color: #F59E0B;
+    --border-radius: 8px;
+    font-weight: 600;
+    text-transform: none;
+    min-height: 36px;
+  }
+}
+
+/* Results count */
+.results-count {
+  padding: 0 4px 8px;
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+/* Club cards */
 .asphalt-card {
   background: #4A5568;
   color: #F7FAFC;
@@ -56,6 +96,7 @@
   }
 }
 
+/* Skeleton styles */
 .asphalt-card-skeleton {
   background: #4A5568;
   border-radius: 12px;
@@ -85,4 +126,42 @@
   display: flex;
   justify-content: space-between;
   padding: 0 16px 12px;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 40px 16px;
+  color: #A0AEC0;
+
+  ion-icon {
+    font-size: 48px;
+    color: #718096;
+    margin-bottom: 12px;
+  }
+
+  p {
+    margin: 4px 0;
+    font-size: 0.95rem;
+  }
+}
+
+/* Error message */
+.error-message {
+  padding: 40px 16px;
+  color: #A0AEC0;
+
+  ion-icon {
+    font-size: 48px;
+    color: #718096;
+    margin-bottom: 12px;
+  }
+
+  ion-button {
+    --color: #F59E0B;
+  }
+}
+
+/* Infinite scroll spinner color */
+ion-infinite-scroll-content {
+  --color: #A0AEC0;
 }
