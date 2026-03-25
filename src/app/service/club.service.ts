@@ -17,7 +17,8 @@ import {
   NearbyClubsResponse,
   LocationCoordinates,
   UserLocationInfo,
-  DistanceInfo
+  DistanceInfo,
+  PaginatedClubsResponse
 } from '../models/club.model';
 
 // Re-export for backward compatibility
@@ -34,7 +35,8 @@ export {
   NearbyClubsResponse,
   LocationCoordinates,
   UserLocationInfo,
-  DistanceInfo
+  DistanceInfo,
+  PaginatedClubsResponse
 } from '../models/club.model';
 
 @Injectable({
@@ -68,6 +70,50 @@ export class ClubService {
       .pipe(
         map(response => response.clubs) // Extracts the 'clubs' array from the response
       );
+  }
+
+  /**
+   * Fetches clubs with pagination, search, and sort support.
+   *
+   * @param page - Page number (default 1)
+   * @param limit - Items per page (default 15)
+   * @param search - Search text to match against club name, location, description
+   * @param sort - Sort option: 'members' (default), 'newest', 'name'
+   * @returns An Observable with paginated club data
+   */
+  getClubsPaginated(page = 1, limit = 15, search = '', sort = 'members'): Observable<PaginatedClubsResponse> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString())
+      .set('sort', sort);
+
+    if (search && search.trim().length > 0) {
+      params = params.set('search', search.trim());
+    }
+
+    return this.http.get<PaginatedClubsResponse>(this.baseUrl, { params });
+  }
+
+  /**
+   * Fetches clubs that the authenticated user is a member of, with pagination.
+   *
+   * @param page - Page number (default 1)
+   * @param limit - Items per page (default 15)
+   * @param search - Search text
+   * @param sort - Sort option: 'members' (default), 'newest', 'name'
+   * @returns An Observable with paginated club data
+   */
+  getMyClubsPaginated(page = 1, limit = 15, search = '', sort = 'members'): Observable<PaginatedClubsResponse> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString())
+      .set('sort', sort);
+
+    if (search && search.trim().length > 0) {
+      params = params.set('search', search.trim());
+    }
+
+    return this.http.get<PaginatedClubsResponse>(`${this.baseUrl}/my`, { params });
   }
 
   /**

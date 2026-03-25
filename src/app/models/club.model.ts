@@ -20,6 +20,7 @@ export interface Club {
   geolocation?: Geolocation;
   isPrivate: boolean;
   members?: ClubMember[]; // More specific typing for members
+  memberCount?: number; // Computed member count from API
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -95,6 +96,17 @@ export interface JoinRequest {
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   updatedAt?: string;
+}
+
+/**
+ * Paginated response from the clubs API
+ */
+export interface PaginatedClubsResponse {
+  message: string;
+  clubs: Club[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 /**
