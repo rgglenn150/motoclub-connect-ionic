@@ -35,3 +35,15 @@
   --background-activated: #d3860a;
   --color: #2D3748;
 }
+
+/* Responsive layout: constrain content width on tablet/desktop */
+.page-content-wrapper {
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 0;
+
+  @media (min-width: 768px) {
+    padding: 0 16px;
+  }
+}

@@ -83,6 +83,8 @@
     </ion-refresher-content>
   </ion-refresher>
 
+  <div class="page-content-wrapper">
+
   <!-- Loading State - Only show when not refreshing -->
   <div *ngIf="(isLoading || statusLoading) && !isRefreshing" class="loading-container">
     <ion-spinner name="crescent" color="primary"></ion-spinner>
@@ -557,6 +559,8 @@
 
   <ng-template #privateView>
   </ng-template>
+
+  </div><!-- end .page-content-wrapper -->
 
   <!-- Members Management Modal -->
   <ion-modal [isOpen]="showMembersModal" (willDismiss)="closeMembersModal()" class="members-modal">

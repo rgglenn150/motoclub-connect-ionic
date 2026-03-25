@@ -221,3 +221,14 @@
 .border-slate-500 {
     border-color: #64748b;
 }
+
+/* Responsive layout: constrain content width on tablet/desktop */
+.page-content-wrapper {
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    padding: 0 16px;
+  }
+}
