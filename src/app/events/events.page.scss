@@ -250,6 +250,13 @@
   border-color: #64748b;
 }
 
+// Web layout: constrain content width on wider screens
+.content-container {
+  max-width: 768px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 // Event-specific styles
 .event-description {
   margin-bottom: 1rem;
