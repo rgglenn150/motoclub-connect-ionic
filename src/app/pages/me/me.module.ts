@@ -13,6 +13,7 @@ import { MePageRoutingModule } from './me-routing.module';
 import { MePage } from './me.page';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { LoadingSpinnerModule } from 'src/app/components/utils/loading-spinner/loading-spinner.module';
+import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
   imports: [
@@ -23,6 +24,7 @@ import { LoadingSpinnerModule } from 'src/app/components/utils/loading-spinner/l
     MePageRoutingModule,
     ImageCropperModule,
     LoadingSpinnerModule,
+    SharedModule,
   ],
   declarations: [MePage],
   exports: [MePage],

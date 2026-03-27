@@ -131,7 +131,7 @@
         [class.mr-6]="last">
         <!-- Logo or initials fallback -->
         <div class="w-20 h-20 rounded-full mx-auto mb-2 border-2 border-slate-500 overflow-hidden flex items-center justify-center bg-slate-600">
-          <img *ngIf="club.logoUrl" [src]="club.logoUrl" [alt]="club.clubName" class="w-full h-full object-cover">
+          <img *ngIf="club.logoUrl" [src]="club.logoUrl | cloudinaryUrl:'w_100,h_100,c_fill'" [alt]="club.clubName" class="w-full h-full object-cover" loading="lazy">
           <span *ngIf="!club.logoUrl" class="text-lg font-bold text-white">{{ getClubInitials(club.clubName) }}</span>
         </div>
         <h4 class="font-bold text-sm leading-tight mb-1">{{ club.clubName }}</h4>

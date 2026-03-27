@@ -33,11 +33,11 @@
   <!-- Actual Header Content -->
   <div *ngIf="!isLoading && !statusLoading" class="club-header-content">
     <div class="cover-photo-container">
-      <img [src]="club.coverPhotoUrl" class="cover-photo" alt="Club Cover Photo" />
+      <img [src]="club.coverPhotoUrl | cloudinaryUrl:'w_800,c_limit'" class="cover-photo" alt="Club Cover Photo" loading="lazy" />
       <div class="gradient-overlay"></div>
     </div>
     <ion-avatar class="club-avatar">
-      <img [src]="club.logoUrl" alt="Club Logo" />
+      <img [src]="club.logoUrl | cloudinaryUrl:'w_80,h_80,c_fill'" alt="Club Logo" loading="lazy" />
     </ion-avatar>
     <div class="header-actions">
       <!-- Admin settings button (separate from join button for better UX) -->
@@ -476,8 +476,7 @@
                 <ion-card-subtitle>{{ getEventTypeDisplay(event.eventType) }} &middot; {{ formatEventDate(event.startTime) }}</ion-card-subtitle>
                 <ion-card-title>{{ event.name }}</ion-card-title>
               </div>
-              <img *ngIf="event.imageUrl" [src]="event.imageUrl" class="club-thumbnail" [alt]="event.name" />
-              <img *ngIf="!event.imageUrl" src="https://placehold.co/200x200/4A5568/FFFFFF?text=EVENT" class="club-thumbnail" [alt]="event.name" />
+              <ion-img [src]="event.imageUrl ? (event.imageUrl | cloudinaryUrl:'w_200,h_200,c_fill') : 'https://placehold.co/200x200/4A5568/FFFFFF?text=EVENT'" class="club-thumbnail" [alt]="event.name"></ion-img>
             </div>
             <ion-card-content *ngIf="event.description" class="event-description">
               <p>{{ event.description }}</p>

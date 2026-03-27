@@ -8,6 +8,7 @@ import { ClubHomePageRoutingModule } from './club-home-routing.module';
 import { NetworkIndicatorModule } from '../../../components/network-indicator/network-indicator.module';
 
 import { ClubHomePage } from './club-home.page';
+import { SharedModule } from '../../../shared/shared.module';
 
 @NgModule({
   imports: [
@@ -15,7 +16,8 @@ import { ClubHomePage } from './club-home.page';
     FormsModule,
     IonicModule,
     ClubHomePageRoutingModule,
-    NetworkIndicatorModule
+    NetworkIndicatorModule,
+    SharedModule
   ],
   declarations: [ClubHomePage]
 })

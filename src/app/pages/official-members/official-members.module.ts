@@ -9,6 +9,7 @@ import { NetworkIndicatorModule } from '../../components/network-indicator/netwo
 import { CsvImportModalComponent } from '../../components/csv-import-modal/csv-import-modal.component';
 
 import { OfficialMembersPage } from './official-members.page';
+import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
   imports: [
@@ -17,7 +18,8 @@ import { OfficialMembersPage } from './official-members.page';
     ReactiveFormsModule,
     IonicModule,
     OfficialMembersPageRoutingModule,
-    NetworkIndicatorModule
+    NetworkIndicatorModule,
+    SharedModule
   ],
   declarations: [OfficialMembersPage, CsvImportModalComponent]
 })

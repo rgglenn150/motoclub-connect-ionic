@@ -67,8 +67,7 @@
           <ion-card-title>{{ club.clubName }}</ion-card-title>
           <ion-card-subtitle>{{ club.location || 'Location not specified' }}</ion-card-subtitle>
         </div>
-        <img class="club-thumbnail" [src]="club.logoUrl || ('https://picsum.photos/100/100?random=' + (club._id || club.id))"
-          alt="Club Logo" />
+        <ion-img class="club-thumbnail" [src]="club.logoUrl ? (club.logoUrl | cloudinaryUrl:'w_100,h_100,c_fill') : ('https://picsum.photos/100/100?random=' + (club._id || club.id))" alt="Club Logo"></ion-img>
       </div>
 
       <ion-card-content>
