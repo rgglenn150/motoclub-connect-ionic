@@ -14,6 +14,7 @@ import { HomePage } from './home.page';
 import { NotificationBellModule } from '../../components/notification-bell/notification-bell.module';
 import { WeatherWidgetModule } from '../../components/weather-widget/weather-widget.module';
 import { WeatherWidget2Module } from 'src/app/components/weather-widget2/weather-widget2.module';
+import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
   imports: [
@@ -24,6 +25,7 @@ import { WeatherWidget2Module } from 'src/app/components/weather-widget2/weather
     NotificationBellModule,
     WeatherWidgetModule,
     WeatherWidget2Module,
+    SharedModule,
   ],
   exports: [HomePage],
   declarations: [HomePage],

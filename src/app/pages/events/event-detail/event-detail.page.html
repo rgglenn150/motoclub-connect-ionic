@@ -62,9 +62,10 @@
       <!-- Background image if available -->
       <img
         *ngIf="event.imageUrl"
-        [src]="event.imageUrl"
+        [src]="event.imageUrl | cloudinaryUrl:'w_800,c_limit'"
         alt="{{ event.name }}"
         class="hero-bg"
+        loading="lazy"
       />
 
       <!-- Gradient overlay (always rendered) -->

@@ -158,7 +158,7 @@
           <!-- Avatar Section -->
           <div class="member-avatar-section">
             <ion-avatar class="member-avatar">
-              <img [src]="getMemberPhoto(member)" [alt]="member.firstName + ' ' + member.lastName">
+              <img [src]="getMemberPhoto(member) | cloudinaryUrl:'w_80,h_80,c_fill'" [alt]="member.firstName + ' ' + member.lastName" loading="lazy">
             </ion-avatar>
             <div class="member-number-badge">
               <span>#{{ member.officialNumber }}</span>
