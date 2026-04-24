@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
@@ -12,6 +12,14 @@ export interface Geolocation {
   placeName: string;
 }
 
+// Lightweight attendee representation returned by the detail endpoint
+export interface EventAttendee {
+  _id: string;
+  username?: string;
+  name?: string;
+  profilePicture?: string;
+}
+
 // Event interface matching the backend EventModel structure
 export interface Event {
   _id?: string;
@@ -22,13 +30,39 @@ export interface Event {
   location?: string;
   geolocation?: Geolocation;
   eventType: 'ride' | 'meeting' | 'meetup' | 'event';
-  club: string | { _id?: string; clubName?: string }; // Can be ObjectId or populated club object
+  club?: string | { _id?: string; clubName?: string }; // Optional: not present for global events
   createdBy?: string | { _id?: string; username?: string; name?: string }; // Can be ObjectId or populated user object
   imageUrl?: string;
   imagePublicId?: string;
   isPrivate?: boolean;
   createdAt?: Date | string;
   updatedAt?: Date | string;
+
+  // Global events / join state additions
+  scope?: 'club' | 'global';
+  attendeeCount?: number;
+  maxAttendees?: number | null;
+  isJoined?: boolean;
+  isCreator?: boolean;
+  joinPolicy?: 'instant';
+  attendees?: EventAttendee[];
+}
+
+// Paginated events response for the "my clubs" feed
+export interface PaginatedEventsResponse {
+  events: Event[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+}
+
+// Query parameters accepted by getMyClubEvents
+export interface MyClubEventsParams {
+  page?: number;
+  limit?: number;
+  q?: string;
+  filter?: 'upcoming' | 'past' | 'all';
 }
 
 // Event creation data interface
@@ -40,8 +74,10 @@ export interface CreateEventData {
   location?: string;
   geolocation?: Geolocation;
   eventType: 'ride' | 'meeting' | 'meetup' | 'event';
-  club: string;
+  club?: string; // Optional: omitted for global events
   isPrivate?: boolean;
+  scope?: 'club' | 'global';
+  maxAttendees?: number | null;
 }
 
 @Injectable({
@@ -109,9 +145,11 @@ export class EventService {
   createEvent(eventData: CreateEventData): Observable<Event> {
     return this.http.post<Event>(`${this.baseUrl}/create`, eventData)
       .pipe(
-        tap(newEvent => {
-          // Refresh the club's events after creating a new event
-          this.refreshClubEvents(eventData.club);
+        tap(_newEvent => {
+          // Refresh the club's events after creating a new club-scoped event
+          if (eventData.club) {
+            this.refreshClubEvents(eventData.club);
+          }
         }),
         catchError(error => {
           console.error('Error creating event:', error);
@@ -154,11 +192,24 @@ export class EventService {
   }
 
   /**
-   * Get events from clubs the user is a member of
-   * @returns Observable with the events data from user's clubs
+   * Get paginated events from clubs the user is a member of.
+   * Supports search (q), time filter, and pagination.
    */
-  getMyClubEvents(): Observable<Event[]> {
-    return this.http.get<Event[]>(`${this.baseUrl}/my-clubs`)
+  getMyClubEvents(params: MyClubEventsParams = {}): Observable<PaginatedEventsResponse> {
+    const { page = 1, limit = 20, q = '', filter = 'upcoming' } = params;
+
+    let httpParams = new HttpParams()
+      .set('page', String(page))
+      .set('limit', String(limit))
+      .set('filter', filter);
+
+    const trimmed = q.trim();
+    if (trimmed.length > 0) {
+      httpParams = httpParams.set('q', trimmed);
+    }
+
+    return this.http
+      .get<PaginatedEventsResponse>(`${this.baseUrl}/my-clubs`, { params: httpParams })
       .pipe(
         catchError(error => {
           console.error('Error fetching my club events:', error);
@@ -210,18 +261,72 @@ export class EventService {
   /**
    * Delete an event
    * @param eventId - The ID of the event to delete
-   * @param clubId - The ID of the club (needed to refresh the events list)
+   * @param clubId - Optional club ID (refreshes club events list if provided)
    * @returns Observable with the deletion result
    */
-  deleteEvent(eventId: string, clubId: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${eventId}`)
+  deleteEvent(eventId: string, clubId?: string): Observable<{ success: boolean }> {
+    return this.http.delete<{ success: boolean }>(`${this.baseUrl}/${eventId}`)
       .pipe(
         tap(() => {
-          // Refresh the club's events after deletion
-          this.refreshClubEvents(clubId);
+          if (clubId) {
+            this.refreshClubEvents(clubId);
+          }
         }),
         catchError(error => {
           console.error('Error deleting event:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
+   * Get paginated global events feed.
+   * Mirrors getMyClubEvents but hits /global.
+   */
+  getGlobalEvents(params: MyClubEventsParams = {}): Observable<PaginatedEventsResponse> {
+    const { page = 1, limit = 20, q = '', filter = 'upcoming' } = params;
+
+    let httpParams = new HttpParams()
+      .set('page', String(page))
+      .set('limit', String(limit))
+      .set('filter', filter);
+
+    const trimmed = q.trim();
+    if (trimmed.length > 0) {
+      httpParams = httpParams.set('q', trimmed);
+    }
+
+    return this.http
+      .get<PaginatedEventsResponse>(`${this.baseUrl}/global`, { params: httpParams })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching global events:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
+   * Join an event (instant-join only in v1).
+   */
+  joinEvent(eventId: string): Observable<Partial<Event>> {
+    return this.http.post<Partial<Event>>(`${this.baseUrl}/${eventId}/join`, {})
+      .pipe(
+        catchError(error => {
+          console.error('Error joining event:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
+   * Leave an event the user has previously joined.
+   */
+  leaveEvent(eventId: string): Observable<Partial<Event>> {
+    return this.http.post<Partial<Event>>(`${this.baseUrl}/${eventId}/leave`, {})
+      .pipe(
+        catchError(error => {
+          console.error('Error leaving event:', error);
           return throwError(() => error);
         })
       );

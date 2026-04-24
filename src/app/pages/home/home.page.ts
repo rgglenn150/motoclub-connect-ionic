@@ -70,13 +70,9 @@ export class HomePage implements OnInit {
 
   loadNextRide() {
     this.nextRideLoading = true;
-    this.eventService.getMyClubEvents().subscribe({
-      next: (events) => {
-        const now = new Date();
-        const upcoming = events
-          .filter(e => new Date(e.startTime) > now)
-          .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-        this.nextRide = upcoming.length > 0 ? upcoming[0] : null;
+    this.eventService.getMyClubEvents({ filter: 'upcoming', page: 1, limit: 1 }).subscribe({
+      next: (res) => {
+        this.nextRide = res.events.length > 0 ? res.events[0] : null;
         this.nextRideLoading = false;
       },
       error: (err) => {
@@ -121,6 +117,10 @@ export class HomePage implements OnInit {
 
   viewEventDetails(eventId: string) {
     this.router.navigate(['/event', eventId]);
+  }
+
+  viewClubDetails(clubId: string) {
+    this.router.navigate(['/clubs', clubId]);
   }
 
 }

@@ -7,9 +7,9 @@
 <ion-header class="asphalt-header">
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button [defaultHref]="'/clubs/' + clubId"></ion-back-button>
+      <ion-back-button [defaultHref]="isGlobal ? '/tabs/events' : ('/clubs/' + clubId)"></ion-back-button>
     </ion-buttons>
-    <ion-title>Create Event</ion-title>
+    <ion-title>{{ pageTitle }}</ion-title>
     <ion-buttons slot="end">
       <ion-button routerLink="/tabs/home" routerDirection="root" fill="clear">
         <ion-icon slot="icon-only" name="home-outline"></ion-icon>
@@ -76,8 +76,8 @@
         </ion-select>
       </ion-item>
 
-      <!-- Event Privacy Toggle -->
-      <ion-item class="asphalt-input-item privacy-toggle-item" lines="none">
+      <!-- Event Privacy Toggle (club mode only) -->
+      <ion-item *ngIf="!isGlobal" class="asphalt-input-item privacy-toggle-item" lines="none">
         <ion-icon name="eye-outline" slot="start" class="asphalt-icon"></ion-icon>
         <ion-label>
           <h3>Event Visibility</h3>
@@ -92,6 +92,18 @@
           [checked]="true"
           slot="end">
         </ion-toggle>
+      </ion-item>
+
+      <!-- Max attendees (global mode only, optional) -->
+      <ion-item *ngIf="isGlobal" class="asphalt-input-item" lines="none">
+        <ion-icon name="people-outline" slot="start" class="asphalt-icon"></ion-icon>
+        <ion-input
+          formControlName="maxAttendees"
+          type="number"
+          min="1"
+          inputmode="numeric"
+          placeholder="Max attendees (optional, blank = unlimited)">
+        </ion-input>
       </ion-item>
 
       <!-- Start Date & Time -->
