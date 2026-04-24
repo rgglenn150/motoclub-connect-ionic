@@ -5,8 +5,110 @@
   --asphalt-danger: #EF4444;
   --asphalt-text: #F7FAFC;
   --asphalt-text-muted: #A0AEC0;
-  --ion-background-color: #2D3748;
+
+  --ion-background-color: #1A202C;
   --ion-text-color: #F7FAFC;
+  --ion-card-background: #2D3748;
+  --ion-item-background: #2D3748;
+  --ion-toolbar-background: #2D3748;
+  --ion-toolbar-color: #F7FAFC;
+}
+
+ion-header ion-toolbar {
+  --background: #2D3748;
+  --color: #F7FAFC;
+  --border-color: #4A5568;
+
+  ion-title { color: #F7FAFC; font-weight: 600; }
+  ion-buttons ion-button { --color: #F7FAFC; }
+  ion-back-button { --color: #F7FAFC; }
+}
+
+ion-content { --background: #1A202C; }
+
+// Segment (My Clubs / Global)
+.segment-wrap {
+  padding: 12px 12px 0;
+}
+
+.events-segment {
+  --background: #2D3748;
+  border-radius: 10px;
+  border: 1px solid #4A5568;
+  padding: 4px;
+
+  ion-segment-button {
+    --background: transparent;
+    --background-checked: #F59E0B;
+    --color: #A0AEC0;
+    --color-checked: #000000;
+    --indicator-color: transparent;
+    --border-radius: 8px;
+    min-height: 36px;
+    text-transform: none;
+    font-weight: 600;
+    letter-spacing: 0;
+
+    ion-label { font-size: 0.9rem; }
+  }
+}
+
+// Search + filter chips + counter
+.search-wrap {
+  padding: 8px 8px 0;
+}
+
+.events-searchbar {
+  --background: #2D3748;
+  --color: #F7FAFC;
+  --placeholder-color: #718096;
+  --icon-color: #A0AEC0;
+  --clear-button-color: #A0AEC0;
+  --border-radius: 10px;
+  padding: 0;
+}
+
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 4px;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar { display: none; }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.filter-chip {
+  --background: #2D3748;
+  --color: #F7FAFC;
+  border: 1px solid #4A5568;
+  font-weight: 500;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  ion-label { color: #F7FAFC; }
+
+  &.selected {
+    --background: #F59E0B;
+    --color: #000000;
+    background: #F59E0B;
+    border-color: #F59E0B;
+
+    ion-label { color: #000000; font-weight: 600; }
+  }
+}
+
+.results-counter {
+  padding: 4px 16px 8px;
+  color: #A0AEC0;
+  font-size: 0.8rem;
+}
+
+.amber-btn {
+  --background: #F59E0B;
+  --background-activated: #d88b0a;
+  --color: #000000;
 }
 
 /* Intentionally left blank to match Tab1 UI */
@@ -327,3 +429,45 @@ ion-card-header {
     }
   }
 }
+
+// "GLOBAL" pill on global-scoped event cards
+.global-pill {
+  display: inline-block;
+  background: #F59E0B;
+  color: #000000;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+// Going / attendees line
+.event-details p.event-going {
+  color: #A0AEC0;
+  font-weight: 500;
+
+  ion-icon { color: #F59E0B; }
+}
+
+// Amber FAB
+ion-fab-button.amber-fab {
+  --background: #F59E0B;
+  --background-activated: #d88b0a;
+  --background-hover: #d88b0a;
+  --color: #000000;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+// Dark action sheet styling
+::ng-deep .dark-action-sheet {
+  --background: #2D3748;
+  --color: #F7FAFC;
+  --button-color: #F7FAFC;
+  --button-background-selected: #4A5568;
+
+  .action-sheet-title {
+    color: #A0AEC0 !important;
+  }
+}
+

@@ -33,6 +33,11 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'events/create-event',
+    loadChildren: () => import('./pages/events/create-event/create-event.module').then( m => m.CreateEventPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'clubs/:id',
     loadChildren: () => import('./pages/clubs/club-home/club-home.module').then( m => m.ClubHomePageModule),
     canActivate: [AuthGuard]

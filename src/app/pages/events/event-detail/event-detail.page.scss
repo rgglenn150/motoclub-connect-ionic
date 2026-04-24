@@ -365,3 +365,204 @@ ion-content {
     letter-spacing: 0.04em;
   }
 }
+
+// ============================================================
+// JOIN / LEAVE BLOCK
+// ============================================================
+.join-block {
+  margin: 16px 16px 0;
+  padding: 16px;
+  background: #2D3748;
+  border: 1px solid #4A5568;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .join-btn {
+    width: 100%;
+    background: #F59E0B;
+    color: #000000;
+    font-weight: 700;
+    font-size: 15px;
+    border: none;
+    border-radius: 999px;
+    padding: 14px 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.15s ease, opacity 0.15s ease;
+
+    ion-icon { font-size: 18px; }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+  }
+
+  .join-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .joined-btn {
+    flex: 1;
+    background: transparent;
+    color: #10B981;
+    border: 2px solid #10B981;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 999px;
+    padding: 12px 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: default;
+
+    ion-icon { font-size: 18px; }
+  }
+
+  .leave-btn {
+    background: transparent;
+    color: #A0AEC0;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    &:hover { color: #F7FAFC; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  .going-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #A0AEC0;
+    font-size: 13px;
+    font-weight: 500;
+
+    ion-icon {
+      color: #F59E0B;
+      font-size: 16px;
+    }
+
+    .spots-left {
+      color: #718096;
+    }
+  }
+
+  .hosting-pill {
+    align-self: flex-start;
+    background: #F59E0B;
+    color: #000000;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 5px 12px;
+    border-radius: 999px;
+    text-transform: uppercase;
+  }
+
+  .attendee-preview {
+    display: flex;
+    align-items: center;
+    gap: -8px;
+    margin-top: 4px;
+
+    .attendee-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid #2D3748;
+      background: #4A5568;
+      margin-left: -8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      &:first-child { margin-left: 0; }
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .initials {
+        color: #F7FAFC;
+        font-size: 11px;
+        font-weight: 700;
+      }
+    }
+
+    .attendee-more {
+      margin-left: 6px;
+      color: #A0AEC0;
+      font-size: 12px;
+      font-weight: 600;
+    }
+  }
+}
+
+// ============================================================
+// DELETE BUTTON (creator only, danger zone)
+// ============================================================
+.danger-zone {
+  margin-top: 24px;
+
+  .delete-btn {
+    width: 100%;
+    background: transparent;
+    color: #EF4444;
+    border: 1.5px solid #EF4444;
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-weight: 700;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    ion-icon { font-size: 16px; }
+
+    &:hover {
+      background: #EF4444;
+      color: #ffffff;
+    }
+  }
+}
+
+// Dark alert styling override
+::ng-deep .dark-alert {
+  --background: #2D3748;
+
+  .alert-wrapper {
+    background: #2D3748 !important;
+    border: 1px solid #4A5568;
+  }
+  .alert-title,
+  .alert-message {
+    color: #F7FAFC !important;
+  }
+  .alert-button {
+    color: #F59E0B !important;
+  }
+}
+

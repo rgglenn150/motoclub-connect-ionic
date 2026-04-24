@@ -93,6 +93,77 @@
     </div>
     <!-- END HERO -->
 
+    <!-- JOIN / LEAVE BLOCK (global events only) -->
+    <div class="join-block" *ngIf="isGlobal">
+      <!-- Creator -->
+      <ng-container *ngIf="event.isCreator">
+        <span class="hosting-pill">You're hosting</span>
+        <div class="going-line">
+          <ion-icon name="people-outline"></ion-icon>
+          <span *ngIf="!isPast">{{ attendeeCount }} going</span>
+          <span *ngIf="isPast">{{ attendeeCount }} attended</span>
+        </div>
+      </ng-container>
+
+      <!-- Past, non-creator -->
+      <ng-container *ngIf="!event.isCreator && isPast">
+        <div class="going-line">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>{{ attendeeCount }} attended</span>
+        </div>
+      </ng-container>
+
+      <!-- Joined, upcoming -->
+      <ng-container *ngIf="!event.isCreator && !isPast && event.isJoined">
+        <div class="join-row">
+          <button class="joined-btn" disabled>
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            Joined
+          </button>
+          <button class="leave-btn" (click)="leaveEvent()" [disabled]="isMutating">Leave</button>
+        </div>
+        <div class="going-line">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>{{ attendeeCount }} going</span>
+        </div>
+      </ng-container>
+
+      <!-- Not joined, upcoming -->
+      <ng-container *ngIf="!event.isCreator && !isPast && !event.isJoined">
+        <button
+          class="join-btn"
+          (click)="joinEvent()"
+          [disabled]="isMutating || isFull">
+          <ion-icon name="people-outline"></ion-icon>
+          {{ isFull ? 'Event is full' : 'Join Event' }}
+        </button>
+        <div class="going-line">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>{{ attendeeCount }} going</span>
+          <span class="spots-left" *ngIf="spotsLeft !== null && spotsLeft > 0">
+            &middot; {{ spotsLeft }} spots left
+          </span>
+        </div>
+      </ng-container>
+
+      <!-- Attendee avatar preview -->
+      <div class="attendee-preview" *ngIf="visibleAttendees.length > 0">
+        <div
+          class="attendee-avatar"
+          *ngFor="let a of visibleAttendees"
+          [title]="a.name || a.username">
+          <img *ngIf="a.profilePicture" [src]="a.profilePicture" alt="" />
+          <span *ngIf="!a.profilePicture" class="initials">{{ attendeeInitials(a) }}</span>
+        </div>
+        <div class="attendee-more" *ngIf="extraAttendees > 0">+{{ extraAttendees }}</div>
+      </div>
+    </div>
+
+    <!-- Hosting badge for club-scoped events (creator only) -->
+    <div class="join-block" *ngIf="!isGlobal && event.isCreator">
+      <span class="hosting-pill">You're hosting</span>
+    </div>
+
     <!-- INFO SECTIONS -->
     <div class="info-section">
 
@@ -169,6 +240,14 @@
       <div class="visibility-row" *ngIf="event.isPrivate !== undefined">
         <ion-icon [name]="event.isPrivate ? 'lock-closed-outline' : 'globe-outline'"></ion-icon>
         <span>{{ event.isPrivate ? 'Private Event' : 'Public Event' }}</span>
+      </div>
+
+      <!-- Delete (creator only) -->
+      <div class="danger-zone" *ngIf="event.isCreator">
+        <button class="delete-btn" (click)="confirmDelete()">
+          <ion-icon name="trash-outline"></ion-icon>
+          Delete Event
+        </button>
       </div>
 
     </div>

@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
-import { FormBuilder, FormGroup, FormControl, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { ToastService } from 'src/app/service/utils/toast.service';
-import { EventService, Event as ClubEvent, CreateEventData, Geolocation } from 'src/app/service/event.service';
+import { EventService, Event as ClubEvent, CreateEventData } from 'src/app/service/event.service';
 import { LocationData } from 'src/app/components/mapbox-autocomplete/mapbox-autocomplete.component';
 
 @Component({
@@ -21,7 +21,16 @@ export class CreateEventPage implements OnInit {
   private selectedImageFile: File | null = null;
   isLoading = false;
   clubId: string = '';
+  scope: 'club' | 'global' = 'club';
   selectedLocation: LocationData | null = null;
+
+  get isGlobal(): boolean {
+    return this.scope === 'global';
+  }
+
+  get pageTitle(): string {
+    return this.isGlobal ? 'Create Global Event' : 'Create Event';
+  }
   
   // Date handling
   minDate = new Date().toISOString();
@@ -40,12 +49,13 @@ export class CreateEventPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Get clubId from route parameters
+    // Resolve scope from query params first; fall back to club-mode if a clubId param is present.
+    const scopeParam = this.activatedRoute.snapshot.queryParamMap.get('scope');
+    this.scope = scopeParam === 'global' ? 'global' : 'club';
+
     this.clubId = this.activatedRoute.snapshot.paramMap.get('clubId') || '';
-    
-    console.log('CreateEventPage initialized with clubId:', this.clubId);
-    
-    if (!this.clubId) {
+
+    if (!this.isGlobal && !this.clubId) {
       console.warn('No club ID found in route parameters');
       this.toastService.presentToast('No club selected. Please select a club first.', 'top', 3000);
       this.router.navigate(['/tabs/clubs']);
@@ -55,14 +65,15 @@ export class CreateEventPage implements OnInit {
     this.createEventForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
       description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]],
-      eventType: ['ride', Validators.required], // Set default to 'ride' for motorcycle clubs
-      location: ['', [Validators.required, Validators.maxLength(200)]], // Direct FormControl
+      eventType: ['ride', Validators.required],
+      location: ['', [Validators.required, Validators.maxLength(200)]],
       startDate: ['', Validators.required],
-      endDate: [''], // Made optional - no validators
-      isPrivate: [true]  // defaults to private
+      endDate: [''],
+      // Global events are always public; force the toggle off in global mode.
+      isPrivate: [this.isGlobal ? false : true],
+      // Global-only optional cap on attendees (empty = unlimited)
+      maxAttendees: [null, [Validators.min(1), Validators.max(100000)]],
     });
-
-    console.log('Form created successfully:', this.createEventForm);
   }
 
   onFileSelected(event: Event): void {
@@ -195,12 +206,21 @@ export class CreateEventPage implements OnInit {
       name: this.createEventForm.get('name')?.value,
       description: this.createEventForm.get('description')?.value,
       startTime: this.startDateTime,
-      endTime: this.endDateTime || undefined, // Only include endTime if provided
+      endTime: this.endDateTime || undefined,
       location: this.createEventForm.get('location')?.value,
       eventType: this.createEventForm.get('eventType')?.value,
-      club: this.clubId,
-      isPrivate: this.createEventForm.get('isPrivate')?.value
+      isPrivate: this.isGlobal ? false : this.createEventForm.get('isPrivate')?.value,
+      scope: this.scope,
     };
+
+    if (this.isGlobal) {
+      const cap = this.createEventForm.get('maxAttendees')?.value;
+      if (cap !== null && cap !== undefined && cap !== '') {
+        eventData.maxAttendees = Number(cap);
+      }
+    } else {
+      eventData.club = this.clubId;
+    }
 
     // Add geolocation data if available from Mapbox selection
     if (this.selectedLocation) {
@@ -313,12 +333,16 @@ export class CreateEventPage implements OnInit {
 
 
   /**
-   * Navigates back to the club home page with the events tab selected
+   * Navigates back to the club home page (or the global events tab if scope=global).
    */
   private navigateToClubHome() {
-    this.router.navigate(['/clubs', this.clubId], { 
+    if (this.isGlobal) {
+      this.router.navigate(['/tabs/events'], { replaceUrl: true });
+      return;
+    }
+    this.router.navigate(['/clubs', this.clubId], {
       queryParams: { tab: 'events' },
-      replaceUrl: true 
+      replaceUrl: true
     });
   }
 }
