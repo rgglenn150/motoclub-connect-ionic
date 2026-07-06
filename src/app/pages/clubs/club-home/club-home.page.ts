@@ -2072,6 +2072,17 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   /**
+   * Navigate to event detail page
+   */
+  navigateToEvent(eventId: string | undefined) {
+    if (!eventId) {
+      this.presentToast('Unable to open event: Event ID not available', 'danger');
+      return;
+    }
+    this.router.navigate(['/event', eventId]);
+  }
+
+  /**
    * Navigate to edit club page with current club ID
    */
   async navigateToEditClub() {

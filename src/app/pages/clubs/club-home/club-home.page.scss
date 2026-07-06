@@ -1397,6 +1397,18 @@ ion-action-sheet.dark-theme-action-sheet {
   padding-top: 0;
 }
 
+/* Clickable event card — tap feedback + pointer on hover */
+.event-card {
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
 /* --- MEMBERS MODAL STYLES --- */
 
 // Enhanced section header styling with manage button

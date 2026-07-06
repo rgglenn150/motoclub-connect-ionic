@@ -470,7 +470,7 @@
 
         <!-- Events List -->
         <div *ngIf="!eventsLoading && !eventsError && clubEvents.length > 0" class="events-section">
-          <ion-card class="asphalt-card" *ngFor="let event of clubEvents">
+          <ion-card class="asphalt-card event-card" *ngFor="let event of clubEvents" (click)="navigateToEvent(event._id)" role="button" tabindex="0">
             <div class="card-header-row">
               <div class="card-text">
                 <ion-card-subtitle>{{ getEventTypeDisplay(event.eventType) }} &middot; {{ formatEventDate(event.startTime) }}</ion-card-subtitle>
