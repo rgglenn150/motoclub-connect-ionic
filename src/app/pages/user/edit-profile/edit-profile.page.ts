@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
-import { ToastController } from '@ionic/angular';
+import { ToastController, ViewWillLeave } from '@ionic/angular';
 
 import { UserService, UserProfile, UpdateProfileData, UpdateUsernameData, UpdateEmailData } from '../../../service/user.service';
 import { UserStateService } from '../../../service/user-state.service';
@@ -20,7 +20,7 @@ interface PendingChange {
   templateUrl: './edit-profile.page.html',
   styleUrls: ['./edit-profile.page.scss'],
 })
-export class EditProfilePage implements OnInit, OnDestroy {
+export class EditProfilePage implements OnInit, OnDestroy, ViewWillLeave {
   @ViewChild('fileInput') fileInput: ElementRef;
 
   private destroy$ = new Subject<void>();
@@ -69,6 +69,16 @@ export class EditProfilePage implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Inline ion-modals are teleported to <ion-app> while presented, so they are
+   * not removed with this page when the router destroys it. Close them before
+   * leaving, otherwise an orphaned (and unstyled) modal is left over the next page.
+   */
+  ionViewWillLeave() {
+    this.isCropperOpen = false;
+    this.showPasswordConfirmation = false;
   }
 
   private initializeForm() {

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertController, ToastController } from '@ionic/angular';
+import { AlertController, ToastController, ViewWillLeave } from '@ionic/angular';
 import { CollectionService, Collection } from '../../../service/collection.service';
 import { PaymentService, Payment } from '../../../service/payment.service';
 import { UserStateService } from '../../../service/user-state.service';
@@ -11,7 +11,7 @@ import { ClubService } from '../../../service/club.service';
   templateUrl: './collection-detail.page.html',
   styleUrls: ['./collection-detail.page.scss'],
 })
-export class CollectionDetailPage implements OnInit {
+export class CollectionDetailPage implements OnInit, ViewWillLeave {
   clubId: string = '';
   collectionId: string = '';
 
@@ -59,6 +59,15 @@ export class CollectionDetailPage implements OnInit {
     this.checkAdminStatus();
     this.loadCollection(autoOpenPayment);
     this.loadPayments();
+  }
+
+  /**
+   * Inline ion-modals are teleported to <ion-app> while presented, so they are
+   * not removed with this page when the router destroys it. Close them before
+   * leaving, otherwise an orphaned (and unstyled) modal is left over the next page.
+   */
+  ionViewWillLeave() {
+    this.showAddPaymentModal = false;
   }
 
   private checkAdminStatus() {
