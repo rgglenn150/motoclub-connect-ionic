@@ -6,13 +6,14 @@ import { ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
 import { UserService } from '../../service/user.service';
 import { UserStateService } from '../../service/user-state.service';
 import { Subject, takeUntil } from 'rxjs';
+import { ViewWillLeave } from '@ionic/angular';
 
 @Component({
   selector: 'app-me',
   templateUrl: './me.page.html',
   styleUrls: ['./me.page.scss'],
 })
-export class MePage implements OnInit, OnDestroy {
+export class MePage implements OnInit, OnDestroy, ViewWillLeave {
   @ViewChild('fileInput') fileInput: ElementRef;
   
   private destroy$ = new Subject<void>();
@@ -48,6 +49,15 @@ export class MePage implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Inline ion-modals are teleported to <ion-app> while presented, so they are
+   * not removed with this page when the router destroys it. Close them before
+   * leaving, otherwise an orphaned (and unstyled) modal is left over the next page.
+   */
+  ionViewWillLeave() {
+    this.isCropperOpen = false;
   }
 
   subscribeToUserState() {

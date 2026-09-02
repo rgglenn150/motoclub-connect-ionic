@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
-import { ToastController, AlertController, LoadingController } from '@ionic/angular';
+import { ToastController, AlertController, LoadingController, ViewWillLeave } from '@ionic/angular';
 
 import { ClubService, Club, ClubUpdateRequest } from '../../../service/club.service';
 import { AuthService } from '../../../service/auth.service';
@@ -16,7 +16,7 @@ import { LocationData } from '../../../components/mapbox-autocomplete/mapbox-aut
   templateUrl: './edit-club.page.html',
   styleUrls: ['./edit-club.page.scss'],
 })
-export class EditClubPage implements OnInit, OnDestroy {
+export class EditClubPage implements OnInit, OnDestroy, ViewWillLeave {
   @ViewChild('logoInput') logoInput: ElementRef;
 
   private destroy$ = new Subject<void>();
@@ -83,6 +83,15 @@ export class EditClubPage implements OnInit, OnDestroy {
     if (this.clubId) {
       this.loadClubData();
     }
+  }
+
+  /**
+   * Inline ion-modals are teleported to <ion-app> while presented, so they are
+   * not removed with this page when the router destroys it. Close them before
+   * leaving, otherwise an orphaned (and unstyled) modal is left over the next page.
+   */
+  ionViewWillLeave() {
+    this.showCropper = false;
   }
 
   ngOnDestroy() {

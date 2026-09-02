@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ViewWillEnter } from '@ionic/angular';
+import { ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   ClubService,
@@ -59,7 +59,7 @@ interface PinnedPost {
   templateUrl: './club-home.page.html',
   styleUrls: ['./club-home.page.scss'],
 })
-export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
+export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave {
   // --- STATE MANAGEMENT ---
   // Club ID from route parameter
   clubId: string | null = null;
@@ -231,6 +231,16 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter {
     if (this.clubId && this.selectedTab === 'tools') {
       this.loadCollections();
     }
+  }
+
+  /**
+   * Inline ion-modals are teleported to <ion-app> while presented, so they are
+   * not removed with this page when the router destroys it. Close them before
+   * leaving, otherwise an orphaned (and unstyled) modal is left over the next page.
+   */
+  ionViewWillLeave() {
+    this.showMembersModal = false;
+    this.showAddCollectionModal = false;
   }
 
   /**
