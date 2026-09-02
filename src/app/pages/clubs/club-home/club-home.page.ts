@@ -1,5 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { ViewWillEnter, ViewWillLeave } from '@ionic/angular';
+import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   ClubService,
@@ -203,6 +204,9 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   collectionForm: { name: string; description: string; targetAmount: number | null; visibility: 'public' | 'members_only' } = { name: '', description: '', targetAmount: null, visibility: 'members_only' };
   isSavingCollection = false;
 
+  // True while a marker history entry is on the stack for an open modal
+  private pushedModalHistoryState = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -215,7 +219,8 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
     private networkService: NetworkService,
     private errorService: ErrorService,
     private userStateService: UserStateService,
-    private collectionService: CollectionService
+    private collectionService: CollectionService,
+    private location: Location
   ) {}
 
   ngOnInit() {
@@ -239,8 +244,41 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
    * leaving, otherwise an orphaned (and unstyled) modal is left over the next page.
    */
   ionViewWillLeave() {
+    // Drop the marker without touching history: the navigation that is already
+    // in flight owns the history stack at this point.
+    this.pushedModalHistoryState = false;
     this.showMembersModal = false;
     this.showAddCollectionModal = false;
+  }
+
+  /**
+   * A back press (browser or hardware) pops the marker entry pushed when a
+   * modal was opened, so it closes the modal instead of leaving the page.
+   */
+  @HostListener('window:popstate')
+  onBrowserBack() {
+    if (!this.pushedModalHistoryState) return;
+    this.pushedModalHistoryState = false;
+    this.showMembersModal = false;
+    this.showAddCollectionModal = false;
+  }
+
+  /**
+   * Inline ion-modals are not router pages, so back would otherwise navigate
+   * away from the club page. Pushing a marker history entry (same URL, so the
+   * router ignores the resulting popstate) gives back something to consume.
+   */
+  private pushModalHistoryState() {
+    if (this.pushedModalHistoryState) return;
+    history.pushState({ ...history.state, modalOpen: true }, '');
+    this.pushedModalHistoryState = true;
+  }
+
+  /** Remove the marker entry when a modal is closed by any other means. */
+  private popModalHistoryState() {
+    if (!this.pushedModalHistoryState) return;
+    this.pushedModalHistoryState = false;
+    this.location.back();
   }
 
   /**
@@ -2168,6 +2206,7 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
     }
 
     this.showMembersModal = true;
+    this.pushModalHistoryState();
 
     // Load admin data when modal opens (if not already loaded)
     if (this.clubMembers.length === 0 && !this.membersLoading) {
@@ -2180,6 +2219,7 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
    */
   closeMembersModal() {
     this.showMembersModal = false;
+    this.popModalHistoryState();
   }
 
   // --- ERROR DISPLAY HELPERS ---
@@ -2233,10 +2273,12 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   openAddCollectionModal() {
     this.collectionForm = { name: '', description: '', targetAmount: null, visibility: 'members_only' };
     this.showAddCollectionModal = true;
+    this.pushModalHistoryState();
   }
 
   closeAddCollectionModal() {
     this.showAddCollectionModal = false;
+    this.popModalHistoryState();
   }
 
   saveCollection() {
