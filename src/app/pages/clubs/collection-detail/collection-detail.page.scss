@@ -283,3 +283,23 @@ ion-card {
   h4 { margin: 0 0 8px; }
   p { margin: 0; font-size: 14px; }
 }
+
+// Add Payment fields wait while a receipt is read (spec 006 US4).
+.payment-fields {
+  position: relative;
+  transition: opacity 0.2s, filter 0.2s;
+
+  &.frosted ion-item {
+    opacity: 0.45;
+    filter: blur(1px);
+  }
+
+  .frosted-note {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #FBD38D;
+    font-size: 14px;
+  }
+}
