@@ -17,6 +17,11 @@ describe('progressPercents', () => {
     expect(progressPercents(12000, 500, 10000)).toEqual({ confirmedPct: 100, pendingPct: 0 });
   });
 
+  it('never draws negative segments', () => {
+    expect(progressPercents(-500, -200, 10000)).toEqual({ confirmedPct: 0, pendingPct: 0 });
+    expect(progressPercents(1000, -200, 10000)).toEqual({ confirmedPct: 10, pendingPct: 0 });
+  });
+
   it('returns null without a positive target', () => {
     expect(progressPercents(500, 0, undefined)).toBeNull();
     expect(progressPercents(500, 0, 0)).toBeNull();

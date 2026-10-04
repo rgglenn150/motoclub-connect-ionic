@@ -15,8 +15,9 @@ export interface ProgressPercents {
  */
 export function progressPercents(confirmed: number, pending: number, target?: number): ProgressPercents | null {
   if (!target || target <= 0) return null;
-  const confirmedPct = Math.min(100, (confirmed / target) * 100);
-  const pendingPct = Math.min(100 - confirmedPct, (pending / target) * 100);
+  // Clamped at 0 too: a bad stored amount must never draw a negative segment.
+  const confirmedPct = Math.max(0, Math.min(100, (confirmed / target) * 100));
+  const pendingPct = Math.max(0, Math.min(100 - confirmedPct, (pending / target) * 100));
   return { confirmedPct, pendingPct };
 }
 
