@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Payment } from '../models/payment.model';
+import { BulkVerifyResponse, StatementCheckResponse } from '../models/statement-check.model';
 
 export type { Payment };
 
@@ -35,6 +36,22 @@ export class PaymentService {
 
   deletePayment(paymentId: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${paymentId}`);
+  }
+
+  /**
+   * Check the collection's awaiting payments against a GCash statement (spec 004).
+   * The password is sent only when given, and the server never stores either.
+   */
+  checkStatement(collectionId: string, file: File, password?: string): Observable<StatementCheckResponse> {
+    const formData = new FormData();
+    formData.append('statement', file);
+    if (password) formData.append('password', password);
+    return this.http.post<StatementCheckResponse>(`${this.baseUrl}/collection/${collectionId}/statement-check`, formData);
+  }
+
+  /** Verify the chosen payments in one request; already-reviewed ones come back as skipped (spec 004). */
+  bulkVerify(collectionId: string, paymentIds: string[]): Observable<BulkVerifyResponse> {
+    return this.http.post<BulkVerifyResponse>(`${this.baseUrl}/collection/${collectionId}/bulk-verify`, { paymentIds });
   }
 
   extractReceipt(file: File): Observable<{ name: string; amount: number; referenceNumber: string; phoneNumber: string; transactionDateTime: string }> {
