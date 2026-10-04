@@ -1,0 +1,85 @@
+<div class="payment-details" *ngIf="payment">
+  <div class="summary">
+    <span class="amount">{{ payment.amount | currency:'PHP':'symbol':'1.0-2' }}</span>
+    <ion-badge
+      [color]="payment.status === 'confirmed' ? 'success' : payment.status === 'rejected' ? 'danger' : 'warning'">
+      {{ payment.status | paymentStatus }}
+    </ion-badge>
+  </div>
+
+  <dl class="fields">
+    <div class="field">
+      <dt>Name</dt>
+      <dd>{{ payment.name }}</dd>
+    </div>
+    <div class="field" *ngIf="payment.accountName">
+      <dt>Account name</dt>
+      <dd>{{ payment.accountName }}</dd>
+    </div>
+    <div class="field">
+      <dt>Reference number</dt>
+      <dd class="reference">
+        <span class="reference-value">{{ payment.referenceNumber }}</span>
+        <ion-button fill="clear" size="small" class="copy-ref tap-target" aria-label="Copy reference number" (click)="copyRef.emit()">
+          <ion-icon slot="icon-only" name="copy-outline"></ion-icon>
+        </ion-button>
+      </dd>
+    </div>
+    <div class="field" *ngIf="payment.phoneNumber">
+      <dt>Phone</dt>
+      <dd>{{ payment.phoneNumber }}</dd>
+    </div>
+    <div class="field" *ngIf="payment.transactionDate || payment.createdAt">
+      <dt>Paid on</dt>
+      <dd>{{ (payment.transactionDate || payment.createdAt) | date:'MMM d, y, h:mm a' }}</dd>
+    </div>
+    <div class="field" *ngIf="payment.description">
+      <dt>Description</dt>
+      <dd>{{ payment.description }}</dd>
+    </div>
+    <div class="field">
+      <dt>Submitted by</dt>
+      <dd>{{ payment.createdBy?.username || 'Submitted without signing in' }}</dd>
+    </div>
+  </dl>
+
+  <div class="receipt-block">
+    <h3>Receipt</h3>
+    <ng-container *ngIf="payment.receiptUrl; else noReceipt">
+      <img
+        *ngIf="!receiptFailed"
+        class="receipt"
+        [src]="payment.receiptUrl"
+        alt="Payment receipt — tap to open full size"
+        (click)="openReceipt.emit()"
+        (error)="receiptFailed = true"
+      />
+      <p class="hint" *ngIf="!receiptFailed">Tap the receipt to open it full size.</p>
+      <div class="receipt-error" *ngIf="receiptFailed">
+        <span>Couldn't load the receipt.</span>
+        <ion-button size="small" fill="outline" class="receipt-retry tap-target" (click)="retryReceipt()">Retry</ion-button>
+      </div>
+    </ng-container>
+    <ng-template #noReceipt>
+      <p class="no-receipt">No receipt attached.</p>
+    </ng-template>
+  </div>
+
+  <div class="actions" *ngIf="canReview || canDelete">
+    <p class="final-note" *ngIf="canReview">Verifying or rejecting is final. To undo it later, delete the payment and add it again.</p>
+    <div class="review" *ngIf="canReview">
+      <ion-button expand="block" color="success" class="verify tap-target" [disabled]="busy" (click)="verify.emit()">
+        <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
+        Verify
+      </ion-button>
+      <ion-button expand="block" color="danger" fill="outline" class="reject tap-target" [disabled]="busy" (click)="reject.emit()">
+        <ion-icon slot="start" name="close-circle-outline"></ion-icon>
+        Reject
+      </ion-button>
+    </div>
+    <ion-button *ngIf="canDelete" expand="block" fill="clear" color="danger" class="delete tap-target" [disabled]="busy" (click)="remove.emit()">
+      <ion-icon slot="start" name="trash-outline"></ion-icon>
+      Delete payment
+    </ion-button>
+  </div>
+</div>

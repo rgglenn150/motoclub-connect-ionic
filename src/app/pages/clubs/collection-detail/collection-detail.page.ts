@@ -37,6 +37,10 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
   isExtractingReceipt = false;
   isSavingPayment = false;
 
+  // Payment dialog (spec 003): admins, and the payer for their own payment.
+  showPaymentModal = false;
+  selectedPayment: Payment | null = null;
+
   get clubName(): string | null {
     return this.collection?.clubName || null;
   }
@@ -68,6 +72,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
    */
   ionViewWillLeave() {
     this.showAddPaymentModal = false;
+    this.showPaymentModal = false;
   }
 
   private checkAdminStatus() {
@@ -124,6 +129,18 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+
+  /** Opens the payment dialog when this viewer may see the details (spec 003 FR-009, FR-014). */
+  openPayment(payment: Payment) {
+    if (!payment.detailsVisible) return;
+    this.selectedPayment = payment;
+    this.showPaymentModal = true;
+  }
+
+  closePayment() {
+    this.showPaymentModal = false;
+    this.selectedPayment = null;
   }
 
   openAddPaymentModal() {
@@ -198,40 +215,100 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     });
   }
 
+  // --- Payment dialog actions (spec 003, US2 + US4) -------------------------
+
+  isPaymentActionBusy = false;
+
+  /** Admin, and the open payment is still awaiting verification. */
+  get canReview(): boolean {
+    return this.isAdmin && this.selectedPayment?.status === 'pending';
+  }
+
+  /** Admins may delete any payment; payers only read their own. */
+  get canDelete(): boolean {
+    return this.isAdmin && !!this.selectedPayment;
+  }
+
+  verifyPayment() {
+    return this.resolveSelected('confirmed');
+  }
+
+  rejectPayment() {
+    return this.resolveSelected('rejected');
+  }
+
   /**
-   * Resolve a pending payment. Confirmed and rejected are final (spec 001,
-   * Story 5): a mistake is fixed by deleting the payment and adding it again.
+   * Verify or reject the open payment after confirming it's final (spec 001
+   * Story 5: a mistake is fixed by deleting the payment and adding it again).
    */
-  async changeStatus(payment: Payment) {
-    if (payment.status !== 'pending') return;
+  private async resolveSelected(status: PaymentResolution) {
+    const payment = this.selectedPayment;
+    if (!payment || !this.canReview) return;
+    const label = status === 'confirmed' ? 'Verify' : 'Reject';
     const alert = await this.alertController.create({
-      header: 'Review Payment',
-      message: 'This is final. To undo it later, delete the payment and add it again.',
-      inputs: [
-        { type: 'radio', label: 'Confirm', value: 'confirmed', checked: true },
-        { type: 'radio', label: 'Reject',  value: 'rejected' },
+      header: `${label} payment?`,
+      message: `${label} ${payment.name}'s payment? This is final. To undo it later, delete the payment and add it again.`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { text: label, handler: () => this.sendStatus(payment, status) },
       ],
+    });
+    await alert.present();
+  }
+
+  private sendStatus(payment: Payment, status: PaymentResolution) {
+    this.isPaymentActionBusy = true;
+    this.paymentService.updateStatus(payment._id, status).subscribe({
+      next: (res) => {
+        this.isPaymentActionBusy = false;
+        this.applyStatus(payment, res.payment.status);
+        this.loadCollection();
+      },
+      error: async (err: HttpErrorResponse) => {
+        this.isPaymentActionBusy = false;
+        let message = 'Failed to update the payment.';
+        if (err.status === 409) {
+          // Already decided (e.g. by another admin): show what the server has.
+          const conflict = err.error as PaymentStatusConflict;
+          this.applyStatus(payment, conflict.status);
+          message = conflict.message;
+          this.loadCollection();
+        }
+        const toast = await this.toastController.create({ message, duration: 3000, color: 'danger' });
+        await toast.present();
+      }
+    });
+  }
+
+  private applyStatus(payment: Payment, status: Payment['status']) {
+    payment.status = status;
+    const listed = this.payments.find(p => p._id === payment._id);
+    if (listed) listed.status = status;
+  }
+
+  async deleteSelected() {
+    const payment = this.selectedPayment;
+    if (!payment || !this.canDelete) return;
+    const alert = await this.alertController.create({
+      header: 'Delete payment?',
+      message: `Remove ${payment.name}'s payment of ₱${payment.amount.toLocaleString('en-PH')}? This can't be undone.`,
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         {
-          text: 'Save',
-          handler: (status: PaymentResolution) => {
-            if (!status) return;
-            this.paymentService.updateStatus(payment._id, status).subscribe({
-              next: (res) => {
-                payment.status = res.payment.status;
+          text: 'Delete',
+          role: 'destructive',
+          handler: () => {
+            this.isPaymentActionBusy = true;
+            this.paymentService.deletePayment(payment._id).subscribe({
+              next: () => {
+                this.isPaymentActionBusy = false;
+                this.payments = this.payments.filter(p => p._id !== payment._id);
+                this.closePayment();
                 this.loadCollection();
               },
-              error: async (err: HttpErrorResponse) => {
-                let message = 'Failed to update status';
-                if (err.status === 409) {
-                  // Already resolved (e.g. by another admin): show what the server has.
-                  const conflict = err.error as PaymentStatusConflict;
-                  payment.status = conflict.status;
-                  message = conflict.message;
-                  this.loadCollection();
-                }
-                const toast = await this.toastController.create({ message, duration: 3000, color: 'danger' });
+              error: async () => {
+                this.isPaymentActionBusy = false;
+                const toast = await this.toastController.create({ message: 'Failed to delete the payment.', duration: 2000, color: 'danger' });
                 await toast.present();
               }
             });
@@ -240,6 +317,26 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
       ]
     });
     await alert.present();
+  }
+
+  /** Copy the reference so admins can check it in GCash or a bank app (spec 003 FR-010). */
+  async copyReference() {
+    const ref = this.selectedPayment?.referenceNumber;
+    if (!ref) return;
+    let message = 'Reference number copied';
+    try {
+      await navigator.clipboard.writeText(ref);
+    } catch {
+      message = "Couldn't copy. Press and hold the number to select it.";
+    }
+    const toast = await this.toastController.create({ message, duration: 2000, position: 'top' });
+    await toast.present();
+  }
+
+  /** A separate tab gets the browser's own pinch-zoom (the app viewport disables it). */
+  openReceipt() {
+    const url = this.selectedPayment?.receiptUrl;
+    if (url) window.open(url, '_blank', 'noopener');
   }
 
   async deleteCollection() {
@@ -261,33 +358,6 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
               error: async (err) => {
                 const msg = err?.error?.message || 'Failed to delete collection.';
                 const toast = await this.toastController.create({ message: msg, duration: 3000, color: 'danger', position: 'top' });
-                await toast.present();
-              }
-            });
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
-
-  async deletePayment(payment: Payment) {
-    const alert = await this.alertController.create({
-      header: 'Delete Payment',
-      message: `Remove payment from ${payment.name}?`,
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: 'Delete',
-          role: 'destructive',
-          handler: () => {
-            this.paymentService.deletePayment(payment._id).subscribe({
-              next: () => {
-                this.payments = this.payments.filter(p => p._id !== payment._id);
-                this.loadCollection();
-              },
-              error: async () => {
-                const toast = await this.toastController.create({ message: 'Failed to delete payment', duration: 2000, color: 'danger' });
                 await toast.present();
               }
             });
