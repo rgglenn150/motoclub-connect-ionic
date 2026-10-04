@@ -54,14 +54,23 @@ export async function handle(request, { env = {}, fetchImpl = fetch, timeoutMs =
   if (ip) headers['x-share-client-ip'] = ip;
   if (env.SHARE_PROXY_SECRET) headers['x-share-proxy-secret'] = env.SHARE_PROXY_SECRET;
 
-  const upstream = await fetchImpl(`${base}/share/collection/${collectionId}`, {
-    headers,
-    redirect: 'manual',
-    signal: AbortSignal.timeout(timeoutMs),
-  });
+  let upstream;
+  try {
+    upstream = await fetchImpl(`${base}/share/collection/${collectionId}`, {
+      headers,
+      redirect: 'manual',
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch {
+    // Backend down or too slow: today's generic page beats an error (FR-007).
+    return undefined;
+  }
+
+  const contentType = upstream.headers.get('content-type') || '';
+  if (upstream.status !== 200 || !contentType.startsWith('text/html')) return undefined;
 
   // Pass on only what a preview needs; never the backend's session cookie.
-  const out = new Headers({ 'content-type': upstream.headers.get('content-type') || 'text/html; charset=utf-8' });
+  const out = new Headers({ 'content-type': contentType });
   const cacheControl = upstream.headers.get('cache-control');
   if (cacheControl) out.set('cache-control', cacheControl);
   return new Response(await upstream.text(), { status: 200, headers: out });
