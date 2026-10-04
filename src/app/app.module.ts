@@ -12,21 +12,28 @@ import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 
-// Import HttpClientModule and the interceptor provider
+// Import HttpClientModule and the interceptor providers
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { TokenInterceptor } from './service/token.interceptor';
+import { ErrorInterceptor } from './interceptor/error.interceptor';
 
-import { MePageModule } from './page/me/me.module';
-import { HomePageModule } from './page/home/home.module';
-import { RegisterPageModule } from './page/register/register.module';
+import { MePageModule } from './pages/me/me.module';
+import { HomePageModule } from './pages/home/home.module';
+import { RegisterPageModule } from './pages/register/register.module';
 import { Tab3PageModule } from './tab3/tab3.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { CreateGroupPageModule } from './page/groups/create-group/create-group.module';
+import { CreateClubPageModule } from './pages/clubs/create-club/create-club.module';
 import { Tab1PageModule } from './tab1/tab1.module';
 import { Tab2PageModule } from './tab2/tab2.module';
-import { RegisterPageRoutingModule } from './page/register/register-routing.module';
-import { CreateGroupPageRoutingModule } from './page/groups/create-group/create-group-routing.module';
+import { RegisterPageRoutingModule } from './pages/register/register-routing.module';
+import { CreateClubPageRoutingModule } from './pages/clubs/create-club/create-club-routing.module';
 import { ServiceWorkerModule } from '@angular/service-worker';
+import { LottieComponent, provideLottieOptions } from 'ngx-lottie';
+import player from 'lottie-web';
+
+export function playerFactory() {
+  return player;
+}
 
 @NgModule({
   declarations: [AppComponent],
@@ -43,8 +50,8 @@ import { ServiceWorkerModule } from '@angular/service-worker';
     Tab2PageModule,
     Tab3PageModule,
     FormsModule,
-    CreateGroupPageModule,
-    CreateGroupPageRoutingModule,
+    CreateClubPageModule,
+    CreateClubPageRoutingModule,
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
@@ -52,12 +59,18 @@ import { ServiceWorkerModule } from '@angular/service-worker';
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    // Add the HTTP_INTERCEPTORS provider here
+    // Add the HTTP_INTERCEPTORS providers here
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TokenInterceptor,
       multi: true,
     },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptor,
+      multi: true,
+    },
+    provideLottieOptions({ player: playerFactory }),
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],

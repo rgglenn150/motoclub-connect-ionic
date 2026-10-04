@@ -7,6 +7,7 @@ import { ExploreContainerComponentModule } from '../explore-container/explore-co
 
 import { Tab2PageRoutingModule } from './tab2-routing.module';
 import { ClubListComponent } from '../components/clubs/club-list/club-list.component';
+import { SharedModule } from '../shared/shared.module';
 
 
 @NgModule({
@@ -15,7 +16,8 @@ import { ClubListComponent } from '../components/clubs/club-list/club-list.compo
     CommonModule,
     FormsModule,
     ExploreContainerComponentModule,
-    Tab2PageRoutingModule
+    Tab2PageRoutingModule,
+    SharedModule
   ],
   // Add ClubListComponent to declarations
   declarations: [Tab2Page, ClubListComponent]

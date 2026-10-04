@@ -1,0 +1,233 @@
+/**
+ * Club-related interfaces and types for the Motoclub Connect application
+ */
+
+export interface Geolocation {
+  latitude: number;
+  longitude: number;
+  placeName: string;
+}
+
+/**
+ * Main Club interface representing the complete club data structure
+ */
+export interface Club {
+  _id?: string;
+  id?: string; // For compatibility with frontend routing
+  clubName: string;
+  description: string;
+  location?: string;
+  geolocation?: Geolocation;
+  isPrivate: boolean;
+  members?: ClubMember[]; // More specific typing for members
+  memberCount?: number; // Computed member count from API
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  logoUrl?: string; // For club logo display
+}
+
+/**
+ * Interface for club update requests
+ * All fields are optional to support partial updates
+ */
+export interface ClubUpdateRequest {
+  clubName?: string;
+  description?: string;
+  location?: string;
+  geolocation?: Geolocation;
+  isPrivate?: boolean;
+}
+
+/**
+ * Interface for club creation requests
+ * Required fields for creating a new club
+ */
+export interface ClubCreateRequest {
+  clubName: string;
+  description: string;
+  location?: string;
+  geolocation?: Geolocation;
+  isPrivate: boolean;
+}
+
+/**
+ * Interface for club name availability check response
+ */
+export interface ClubAvailabilityCheck {
+  available: boolean;
+  message?: string;
+}
+
+/**
+ * Interface for club member data
+ */
+export interface ClubMember {
+  _id: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    profilePicture?: string;
+  };
+  club: string;
+  role: 'member' | 'admin';
+  joinedAt: string;
+}
+
+/**
+ * Interface for join request data
+ */
+export interface JoinRequest {
+  _id: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    profilePicture?: string;
+  };
+  club: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt?: string;
+}
+
+/**
+ * Paginated response from the clubs API
+ */
+export interface PaginatedClubsResponse {
+  message: string;
+  clubs: Club[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+/**
+ * Interface for club search and filtering
+ */
+export interface ClubSearchCriteria {
+  name?: string;
+  location?: string;
+  isPrivate?: boolean;
+  radius?: number; // For geolocation-based search
+  latitude?: number;
+  longitude?: number;
+}
+
+/**
+ * Interface for club statistics and metrics
+ */
+export interface ClubStats {
+  memberCount: number;
+  eventCount: number;
+  upcomingEventCount: number;
+  joinRequestCount?: number; // Only for admins
+}
+
+/**
+ * Validation result interface
+ */
+export interface ValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+/**
+ * Multi-field validation result interface
+ */
+export interface MultiValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+/**
+ * Club visibility options
+ */
+export enum ClubVisibility {
+  PUBLIC = 0,
+  PRIVATE = 1
+}
+
+/**
+ * Club member roles
+ */
+export enum ClubRole {
+  MEMBER = 'member',
+  ADMIN = 'admin'
+}
+
+/**
+ * Join request status options
+ */
+export enum JoinRequestStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected'
+}
+
+/**
+ * Location coordinates interface
+ */
+export interface LocationCoordinates {
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Options for nearby clubs search
+ */
+export interface NearbyClubsOptions {
+  radius?: number;
+  limit?: number;
+  includePrivate?: boolean;
+  useUserLocation?: boolean;
+  fallbackCoordinates?: LocationCoordinates;
+  enableHighAccuracy?: boolean;
+  maxLocationAttempts?: number;
+}
+
+/**
+ * Distance information for nearby clubs
+ */
+export interface DistanceInfo {
+  value: number;
+  unit: 'km' | 'miles';
+  formatted: string;
+}
+
+/**
+ * Club with distance information for nearby search results
+ */
+export interface ClubWithDistance extends Club {
+  distance: DistanceInfo;
+  memberCount: number;
+  bearing?: number;
+}
+
+/**
+ * User location information with source tracking
+ */
+export interface UserLocationInfo {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  source: 'gps' | 'fallback' | 'cached';
+}
+
+/**
+ * Response structure for nearby clubs API call
+ */
+export interface NearbyClubsResponse {
+  clubs: ClubWithDistance[];
+  userLocation: UserLocationInfo;
+  searchRadius: number;
+  totalCount: number;
+  message?: string;
+}

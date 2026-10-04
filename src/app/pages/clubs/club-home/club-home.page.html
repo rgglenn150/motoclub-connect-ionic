@@ -1,0 +1,707 @@
+<ion-header class="ion-no-border club-header">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <!-- Edit Club Button - Only show for admins -->
+      <ion-button *ngIf="isUserAdmin && !isLoading && !statusLoading" (click)="navigateToEditClub()" fill="clear" color="light">
+        <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+      </ion-button>
+      <ion-button routerLink="/tabs/home" routerDirection="root" fill="clear" color="light">
+        <ion-icon slot="icon-only" name="home-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Skeleton Loader for Header -->
+  <div *ngIf="isLoading || statusLoading" class="club-header-content skeleton-header">
+    <div class="cover-photo-container">
+      <ion-skeleton-text animated class="cover-photo-skeleton"></ion-skeleton-text>
+      <div class="gradient-overlay"></div>
+    </div>
+    <ion-skeleton-text animated class="club-avatar-skeleton"></ion-skeleton-text>
+    <div class="header-actions">
+      <ion-skeleton-text animated class="join-button-skeleton"></ion-skeleton-text>
+    </div>
+    <div class="club-info">
+      <ion-skeleton-text animated style="width: 70%; height: 32px; margin-bottom: 8px;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width: 50%; height: 16px;"></ion-skeleton-text>
+    </div>
+  </div>
+
+  <!-- Actual Header Content -->
+  <div *ngIf="!isLoading && !statusLoading" class="club-header-content">
+    <div class="cover-photo-container">
+      <img [src]="club.coverPhotoUrl | cloudinaryUrl:'w_800,c_limit'" class="cover-photo" alt="Club Cover Photo" loading="lazy" />
+      <div class="gradient-overlay"></div>
+    </div>
+    <ion-avatar class="club-avatar">
+      <img [src]="club.logoUrl | cloudinaryUrl:'w_80,h_80,c_fill'" alt="Club Logo" loading="lazy" />
+    </ion-avatar>
+    <div class="header-actions">
+      <!-- Admin settings button (separate from join button for better UX) -->
+      <!--  <ion-button *ngIf="isUserAdmin" fill="clear" color="light">
+        <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+      </ion-button> -->
+      <!-- Smart Join Button - Always visible with dynamic content -->
+      <ion-button [color]="getJoinButtonColor()" shape="round" [disabled]="isJoinButtonDisabled()"
+        [class.loading-button]="shouldShowSpinner()" (click)="handleJoinButtonClick()"> <!-- Loading spinner -->
+        <ion-spinner *ngIf="shouldShowSpinner()" name="crescent" size="small"></ion-spinner>
+
+        <!-- Button icon (when not loading) -->
+        <ion-icon *ngIf="!shouldShowSpinner() && getJoinButtonIcon()"
+          [slot]="getJoinButtonText().length > 8 ? 'start' : 'icon-only'" [name]="getJoinButtonIcon()">
+        </ion-icon>
+
+        <!-- Button text (when not icon-only) -->
+        <span *ngIf="!shouldShowSpinner() && getJoinButtonText().length > 0"
+          [style.margin-left.px]="getJoinButtonIcon() && getJoinButtonText().length > 8 ? 8 : 0">
+          {{ getJoinButtonText() }}
+        </span>
+
+        <!-- Loading text -->
+        <span *ngIf="shouldShowSpinner()" style="margin-left: 8px;">
+          {{ getJoinButtonText() }}
+        </span>
+      </ion-button>
+    </div>
+    <div class="club-info">
+      <h1 class="club-name">{{ club.name }}</h1>
+      <div class="club-meta">
+        <ion-icon name="location-sharp"></ion-icon> {{ club.location }} &middot; {{ club.memberCount }} Members
+      </div>
+    </div>
+  </div>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- Pull to Refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content pullingIcon="chevron-down-circle-outline" pullingText="Pull to refresh"
+      refreshingSpinner="crescent" refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
+
+  <div class="page-content-wrapper">
+
+  <!-- Loading State - Only show when not refreshing -->
+  <div *ngIf="(isLoading || statusLoading) && !isRefreshing" class="loading-container">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <p *ngIf="isLoading && !statusLoading">Loading club details...</p>
+    <p *ngIf="statusLoading && !isLoading">Checking membership status...</p>
+    <p *ngIf="isLoading && statusLoading">Loading club details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="hasError" class="error-container">
+    <ion-icon name="alert-circle-outline" color="danger" size="large"></ion-icon>
+    <h3>Unable to Load Club</h3>
+    <p>{{ errorMessage }}</p>
+    <ion-button color="primary" (click)="clubId && fetchClubData(clubId)">
+      <ion-icon slot="start" name="refresh"></ion-icon>
+      Try Again
+    </ion-button>
+  </div>
+
+  <!-- Skeleton Loader for Segments and Content -->
+  <ng-container *ngIf="(isLoading || statusLoading) && !isRefreshing && !hasError">
+    <!-- Skeleton Segment -->
+    <div class="segment-skeleton">
+      <ion-skeleton-text animated
+        style="width: 100%; height: 48px; border-radius: 12px; margin: 20px;"></ion-skeleton-text>
+    </div>
+
+    <!-- Skeleton Content based on selected tab -->
+    <div class="content-skeleton">
+      <!-- Feed Skeleton -->
+      <ion-card class="asphalt-card-skeleton">
+        <div class="card-header-row">
+          <div class="card-text">
+            <ion-skeleton-text animated style="width: 40%; height: 16px; margin-bottom: 6px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 70%; height: 20px;"></ion-skeleton-text>
+          </div>
+          <ion-skeleton-text animated class="club-thumbnail-skeleton"></ion-skeleton-text>
+        </div>
+        <ion-skeleton-text animated style="width: 90%; margin: 8px 16px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 80%; margin: 0 16px 16px;"></ion-skeleton-text>
+        <div class="footer-skeleton">
+          <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
+        </div>
+      </ion-card>
+
+      <!-- Another card -->
+      <ion-card class="asphalt-card-skeleton">
+        <div class="card-header-row">
+          <div class="card-text">
+            <ion-skeleton-text animated style="width: 50%; height: 16px; margin-bottom: 6px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 60%; height: 20px;"></ion-skeleton-text>
+          </div>
+          <ion-skeleton-text animated class="club-thumbnail-skeleton"></ion-skeleton-text>
+        </div>
+        <div class="footer-skeleton">
+          <ion-skeleton-text animated style="width: 35%; height: 20px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 25%; height: 20px;"></ion-skeleton-text>
+        </div>
+      </ion-card>
+    </div>
+  </ng-container>
+
+  <!-- Main Content -->
+  <ng-container *ngIf="canViewContent && !isLoading && !hasError; else privateView">
+    <ion-segment [value]="selectedTab" (ionChange)="segmentChanged($event)">
+      <ion-segment-button value="feed">
+        <ion-icon name="newspaper"></ion-icon>
+      </ion-segment-button>
+      <ion-segment-button value="members">
+        <ion-icon name="people"></ion-icon>
+      </ion-segment-button>
+      <ion-segment-button value="events">
+        <ion-icon name="calendar"></ion-icon>
+      </ion-segment-button>
+      <ion-segment-button value="tools">
+        <ion-icon name="construct"></ion-icon>
+      </ion-segment-button>
+    </ion-segment>
+
+    <div [ngSwitch]="selectedTab">
+      <div *ngSwitchCase="'feed'">
+        <ion-card class="asphalt-card pinned-announcement" *ngIf="pinnedPost">
+          <ion-card-header>
+            <ion-card-subtitle class="pinned-subtitle">
+              <ion-icon name="pin"></ion-icon> PINNED ANNOUNCEMENT
+            </ion-card-subtitle>
+            <ion-card-title>{{ pinnedPost.title }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>{{ pinnedPost.content }}</ion-card-content>
+        </ion-card>
+
+        <!-- Operation-specific error indicators -->
+        <div *ngIf="operationErrors.clubData && canViewContent" class="operation-error">
+          <ion-item lines="none" class="error-item">
+            <ion-icon [name]="getErrorIcon(operationErrors.clubData)" [color]="getErrorColor(operationErrors.clubData)"
+              slot="start">
+            </ion-icon>
+            <ion-label>
+              <h4>Club data may be outdated</h4>
+              <p>{{ getErrorMessage(operationErrors.clubData) }}</p>
+            </ion-label>
+            <ion-button *ngIf="shouldShowRetryButton(operationErrors.clubData)" slot="end" fill="clear" size="small"
+              (click)="retryFetchClubData()">
+              <ion-icon name="refresh-outline"></ion-icon>
+            </ion-button>
+          </ion-item>
+        </div>
+
+        <!-- Feed content will be implemented later - for now just show pinned post -->
+        <!-- Future: Add club posts, activities, updates, etc. -->
+      </div>
+
+      <div *ngSwitchCase="'members'">
+        <!-- Join Requests Section (Admin Only) -->
+        <div *ngIf="isUserAdmin" class="admin-section">
+          <ion-card class="asphalt-card">
+            <ion-card-header>
+              <div class="section-header">
+                <ion-card-title>
+                  <ion-icon name="person-add-outline"></ion-icon>
+                  Join Requests
+                </ion-card-title>
+                <ion-badge *ngIf="joinRequests.length > 0" color="brand-amber">{{ joinRequests.length }}</ion-badge>
+              </div>
+            </ion-card-header>
+
+            <ion-card-content>
+              <!-- Join Operation Error State -->
+              <div *ngIf="operationErrors.joinOperation" class="operation-error join-error">
+                <ion-item lines="none" class="error-item">
+                  <ion-icon [name]="getErrorIcon(operationErrors.joinOperation)"
+                    [color]="getErrorColor(operationErrors.joinOperation)" slot="start">
+                  </ion-icon>
+                  <ion-label>
+                    <h4>Join Operation Failed</h4>
+                    <p>{{ getErrorMessage(operationErrors.joinOperation) }}</p>
+                  </ion-label>
+                  <ion-button *ngIf="shouldShowRetryButton(operationErrors.joinOperation)" slot="end" fill="clear"
+                    size="small" color="primary" (click)="retryJoinClub()" [disabled]="isRetrying">
+                    <ion-spinner *ngIf="isRetrying" name="crescent" size="small"></ion-spinner>
+                    <ion-icon *ngIf="!isRetrying" name="refresh-outline"></ion-icon>
+                  </ion-button>
+                </ion-item>
+              </div>
+
+              <!-- Loading State with Skeleton -->
+              <div *ngIf="joinRequestsLoading" class="loading-state">
+                <!-- Skeleton for join requests -->
+                <div class="requests-skeleton">
+                  <ion-item class="request-item-skeleton" *ngFor="let i of [1,2]">
+                    <ion-avatar slot="start">
+                      <ion-skeleton-text animated></ion-skeleton-text>
+                    </ion-avatar>
+                    <ion-label>
+                      <ion-skeleton-text animated
+                        style="width: 60%; height: 18px; margin-bottom: 4px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated
+                        style="width: 80%; height: 14px; margin-bottom: 2px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 45%; height: 12px;"></ion-skeleton-text>
+                    </ion-label>
+                    <div slot="end" class="request-actions-skeleton">
+                      <ion-skeleton-text animated
+                        style="width: 80px; height: 32px; border-radius: 8px; margin-right: 8px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated
+                        style="width: 70px; height: 32px; border-radius: 8px;"></ion-skeleton-text>
+                    </div>
+                  </ion-item>
+                </div>
+              </div>
+
+              <!-- Admin Operations Error State -->
+              <div *ngIf="operationErrors.adminOperations" class="operation-error admin-error">
+                <ion-item lines="none" class="error-item">
+                  <ion-icon [name]="getErrorIcon(operationErrors.adminOperations)"
+                    [color]="getErrorColor(operationErrors.adminOperations)" slot="start">
+                  </ion-icon>
+                  <ion-label>
+                    <h4>Admin Operation Failed</h4>
+                    <p>{{ getErrorMessage(operationErrors.adminOperations) }}</p>
+                  </ion-label>
+                  <ion-button *ngIf="shouldShowRetryButton(operationErrors.adminOperations)" slot="end" fill="clear"
+                    size="small" (click)="loadAdminData()" [disabled]="isRetrying">
+                    <ion-spinner *ngIf="isRetrying" name="crescent" size="small"></ion-spinner>
+                    <ion-icon *ngIf="!isRetrying" name="refresh-outline"></ion-icon>
+                  </ion-button>
+                </ion-item>
+              </div>
+
+              <!-- Empty State -->
+              <div *ngIf="!joinRequestsLoading && joinRequests.length === 0 && !operationErrors.adminOperations"
+                class="empty-state">
+                <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
+                <h4>No Pending Requests</h4>
+                <p>All join requests have been processed.</p>
+              </div>
+
+              <!-- Join Requests List -->
+              <div *ngIf="!joinRequestsLoading && joinRequests.length > 0">
+                <ion-item *ngFor="let request of joinRequests" class="request-item">
+                  <ion-avatar slot="start">
+                    <img [src]="getAvatarUrl(request.user.profilePicture, getDisplayName(request.user))"
+                      [alt]="getDisplayName(request.user)">
+                  </ion-avatar>
+                  <ion-label>
+                    <h3>{{ getDisplayName(request.user) }}</h3>
+                    <p class="member-username">{{ '@' + (request.user.username || 'username') }}</p>
+                    <p class="request-date">Requested {{ request.createdAt | date:'MMM d, y' }}</p>
+                  </ion-label>
+
+                  <!-- Action Buttons -->
+                  <div slot="end" class="request-actions">
+                    <ion-button fill="clear" color="success" size="small"
+                      [disabled]="isRequestProcessing(request._id) || !networkStatus.online"
+                      [class.loading-button]="isRequestProcessing(request._id)" (click)="approveRequest(request)"
+                      [attr.aria-label]="'Approve join request from ' + getDisplayName(request.user)">
+                      <ion-spinner *ngIf="isRequestProcessing(request._id)" name="crescent" size="small"></ion-spinner>
+                      <ion-icon *ngIf="!isRequestProcessing(request._id)" name="checkmark-outline"></ion-icon>
+                      <span *ngIf="!isRequestProcessing(request._id)">Approve</span>
+                      <span *ngIf="isRequestProcessing(request._id)" style="margin-left: 6px;">Processing...</span>
+                    </ion-button>
+                    <ion-button fill="clear" color="danger" size="small"
+                      [disabled]="isRequestProcessing(request._id) || !networkStatus.online"
+                      [class.loading-button]="isRequestProcessing(request._id)" (click)="rejectRequest(request)"
+                      [attr.aria-label]="'Reject join request from ' + getDisplayName(request.user)">
+                      <ion-spinner *ngIf="isRequestProcessing(request._id)" name="crescent" size="small"></ion-spinner>
+                      <ion-icon *ngIf="!isRequestProcessing(request._id)" name="close-outline"></ion-icon>
+                      <span *ngIf="!isRequestProcessing(request._id)">Reject</span>
+                      <span *ngIf="isRequestProcessing(request._id)" style="margin-left: 6px;">Processing...</span>
+                    </ion-button>
+
+                    <!-- Offline indicator for this request -->
+                    <ion-badge *ngIf="!networkStatus.online" color="warning" class="offline-badge">
+                      <ion-icon name="cloud-offline-outline"></ion-icon>
+                      Offline
+                    </ion-badge>
+                  </div>
+                </ion-item>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </div>
+
+        <!-- Members Section Start-->
+        <div class="members-section">
+          <ion-card class="asphalt-card">
+            <ion-card-header>
+              <div class="section-header">
+                <ion-card-title>Club Members ({{ club.memberCount }})</ion-card-title>
+                <div class="header-buttons">
+                  <ion-button *ngIf="isUserAdmin" fill="clear" color="brand-amber" size="small"
+                    (click)="openMembersModal()" class="manage-members-button">
+                    <ion-icon name="settings-outline" slot="start"></ion-icon>
+                    Manage Members
+                  </ion-button>
+                  <ion-button *ngIf="canViewOfficialMembers" fill="clear" color="brand-amber" size="small"
+                    (click)="navigateToOfficialMembers()" class="official-members-button">
+                    <ion-icon name="id-card" slot="start"></ion-icon>
+                    Official Members
+                  </ion-button>
+                </div>
+              </div>
+            </ion-card-header>
+            <ion-card-content class="members-list">
+
+              <!-- Loading State -->
+              <div *ngIf="membersDataLoading" class="loading-state">
+                <div class="members-skeleton">
+                  <ion-item class="member-item-skeleton" *ngFor="let i of [1,2,3,4]">
+                    <ion-avatar slot="start">
+                      <ion-skeleton-text animated></ion-skeleton-text>
+                    </ion-avatar>
+                    <ion-label>
+                      <ion-skeleton-text animated
+                        style="width: 60%; height: 18px; margin-bottom: 6px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 40%; height: 14px;"></ion-skeleton-text>
+                    </ion-label>
+                  </ion-item>
+                </div>
+              </div>
+
+              <!-- Error State -->
+              <div *ngIf="memberError && !membersDataLoading" class="error-container">
+                <ion-icon name="people-outline" color="medium" size="large"></ion-icon>
+                <h4>Unable to Load Members</h4>
+                <p>{{ memberError }}</p>
+                <ion-button color="primary" fill="clear" (click)="loadMembersForDisplay()">
+                  <ion-icon slot="start" name="refresh"></ion-icon>
+                  Try Again
+                </ion-button>
+              </div>
+
+              <!-- Empty State -->
+              <div *ngIf="!membersDataLoading && !memberError && membersForPublicView.length === 0" class="empty-state">
+                <ion-icon name="people-outline" color="medium"></ion-icon>
+                <h4>No Members Found</h4>
+                <p>This club doesn't have any members yet.</p>
+              </div>
+
+              <!-- Members List -->
+              <div *ngIf="!membersDataLoading && !memberError && membersForPublicView.length > 0">
+                <ion-item *ngFor="let member of membersForPublicView" class="member-item">
+                  <ion-avatar slot="start">
+                    <img [src]="getAvatarUrl(member.user.profilePicture, getDisplayName(member.user))"
+                      [alt]="getDisplayName(member.user)">
+                  </ion-avatar>
+                  <ion-label>
+                    <h3>
+                      {{ getDisplayName(member.user) }}
+                      <ion-badge [color]="member.role === 'admin' ? 'success' : 'medium'" class="role-badge">
+                        {{ member.role | titlecase }}
+                      </ion-badge>
+                    </h3>
+                    <p class="member-username">{{ '@' + (member.user.username || 'username') }}</p>
+                    <p class="join-date">Member since {{ member.joinedAt | date:'MMM d, y' }}</p>
+                  </ion-label>
+                </ion-item>
+              </div>
+
+            </ion-card-content>
+          </ion-card>
+        </div>
+        <!-- Members Section End-->
+      </div>
+
+      <div *ngSwitchCase="'events'">
+        <!-- Pull to Refresh for Events Tab -->
+        <ion-refresher slot="fixed" (ionRefresh)="handleRefreshEvents($event)">
+          <ion-refresher-content pullingIcon="chevron-down-circle-outline" pullingText="Pull to refresh events"
+            refreshingSpinner="crescent" refreshingText="Refreshing events...">
+          </ion-refresher-content>
+        </ion-refresher>
+
+        <!-- Create Event Button Section -->
+        <div *ngIf="isUserAdmin" class="create-event-section">
+          <ion-button expand="block" color="brand-amber" (click)="navigateToCreateEvent()" class="create-event-button">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            Create Event
+          </ion-button>
+        </div>
+
+        <!-- Loading State for Events -->
+        <div *ngIf="eventsLoading" class="loading-state">
+          <div class="events-skeleton">
+            <ion-card class="asphalt-card-skeleton" *ngFor="let i of [1,2]">
+              <div class="card-header-row">
+                <div class="card-text">
+                  <ion-skeleton-text animated style="width: 50%; height: 16px; margin-bottom: 6px;"></ion-skeleton-text>
+                  <ion-skeleton-text animated style="width: 70%; height: 20px;"></ion-skeleton-text>
+                </div>
+                <ion-skeleton-text animated class="club-thumbnail-skeleton"></ion-skeleton-text>
+              </div>
+              <div class="footer-skeleton">
+                <ion-skeleton-text animated style="width: 40%; height: 20px;"></ion-skeleton-text>
+                <ion-skeleton-text animated style="width: 30%; height: 20px;"></ion-skeleton-text>
+              </div>
+            </ion-card>
+          </div>
+        </div>
+
+        <!-- Error State for Events -->
+        <div *ngIf="eventsError && !eventsLoading" class="error-container">
+          <ion-icon name="calendar-outline" color="medium" size="large"></ion-icon>
+          <h4>Unable to Load Events</h4>
+          <p>{{ eventsError }}</p>
+          <ion-button color="primary" fill="clear" (click)="loadClubEvents()">
+            <ion-icon slot="start" name="refresh"></ion-icon>
+            Try Again
+          </ion-button>
+        </div>
+
+        <!-- Empty State for Events -->
+        <div *ngIf="!eventsLoading && !eventsError && clubEvents.length === 0" class="empty-state">
+          <ion-icon name="calendar-outline" color="medium"></ion-icon>
+          <h4>No Events Yet</h4>
+          <p *ngIf="!isUserAdmin">This club doesn't have any upcoming events.</p>
+          <p *ngIf="isUserAdmin">Create your first event to get started!</p>
+          <ion-button *ngIf="isUserAdmin" color="brand-amber" (click)="navigateToCreateEvent()">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            Create Event
+          </ion-button>
+        </div>
+
+        <!-- Events List -->
+        <div *ngIf="!eventsLoading && !eventsError && clubEvents.length > 0" class="events-section">
+          <ion-card class="asphalt-card event-card" *ngFor="let event of clubEvents" (click)="navigateToEvent(event._id)" role="button" tabindex="0">
+            <div class="card-header-row">
+              <div class="card-text">
+                <ion-card-subtitle>{{ getEventTypeDisplay(event.eventType) }} &middot; {{ formatEventDate(event.startTime) }}</ion-card-subtitle>
+                <ion-card-title>{{ event.name }}</ion-card-title>
+              </div>
+              <ion-img [src]="event.imageUrl ? (event.imageUrl | cloudinaryUrl:'w_200,h_200,c_fill') : 'https://placehold.co/200x200/4A5568/FFFFFF?text=EVENT'" class="club-thumbnail" [alt]="event.name"></ion-img>
+            </div>
+            <ion-card-content *ngIf="event.description" class="event-description">
+              <p>{{ event.description }}</p>
+            </ion-card-content>
+            <div class="card-footer">
+              <div class="footer-item" *ngIf="event.location || event.geolocation?.placeName">
+                <ion-icon name="location-sharp"></ion-icon>
+                <span>{{ event.location || event.geolocation?.placeName || 'Location TBD' }}</span>
+              </div>
+              <div class="footer-item">
+                <ion-icon name="time-outline"></ion-icon>
+                <span>{{ event.startTime | date: 'shortTime' }}</span>
+              </div>
+            </div>
+          </ion-card>
+        </div>
+      </div>
+
+      <div *ngSwitchCase="'tools'" class="tools-section">
+        <!-- Add Collection button (admin only) -->
+        <div *ngIf="isUserAdmin" class="add-payment-section">
+          <ion-button expand="block" color="brand-amber" (click)="openAddCollectionModal()">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            New Collection
+          </ion-button>
+        </div>
+
+        <!-- Collections loading skeleton -->
+        <div *ngIf="collectionsLoading" class="payments-skeleton">
+          <ion-card *ngFor="let i of [1,2,3]" class="payment-card-skeleton">
+            <ion-card-content>
+              <ion-skeleton-text animated style="width: 60%; height: 18px; margin-bottom: 8px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 40%; height: 14px; margin-bottom: 4px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 30%; height: 24px;"></ion-skeleton-text>
+            </ion-card-content>
+          </ion-card>
+        </div>
+
+        <!-- Collections list -->
+        <div *ngIf="!collectionsLoading">
+          <ion-card *ngFor="let c of collections" class="collection-card" (click)="navigateToCollection(c._id)">
+            <ion-card-content>
+              <div class="collection-header">
+                <span class="collection-name">{{ c.name }}</span>
+                <ion-badge [color]="c.status === 'open' ? 'success' : 'medium'">
+                  {{ c.status === 'open' ? 'Open' : 'Closed' }}
+                </ion-badge>
+              </div>
+              <p *ngIf="c.description" class="collection-description">{{ c.description }}</p>
+              <div class="collection-stats">
+                <div class="stat">
+                  <span class="stat-value">{{ c.totalCollected | currency:'PHP':'symbol' }}</span>
+                  <span class="stat-label">Collected</span>
+                </div>
+                <div class="stat" *ngIf="c.targetAmount">
+                  <span class="stat-value">{{ c.targetAmount | currency:'PHP':'symbol' }}</span>
+                  <span class="stat-label">Target</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ c.paymentCount }}</span>
+                  <span class="stat-label">Payments</span>
+                </div>
+              </div>
+            </ion-card-content>
+            <ion-ripple-effect></ion-ripple-effect>
+          </ion-card>
+
+          <div *ngIf="collections.length === 0" class="empty-state">
+            <ion-icon name="wallet-outline" color="medium"></ion-icon>
+            <h4>No collections yet.</h4>
+            <p *ngIf="isUserAdmin">Create a collection to start tracking payments.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </ng-container>
+
+  <ng-template #privateView>
+  </ng-template>
+
+  </div><!-- end .page-content-wrapper -->
+
+  <!-- Members Management Modal -->
+  <ion-modal [isOpen]="showMembersModal" (willDismiss)="closeMembersModal()" class="members-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Members Management</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="closeMembersModal()">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <div class="admin-section">
+
+          <!-- Members Management Section -->
+          <ion-card class="asphalt-card">
+            <ion-card-header>
+              <div class="section-header">
+                <ion-card-title>
+                  <ion-icon name="people-outline"></ion-icon>
+                  Members Management
+                </ion-card-title>
+                <ion-badge *ngIf="clubMembers.length > 0" color="primary">{{ clubMembers.length }}</ion-badge>
+              </div>
+            </ion-card-header>
+
+            <ion-card-content>
+              <!-- Loading State with Skeleton -->
+              <div *ngIf="membersLoading" class="loading-state">
+                <!-- Skeleton for members -->
+                <div class="members-skeleton">
+                  <ion-item class="member-item-skeleton" *ngFor="let i of [1,2,3]">
+                    <ion-avatar slot="start">
+                      <ion-skeleton-text animated></ion-skeleton-text>
+                    </ion-avatar>
+                    <ion-label>
+                      <ion-skeleton-text animated
+                        style="width: 50%; height: 18px; margin-bottom: 6px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated
+                        style="width: 70%; height: 14px; margin-bottom: 2px;"></ion-skeleton-text>
+                      <ion-skeleton-text animated style="width: 40%; height: 12px;"></ion-skeleton-text>
+                    </ion-label>
+                    <ion-skeleton-text slot="end" animated
+                      style="width: 36px; height: 36px; border-radius: 50%;"></ion-skeleton-text>
+                  </ion-item>
+                </div>
+              </div>
+
+              <!-- Empty State -->
+              <div *ngIf="!membersLoading && clubMembers.length === 0" class="empty-state">
+                <ion-icon name="people-outline" color="medium"></ion-icon>
+                <h4>No Members Found</h4>
+                <p>Unable to load member list.</p>
+              </div>
+
+              <!-- Members List -->
+              <div *ngIf="!membersLoading && clubMembers.length > 0">
+                <ion-item *ngFor="let member of clubMembers" class="member-item">
+                  <ion-avatar slot="start">
+                    <img [src]="getAvatarUrl(member.user.profilePicture, getDisplayName(member.user))"
+                      [alt]="getDisplayName(member.user)">
+                  </ion-avatar>
+                  <ion-label>
+                    <h3>
+                      {{ getDisplayName(member.user) }}
+                      <ion-badge [color]="member.role === 'admin' ? 'success' : 'medium'" class="role-badge">
+                        {{ member.role | titlecase }}
+                      </ion-badge>
+                    </h3>
+                    <p class="member-username">{{ '@' + (member.user.username || 'username') }}</p>
+                    <p class="join-date">Member since {{ member.joinedAt | date:'MMM d, y' }}</p>
+                  </ion-label>
+
+                  <!-- Member Actions -->
+                  <div slot="end" class="member-actions">
+                    <ion-button *ngIf="member._id !== membershipData.memberId" fill="clear" color="medium"
+                      [disabled]="isMemberProcessing(member._id) || !networkStatus.online"
+                      [class.loading-button]="isMemberProcessing(member._id)" (click)="presentMemberActions(member)"
+                      [attr.aria-label]="'Manage ' + getDisplayName(member.user)">
+                      <ion-spinner *ngIf="isMemberProcessing(member._id)" name="crescent" size="small"></ion-spinner>
+                      <ion-icon *ngIf="!isMemberProcessing(member._id)" name="ellipsis-vertical"></ion-icon>
+                    </ion-button>
+
+                    <!-- Offline indicator -->
+                    <ion-badge *ngIf="!networkStatus.online" color="warning" class="offline-badge">
+                      <ion-icon name="cloud-offline-outline"></ion-icon>
+                    </ion-badge>
+                  </div>
+                </ion-item>
+              </div>
+            </ion-card-content>
+          </ion-card>
+
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Add Collection Modal -->
+  <ion-modal [isOpen]="showAddCollectionModal" (willDismiss)="closeAddCollectionModal()" class="add-collection-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>New Collection</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeAddCollectionModal()">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-label position="stacked">Name *</ion-label>
+          <ion-input [(ngModel)]="collectionForm.name" placeholder="e.g. Annual Dues 2025"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Description</ion-label>
+          <ion-textarea [(ngModel)]="collectionForm.description" placeholder="Optional description" rows="3"></ion-textarea>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Target Amount (optional)</ion-label>
+          <ion-input type="number" [(ngModel)]="collectionForm.targetAmount" placeholder="0.00"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Visibility</ion-label>
+          <ion-select [(ngModel)]="collectionForm.visibility" interface="popover">
+            <ion-select-option value="members_only">Members Only</ion-select-option>
+            <ion-select-option value="public">Public</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-button expand="block" color="brand-amber" [disabled]="isSavingCollection || !collectionForm.name.trim()" (click)="saveCollection()" style="margin-top: 24px;">
+          <ion-spinner *ngIf="isSavingCollection" name="crescent"></ion-spinner>
+          <span *ngIf="!isSavingCollection">Create Collection</span>
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+</ion-content>

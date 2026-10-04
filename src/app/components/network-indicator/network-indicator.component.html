@@ -1,0 +1,56 @@
+<div [class]="indicatorClass" *ngIf="isVisible">
+  <!-- Compact Version -->
+  <div *ngIf="compact" class="compact-indicator" [attr.aria-label]="statusText">
+    <ion-icon 
+      [name]="statusIcon" 
+      [color]="statusColor"
+      class="status-icon">
+    </ion-icon>
+    <span class="status-dot" [class]="statusColor + '-dot'"></span>
+  </div>
+
+  <!-- Full Version -->
+  <div *ngIf="!compact" class="full-indicator">
+    <div class="indicator-content">
+      <ion-icon 
+        [name]="statusIcon" 
+        [color]="statusColor"
+        class="status-icon">
+      </ion-icon>
+      
+      <div class="status-info">
+        <span class="status-text" [class]="statusColor + '-text'">
+          {{ statusText }}
+        </span>
+        
+        <!-- Network details (when online and showQuality is true) -->
+        <div *ngIf="networkStatus.online && showQuality && connectionQuality.quality !== 'excellent'" class="quality-details">
+          <span class="quality-label">{{ connectionQuality.quality | titlecase }}</span>
+          <span *ngIf="networkStatus.effectiveType" class="network-type">{{ networkStatus.effectiveType }}</span>
+        </div>
+        
+        <!-- Offline message -->
+        <div *ngIf="!networkStatus.online" class="offline-details">
+          <span class="offline-message">Please check your internet connection</span>
+        </div>
+      </div>
+      
+      <!-- Action button for offline state -->
+      <ion-button 
+        *ngIf="!networkStatus.online"
+        fill="clear" 
+        size="small" 
+        color="light"
+        (click)="onRefreshConnection()"
+        aria-label="Retry connection">
+        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+      </ion-button>
+    </div>
+
+    <!-- Progress bar for poor connection -->
+    <div *ngIf="connectionQuality.quality === 'poor' && networkStatus.online" class="connection-warning">
+      <div class="warning-bar"></div>
+      <span class="warning-text">Slow connection detected</span>
+    </div>
+  </div>
+</div>

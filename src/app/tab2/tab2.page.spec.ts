@@ -1,6 +1,10 @@
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 import { ExploreContainerComponentModule } from '../explore-container/explore-container.module';
+import { ClubListComponent } from '../components/clubs/club-list/club-list.component';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 
 import { Tab2Page } from './tab2.page';
 
@@ -10,8 +14,14 @@ describe('Tab2Page', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [Tab2Page],
-      imports: [IonicModule.forRoot(), ExploreContainerComponentModule]
+      declarations: [Tab2Page, ClubListComponent],
+      imports: [
+        IonicModule.forRoot(),
+        ExploreContainerComponentModule,
+        HttpClientTestingModule,
+        RouterTestingModule,
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Tab2Page);

@@ -1,0 +1,89 @@
+<!-- Places Autocomplete Input Component -->
+<div class="places-autocomplete-container">
+  <!-- Main Input Field -->
+  <ion-item class="asphalt-input-item autocomplete-input-item" lines="none">
+    <ion-icon [name]="icon" slot="start" class="asphalt-icon"></ion-icon>
+    <ion-input 
+      #searchInput
+      [formControl]="searchControl"
+      [placeholder]="placeholder"
+      type="text"
+      (ionFocus)="onInputFocus()"
+      id="places-input"
+      ngDefaultControl>
+    </ion-input>
+    
+    <!-- Loading spinner when searching -->
+    <ion-spinner *ngIf="isSearching" name="dots" slot="end" class="search-spinner"></ion-spinner>
+    
+    <!-- Clear button -->
+    <ion-button 
+      *ngIf="searchControl.value" 
+      fill="clear" 
+      size="small" 
+      slot="end"
+      (click)="clearLocation()">
+      <ion-icon name="close-circle" class="clear-icon"></ion-icon>
+    </ion-button>
+  </ion-item>
+
+  <!-- Current Location Button -->
+  <ion-button 
+    *ngIf="showCurrentLocationButton"
+    fill="outline" 
+    size="small" 
+    class="current-location-button"
+    (click)="useCurrentLocation()">
+    <ion-icon name="navigate-outline" slot="start"></ion-icon>
+    Use Current Location
+  </ion-button>
+
+  <!-- Autocomplete Suggestions Popover -->
+  <ion-popover 
+    #popover
+    [isOpen]="isPopoverOpen && isApiAvailable"
+    trigger="places-input"
+    placement="bottom-start"
+    [showBackdrop]="false"
+    (didDismiss)="onPopoverDidDismiss()"
+    class="places-popover">
+    
+    <ng-template>
+      <ion-content class="places-suggestions">
+        <ion-list *ngIf="predictions.length > 0">
+          <ion-item 
+            *ngFor="let place of predictions; trackBy: trackByPlaceId"
+            button 
+            (click)="onPlaceSelected(place)"
+            class="suggestion-item">
+            <ion-icon name="location-outline" slot="start" class="suggestion-icon"></ion-icon>
+            <ion-label>
+              <h3 class="suggestion-main">{{ place.formatted_address || place.description }}</h3>
+              <p *ngIf="place.formatted_address !== place.description" class="suggestion-secondary">
+                {{ place.description }}
+              </p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+        
+        <!-- No results message -->
+        <div *ngIf="predictions.length === 0 && !isSearching" class="no-results">
+          <ion-icon name="search-outline" class="no-results-icon"></ion-icon>
+          <p>No locations found</p>
+        </div>
+        
+        <!-- Loading message -->
+        <div *ngIf="isSearching" class="loading-suggestions">
+          <ion-spinner name="dots"></ion-spinner>
+          <p>Searching locations...</p>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-popover>
+
+  <!-- Fallback message when API is not available -->
+  <ion-note *ngIf="!isApiAvailable" class="api-warning">
+    <ion-icon name="information-circle-outline"></ion-icon>
+    Location autocomplete not available. Please enter location manually.
+  </ion-note>
+</div>

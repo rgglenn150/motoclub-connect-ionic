@@ -1,0 +1,45 @@
+.notification-bell-button {
+  position: relative;
+  --color: var(--ion-color-medium);
+  
+  &:hover {
+    --color: var(--ion-color-primary);
+  }
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 0.3s ease-in-out;
+  z-index: 10;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Global popover styling
+:host ::ng-deep .notification-popover {
+  .popover-content {
+    --width: 320px;
+    --max-width: 90vw;
+    --min-height: 200px;
+    --max-height: 400px;
+  }
+}

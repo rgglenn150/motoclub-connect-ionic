@@ -1,0 +1,50 @@
+/**
+ * Weather Widget Dynamic Backgrounds
+ */
+
+.weather-widget::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.8;
+  pointer-events: none;
+  transition: background var(--weather-duration-very-slow) var(--weather-ease-in-out);
+  z-index: var(--weather-z-background);
+  will-change: transform, opacity, background;
+  transform: translateZ(0);
+}
+
+.weather-bg-clear::before {
+  background: linear-gradient(135deg, #2a4c8d 0%, #1a237e 100%);
+  animation: sunRays 20s linear infinite;
+}
+.weather-bg-partly-cloudy::before {
+  background: linear-gradient(135deg, #4a6fa1 0%, #3949ab 100%);
+  animation: cloudsFloat 25s ease-in-out infinite;
+}
+.weather-bg-cloudy::before, .weather-bg-fog::before {
+  background: linear-gradient(135deg, #546e7a 0%, #37474f 100%);
+  animation: heavyClouds 30s ease-in-out infinite;
+}
+.weather-bg-drizzle::before, .weather-bg-rain::before {
+  background: linear-gradient(135deg, #425c78 0%, #28354a 100%);
+  animation: heavyRain 1.5s linear infinite;
+}
+.weather-bg-showers::before {
+  background: linear-gradient(135deg, #395270 0%, #1e2a3a 100%);
+  animation: showers 1s linear infinite;
+}
+.weather-bg-snow::before {
+  background: linear-gradient(135deg, #607d8b 0%, #455a64 100%);
+  animation: snowfall 10s linear infinite;
+}
+.weather-bg-thunderstorm::before {
+  background: linear-gradient(135deg, #263238 0%, #1a1a1a 100%);
+  animation: lightning 5s ease-in-out infinite;
+}
+.weather-bg-default::before {
+  background: linear-gradient(135deg, #333 0%, #1a1a1a 100%);
+}

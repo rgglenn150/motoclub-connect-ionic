@@ -7,7 +7,7 @@ import { Tab3Page } from './tab3.page';
 import { ExploreContainerComponentModule } from '../explore-container/explore-container.module';
 
 import { Tab3PageRoutingModule } from './tab3-routing.module';
-import { MePageModule } from '../page/me/me.module';
+import { MePageModule } from '../pages/me/me.module';
 
 @NgModule({
   imports: [

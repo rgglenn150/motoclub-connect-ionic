@@ -1,0 +1,50 @@
+/**
+ * Weather Widget Animations
+ */
+
+// Loading and Skeleton Animations
+@keyframes shimmer {
+  100% { background-position: -200% 0; }
+}
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+// Interactive Element Animations
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// Weather Condition Animations
+@keyframes sunRays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes cloudsFloat {
+  0%, 100% { transform: translateX(-5%); }
+  50% { transform: translateX(5%); }
+}
+@keyframes heavyClouds {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(-2%) translateY(-1%); }
+}
+@keyframes lightRain {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 100px; }
+}
+@keyframes heavyRain {
+  0% { background-position: 0 0; }
+  100% { background-position: 100px 200px; }
+}
+@keyframes snowfall {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 150px; }
+}
+@keyframes showers {
+  0% { background-position: 0 0; }
+  100% { background-position: 150px 300px; }
+}
+@keyframes lightning {
+  0%, 95%, 100% { opacity: 0; }
+  96% { opacity: 1; }
+}

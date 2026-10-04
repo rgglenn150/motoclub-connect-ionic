@@ -12,6 +12,9 @@
 /* Core CSS required for Ionic components to work properly */
 @import "~@ionic/angular/css/core.css";
 
+/* Action Sheet Dark Theme Override */
+@import "./action-sheet-dark-theme.scss";
+
 /* Basic CSS for apps built with Ionic */
 @import "~@ionic/angular/css/normalize.css";
 @import "~@ionic/angular/css/structure.css";
@@ -25,14 +28,128 @@
 @import "~@ionic/angular/css/text-transformation.css";
 @import "~@ionic/angular/css/flex-utils.css";
 
-:root {
-    --ion-background-color: #2D3748;
-    --ion-text-color: #F7FAFC;
-}
+
 
 .flex-center {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100%;
+}
+
+/* Location Preferences Modal Styling */
+.location-preferences-modal {
+  --height: 90vh;
+  --border-radius: 16px;
+  --backdrop-opacity: 0.6;
+  
+  ion-modal {
+    --background: var(--ion-color-dark);
+  }
+  
+  .modal-wrapper {
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+  }
+  
+  @media (max-width: 768px) {
+    --height: 95vh;
+    --border-radius: 16px 16px 0 0;
+  }
+}
+
+/* Global Action Sheet Dark Theme Support - High Specificity Override */
+ion-action-sheet,
+ion-action-sheet.dark-theme-action-sheet,
+.action-sheet-backdrop ion-action-sheet {
+  --background: #2D3748 !important;
+  --color: #F7FAFC !important;
+}
+
+/* Force action sheet button colors with maximum specificity */
+ion-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button,
+.action-sheet-md .action-sheet-wrapper .action-sheet-group .action-sheet-button,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-group .action-sheet-button {
+  color: #F7FAFC !important;
+  background: transparent !important;
+
+  /* Text content and spans inside buttons */
+  * {
+    color: #F7FAFC !important;
+  }
+}
+
+/* Destructive buttons */
+ion-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive,
+.action-sheet-md .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-destructive {
+  color: #F56565 !important;
+
+  * {
+    color: #F56565 !important;
+  }
+}
+
+/* Cancel buttons */
+ion-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel,
+.action-sheet-md .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-group .action-sheet-button.action-sheet-cancel {
+  color: #A0AEC0 !important;
+
+  * {
+    color: #A0AEC0 !important;
+  }
+}
+
+/* Background overrides */
+ion-action-sheet .action-sheet-wrapper .action-sheet-group,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-group,
+.action-sheet-md .action-sheet-wrapper .action-sheet-group,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-group {
+  background: #2D3748 !important;
+}
+
+/* Title overrides */
+ion-action-sheet .action-sheet-wrapper .action-sheet-title,
+ion-action-sheet.dark-theme-action-sheet .action-sheet-wrapper .action-sheet-title,
+.action-sheet-md .action-sheet-wrapper .action-sheet-title,
+.action-sheet-ios .action-sheet-wrapper .action-sheet-title {
+  color: #F7FAFC !important;
+}
+
+/* Global DateTime Modal Styling - White Background Theme */
+ion-modal.datetime-modal,
+ion-modal ion-datetime {
+  --background: #ffffff !important;
+  --background-rgb: 255, 255, 255 !important;
+  --color: #2D3748 !important;
+  --ion-color-base: #2D3748 !important;
+  --ion-color-contrast: #ffffff !important;
+}
+
+/* DateTime picker specific elements */
+ion-datetime {
+  --ion-color-primary: #F59E0B !important;
+  --ion-color-primary-rgb: 245, 158, 11 !important;
+  --ion-color-primary-contrast: #ffffff !important;
+  --ion-color-primary-contrast-rgb: 255, 255, 255 !important;
+  --ion-toolbar-background: #ffffff !important;
+  --ion-toolbar-color: #2D3748 !important;
+  --ion-item-background: #ffffff !important;
+  --ion-item-color: #2D3748 !important;
+}
+
+/* DateTime calendar and picker elements */
+.datetime-calendar .calendar-day[aria-selected="true"],
+.datetime-time .time-button[aria-selected="true"] {
+  --background: #F59E0B !important;
+  --color: #ffffff !important;
+}
+
+.datetime-calendar .calendar-day.calendar-day-today,
+.datetime-time .time-button.time-button-today {
+  --color: #F59E0B !important;
 }

@@ -1,0 +1,149 @@
+<div class="weather-widget"
+     role="region"
+     aria-label="Weather information widget"
+     [class]="weatherBackgroundClass"
+     [class.offline-mode]="!networkStatus.online"
+     [class.poor-connection]="connectionQuality.quality === 'poor'"
+     [class.flipped]="isFlipped"
+     (click)="toggleFlip()"
+     (keydown.enter)="toggleFlip()"
+     (keydown.space)="toggleFlip()"
+     tabindex="0"
+     [attr.aria-label]="isFlipped ? 'Weather details view, press Enter or Space to return to main view' : 'Weather widget, press Enter or Space to view details'">
+
+  <div class="flip-container">
+    <div class="flip-side flip-front">
+
+      <div *ngIf="isLoading" class="skeleton-container">
+        <div class="flex items-start justify-between flex-1">
+          <div class="flex-1">
+            <div class="skeleton skeleton-location mb-1"></div>
+            <div class="skeleton skeleton-temperature mb-1"></div>
+            <div class="skeleton skeleton-condition"></div>
+          </div>
+          <div class="skeleton skeleton-icon ml-4"></div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="skeleton skeleton-metric"></div>
+            <div class="skeleton skeleton-metric"></div>
+          </div>
+          <div class="skeleton skeleton-controls"></div>
+        </div>
+      </div>
+
+      <div *ngIf="hasError && !isLoading" class="error-container">
+        <div class="flex flex-col items-center space-y-3">
+          <app-weather-svg-icon iconType="error" size="large" [animated]="true"></app-weather-svg-icon>
+          <div>
+            <p class="weather-error mb-2">{{ getContextualErrorMessage(errorMessage) }}</p>
+            <button
+              *ngIf="canRefresh"
+              (click)="refreshWeatherData(); $event.stopPropagation()"
+              class="weather-button weather-ripple"
+              [disabled]="!canRefresh"
+              type="button"
+              aria-label="Retry loading weather data">
+              <ion-icon name="refresh-outline" class="mr-1" aria-hidden="true"></ion-icon>
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="weatherData && !isLoading && !hasError" class="weather-data-container">
+        <div class="widget-main-content">
+          <div class="flex-1">
+            <p class="weather-location" role="text" [attr.aria-label]="'Location ' + locationName">{{ locationName }}</p>
+            <p class="weather-temperature" role="text" [attr.aria-label]="'Current temperature ' + temperatureText">{{ temperatureText }}</p>
+            <p class="weather-condition" role="text" [attr.aria-label]="'Weather condition ' + conditionText">{{ conditionText }}</p>
+          </div>
+          <div class="weather-icon-container">
+            <app-weather-svg-icon [iconType]="iconType" size="large" [animated]="true"></app-weather-svg-icon>
+          </div>
+        </div>
+
+        <div class="widget-footer">
+          <div class="weather-metrics" role="group" aria-label="Weather metrics">
+            <span *ngIf="weatherData.metrics.humidity" [attr.aria-label]="'Humidity ' + weatherData.metrics.humidity + ' percent'" title="Humidity">
+              <ion-icon name="water-outline" aria-hidden="true"></ion-icon>
+              <span class="metric-value">{{ weatherData.metrics.humidity }}%</span>
+            </span>
+            <span *ngIf="weatherData.metrics.windSpeed" [attr.aria-label]="'Wind speed ' + weatherData.metrics.windSpeed + ' kilometers per hour'" title="Wind Speed">
+              <ion-icon name="leaf-outline" aria-hidden="true"></ion-icon>
+              <span class="metric-value">{{ weatherData.metrics.windSpeed }} km/h</span>
+            </span>
+            <span *ngIf="weatherData.temperature.feelsLike" [attr.aria-label]="'Feels like ' + weatherData.temperature.feelsLike + ' degrees celsius'" title="Feels Like">
+              <ion-icon name="thermometer-outline" aria-hidden="true"></ion-icon>
+              <span class="metric-value">{{ weatherData.temperature.feelsLike }}°</span>
+            </span>
+          </div>
+
+          <div class="controls-status-container">
+            <div *ngIf="lastUpdated" class="data-freshness">
+              <div class="freshness-dot" [class.fresh]="!isDataStale" [class.stale]="isDataStale"></div>
+              <span class="weather-freshness">{{ dataFreshnessText }}</span>
+            </div>
+            <div class="controls-group">
+              <div class="location-source-indicator" [title]="locationSourceIndicator">
+                <ion-icon [name]="locationSourceIcon"></ion-icon>
+              </div>
+              <button (click)="openLocationPreferences(); $event.stopPropagation()" class="settings-btn" type="button" aria-label="Open location preferences">
+                <ion-icon name="settings-outline" aria-hidden="true"></ion-icon>
+              </button>
+              <button (click)="refreshWeatherData(); $event.stopPropagation()" class="refresh-btn" [class.disabled]="!canRefresh" [disabled]="!canRefresh" type="button" [attr.aria-label]="canRefresh ? 'Refresh weather data' : 'Cannot refresh'">
+                <ion-icon name="refresh-outline" [class.animate-spin]="isLoading" aria-hidden="true"></ion-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flip-side flip-back" *ngIf="weatherData && !isLoading && !hasError">
+      <div class="flip-header">
+        <h3 class="weather-detail-title">Weather Details</h3>
+        <button class="flip-back-btn" (click)="toggleFlip(); $event.stopPropagation()" type="button" aria-label="Return to main weather view">
+          <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
+        </button>
+      </div>
+      
+      <div class="forecast-section" *ngIf="hasForecast">
+        <h4 class="section-title">3-Day Forecast</h4>
+        <div class="forecast-grid" role="group" aria-label="3-day weather forecast">
+          <div *ngFor="let day of weatherData!.forecast; trackBy: trackForecastDay" class="forecast-item" [attr.aria-label]="day.dayName + ' forecast: ' + getForecastShortDescription(day.conditions.description) + ', high ' + day.temperature.max + ' degrees, low ' + day.temperature.min + ' degrees'">
+            <span class="forecast-day">{{ day.dayName }}</span>
+            <app-weather-svg-icon [iconType]="getForecastIconType(day.conditions.code)" size="small" [animated]="false"></app-weather-svg-icon>
+            <span class="forecast-temp">{{ day.temperature.max }}° / {{ day.temperature.min }}°</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="conditions-details">
+        <h4 class="section-title">Current Conditions</h4>
+        <div class="details-grid">
+          <div class="detail-card" *ngIf="weatherData.metrics.humidity">
+            <div class="detail-header"><ion-icon name="water-outline" class="detail-icon"></ion-icon><span class="detail-label">Humidity</span></div>
+            <div class="detail-content"><p class="detail-primary">{{ weatherData.metrics.humidity }}%</p><p class="detail-secondary">{{ getHumidityDescription(weatherData.metrics.humidity) }}</p></div>
+          </div>
+          <div class="detail-card" *ngIf="weatherData.metrics.windSpeed">
+            <div class="detail-header"><ion-icon name="leaf-outline" class="detail-icon"></ion-icon><span class="detail-label">Wind</span></div>
+            <div class="detail-content"><p class="detail-primary">{{ weatherData.metrics.windSpeed }} km/h</p><p class="detail-secondary">{{ getWindDescription(weatherData.metrics.windSpeed) }}</p></div>
+          </div>
+          <div class="detail-card" *ngIf="weatherData.metrics.pressure">
+            <div class="detail-header"><ion-icon name="speedometer-outline" class="detail-icon"></ion-icon><span class="detail-label">Pressure</span></div>
+            <div class="detail-content"><p class="detail-primary">{{ weatherData.metrics.pressure }} hPa</p><p class="detail-secondary">{{ getPressureDescription(weatherData.metrics.pressure) }}</p></div>
+          </div>
+          <div class="detail-card" *ngIf="weatherData.metrics.visibility">
+            <div class="detail-header"><ion-icon name="eye-outline" class="detail-icon"></ion-icon><span class="detail-label">Visibility</span></div>
+            <div class="detail-content"><p class="detail-primary">{{ weatherData.metrics.visibility }} km</p><p class="detail-secondary">{{ getVisibilityDescription(weatherData.metrics.visibility) }}</p></div>
+          </div>
+          <div class="detail-card" *ngIf="weatherData.metrics.uvIndex !== undefined">
+            <div class="detail-header"><ion-icon name="sunny-outline" class="detail-icon"></ion-icon><span class="detail-label">UV Index</span></div>
+            <div class="detail-content"><p class="detail-primary">{{ weatherData.metrics.uvIndex }}</p><p class="detail-secondary">{{ getUVIndexDescription(weatherData.metrics.uvIndex) }}</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,183 @@
+/* "Asphalt UI" Styles for Create Club Page
+  - Imports variables from the login page for consistency.
+  - Adds styles for new components like image uploader and toggle.
+*/
+
+// --- Import Asphalt UI Color Palette ---
+// Note: In a real app, these variables would live in a global file like variables.scss
+:host {
+  --asphalt-primary: #2D3748;
+  --asphalt-secondary: #4A5568;
+  --asphalt-accent: #F59E0B;
+  --asphalt-danger: #EF4444;
+  --asphalt-text: #F7FAFC;
+  --asphalt-text-muted: #A0AEC0;
+}
+
+// --- Global Page & Header Styles ---
+.asphalt-background {
+  --background: #2d3849;
+}
+
+.asphalt-header ion-toolbar {
+  --background: var(--asphalt-secondary);
+  --color: var(--asphalt-text);
+}
+
+.asphalt-header ion-title {
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+// --- Image Uploader ---
+.image-uploader {
+  background-color: var(--asphalt-secondary);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 1 / 1;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed var(--asphalt-text-muted);
+  cursor: pointer;
+  overflow: hidden;
+
+  .club-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
+  }
+
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--asphalt-text-muted);
+  }
+
+  .placeholder-icon {
+    font-size: 3rem;
+  }
+}
+
+.cropper-container {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  z-index: 1000;
+
+  image-cropper {
+    width: 100%;
+    max-width: 480px;
+    background: #222;
+    border-radius: 8px;
+  }
+
+  .cropper-actions {
+    margin-top: 12px;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 8px;
+  }
+}
+
+// --- Form Items ---
+.asphalt-input-item,
+.asphalt-textarea-item {
+  --background: var(--asphalt-secondary);
+  --padding-start: 16px;
+  --highlight-height: 0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: var(--asphalt-text);
+}
+
+.asphalt-textarea-item {
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+}
+
+.asphalt-icon {
+  color: var(--asphalt-accent);
+  margin-right: 8px;
+}
+
+// --- Location Field Container ---
+.location-field-container {
+  position: relative;
+  background: var(--asphalt-secondary);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  overflow: visible; // Ensure dropdown can overflow the container
+  z-index: 100; // Ensure the container has proper stacking
+
+  .location-icon {
+    color: var(--asphalt-accent);
+    margin-right: 8px;
+    font-size: 1.2rem;
+  }
+
+  app-mapbox-autocomplete {
+    flex: 1;
+  }
+}
+
+// --- Toggle ---
+.asphalt-toggle-item {
+  --background: transparent;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+
+.asphalt-toggle {
+  --background: var(--asphalt-secondary);
+  --background-checked: var(--asphalt-secondary);
+  --handle-background: var(--asphalt-text-muted);
+  --handle-background-checked: var(--asphalt-accent);
+}
+
+.field-description {
+  font-size: 0.8rem;
+  color: var(--asphalt-text-muted);
+  margin-top: -12px;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+// --- Footer & Button ---
+.asphalt-footer ion-toolbar {
+  --background: var(--asphalt-primary);
+  padding: 8px 16px;
+}
+
+.asphalt-button-primary {
+  --background: var(--asphalt-accent);
+  --background-activated: #d3860a;
+  --background-focused: #d3860a;
+  --color: var(--asphalt-primary);
+  --border-radius: 8px;
+  --box-shadow: none;
+  height: 48px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  margin: 0;
+}

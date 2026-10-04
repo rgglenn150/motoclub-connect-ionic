@@ -4,36 +4,128 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { FacebookLogin } from '@capacitor-community/facebook-login';
+import { UserStateService } from './user-state.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private baseUrl = `${environment.apiUrl}/auth`;
-  destroySubject$: Subject<void> = new Subject();
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient, 
+    private router: Router,
+    private userStateService: UserStateService
+  ) {
+    // Only initialize Facebook login if not in test environment
+    if (!this.isTestEnvironment()) {
+      this.initializeFacebookLogin();
+    }
+  }
+
+  private isTestEnvironment(): boolean {
+    // Check if we're running in a test environment
+    return typeof (window as any).jasmine !== 'undefined' || typeof (window as any).__karma__ !== 'undefined';
+  }
+
+  private async initializeFacebookLogin() {
+    try {
+      await FacebookLogin.initialize({ appId: environment.facebookAppId });
+    } catch (error) {
+      console.error('Facebook login initialization error:', error);
+    }
+  }
 
   login(loginForm: any) {
+    return this.http.post(`${this.baseUrl}/login`, loginForm);
+  }
+
+  register(registerForm: any) {
     return this.http
-      .post(`${this.baseUrl}/login`, loginForm)
-      .pipe(takeUntil(this.destroySubject$));
+      .post(`${this.baseUrl}/signup`, registerForm);
   }
 
   logout() {
-    this.http.post(`${this.baseUrl}/logout`, {}).pipe(
-      takeUntil(this.destroySubject$)
-    ).subscribe({
-      next: () => {
-        console.log('logout');
-        localStorage.removeItem('token');
-        this.router.navigate(['/login']);
-      },
-      error: (error) => {
-        console.log('something went wrong on logout', error);
-        localStorage.removeItem('token');
-        this.router.navigate(['/login']);
+    this.http
+      .post(`${this.baseUrl}/logout`, {})
+      .subscribe({
+        next: () => {
+          console.log('logout');
+          this.facebookLogout(); // Also logout from Facebook
+          this.clearAuthData();
+          this.router.navigate(['/login']);
+        },
+        error: (error) => {
+          console.log('something went wrong on logout', error);
+          this.facebookLogout(); // Also logout from Facebook
+          this.clearAuthData();
+          this.router.navigate(['/login']);
+        },
+      });
+  }
+
+  /**
+   * Clear all authentication data
+   */
+  clearAuthData() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('redirectUrl');
+    // Clear user state
+    this.userStateService.clearUser();
+  }
+
+  /**
+   * Handle successful login and redirect to intended page
+   */
+  handleLoginSuccess() {
+    const redirectUrl = localStorage.getItem('redirectUrl') || '/tabs/home';
+    localStorage.removeItem('redirectUrl');
+    this.router.navigate([redirectUrl]);
+  }
+
+  /**
+   * Initialize user state from localStorage at app startup
+   */
+  initializeUserState() {
+    const storedUser = this.getLoggedInUser();
+    if (storedUser) {
+      this.userStateService.updateUser(storedUser);
+    }
+  }
+
+  getLoggedInUser() {
+    const user = localStorage.getItem('user');
+   
+    return user ? JSON.parse(user) : null;
+  }
+
+  async facebookLogin() {
+    try {
+      const result = await FacebookLogin.login({
+        permissions: ['email', 'public_profile']
+      });
+
+      if (result.accessToken) {
+        // Send the access token to the backend for verification and user creation/login
+        return this.http.post(`${this.baseUrl}/facebook`, {
+          accessToken: result.accessToken.token
+        });
+      } else {
+        throw new Error('Facebook login failed - no access token received');
       }
-    });
+    } catch (error) {
+      console.error('Facebook login error:', error);
+      throw error;
+    }
+  }
+
+  async facebookLogout() {
+    try {
+      await FacebookLogin.logout();
+    } catch (error) {
+      console.error('Facebook logout error:', error);
+    }
   }
 }
