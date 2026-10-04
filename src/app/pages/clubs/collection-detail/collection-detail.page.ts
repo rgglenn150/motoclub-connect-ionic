@@ -368,6 +368,53 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     if (url) window.open(url, '_blank', 'noopener');
   }
 
+  /** The plain collection page address — never the "add payment" variant, never query/hash (spec 005, D2). */
+  private shareUrl(): string {
+    return `${window.location.origin}/clubs/${this.clubId}/collection/${this.collectionId}`;
+  }
+
+  /** Names and the plain address only — no amounts in a shared message (spec 005, D3/D4). */
+  private sharePayload(): ShareData {
+    const payload: ShareData = {
+      title: this.collection?.name ?? 'Collection',
+      url: this.shareUrl(),
+    };
+    if (this.clubName) payload.text = `A collection by ${this.clubName}`;
+    return payload;
+  }
+
+  async shareCollection() {
+    if (!this.collection) return;
+    if (navigator.share) {
+      try {
+        await navigator.share(this.sharePayload());
+        return;
+      } catch (err) {
+        // Closing the share sheet is a cancel, not an error (spec 005 edge case).
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        // Any other failure falls through to the copy fallback below.
+      }
+    }
+    await this.copyShareLink();
+  }
+
+  /** No share facility (most desktop browsers): copy the address; if even that is blocked, show it (spec 005, FR-003). */
+  private async copyShareLink() {
+    const url = this.shareUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      const toast = await this.toastController.create({ message: 'Link copied', duration: 2000, position: 'top' });
+      await toast.present();
+    } catch {
+      const alert = await this.alertController.create({
+        header: 'Share this collection',
+        message: url,
+        buttons: ['OK'],
+      });
+      await alert.present();
+    }
+  }
+
   async deleteCollection() {
     const alert = await this.alertController.create({
       header: 'Delete Collection',
