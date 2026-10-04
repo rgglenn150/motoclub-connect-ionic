@@ -240,13 +240,13 @@ describe('BulkVerifyComponent (spec 004)', () => {
     });
   });
 
-  it('says so when there is nothing awaiting verification', async () => {
+  it('says so when nothing is pending (spec 006 US3 AC5)', async () => {
     paymentService.checkStatement.and.returnValue(
       of({ ...RESPONSE, summary: { checked: 0, matched: 0, mismatched: 0, notFound: 0, matchedTotal: 0 }, results: [] })
     );
     await pick(pdfFile(false));
 
-    expect(text()).toContain('No payments awaiting verification.');
+    expect(text()).toContain('No pending payments.');
   });
 
   describe('verify selected (US2)', () => {

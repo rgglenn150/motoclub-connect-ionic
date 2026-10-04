@@ -2,13 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { AlertController, IonicModule, ToastController } from '@ionic/angular';
-import { Observable, of, throwError } from 'rxjs';
+import { ActionSheetController, AlertController, IonicModule, ToastController } from '@ionic/angular';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { CollectionDetailPage } from './collection-detail.page';
 import { PaymentDetailsComponent } from './payment-details/payment-details.component';
 import { BulkVerifyComponent } from './bulk-verify/bulk-verify.component';
+import { EditCollectionComponent } from './edit-collection/edit-collection.component';
 import { CollectionService } from '../../../service/collection.service';
 import { PaymentService } from '../../../service/payment.service';
 import { Payment } from '../../../models/payment.model';
@@ -63,6 +64,8 @@ describe('CollectionDetailPage', () => {
   let alertButtons: any[];
   let alertInputs: any[];
   let toastController: jasmine.SpyObj<ToastController>;
+  let actionSheetController: jasmine.SpyObj<ActionSheetController>;
+  let sheet: { header?: string; buttons: any[] } | null;
 
   /** Runs the handler of the alert button with the given text. */
   async function pressAlertButton(text: string, value?: unknown) {
@@ -72,7 +75,7 @@ describe('CollectionDetailPage', () => {
 
   beforeEach(async () => {
     localStorage.removeItem('token');
-    collectionService = jasmine.createSpyObj('CollectionService', ['getCollections', 'deleteCollection']);
+    collectionService = jasmine.createSpyObj('CollectionService', ['getCollections', 'deleteCollection', 'updateCollection']);
     collectionService.getCollections.and.returnValue(of({ collections: [collection()] }));
     paymentService = jasmine.createSpyObj('PaymentService', ['getPayments', 'createPayment', 'updateStatus', 'deletePayment', 'extractReceipt', 'checkStatement', 'bulkVerify']);
     paymentService.getPayments.and.returnValue(of({ payments: [payment()] }));
@@ -85,9 +88,15 @@ describe('CollectionDetailPage', () => {
     });
     toastController = jasmine.createSpyObj('ToastController', ['create']);
     toastController.create.and.resolveTo({ present: () => Promise.resolve() } as any);
+    sheet = null;
+    actionSheetController = jasmine.createSpyObj('ActionSheetController', ['create']);
+    actionSheetController.create.and.callFake(async (opts: any) => {
+      sheet = opts;
+      return { present: () => Promise.resolve() } as any;
+    });
 
     await TestBed.configureTestingModule({
-      declarations: [CollectionDetailPage, PaymentDetailsComponent, BulkVerifyComponent],
+      declarations: [CollectionDetailPage, PaymentDetailsComponent, BulkVerifyComponent, EditCollectionComponent],
       imports: [IonicModule.forRoot(), FormsModule, RouterTestingModule, CollectionProgressModule, SharedModule],
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ clubId: CLUB_ID, collectionId: COLLECTION_ID }) } } },
@@ -97,6 +106,7 @@ describe('CollectionDetailPage', () => {
         { provide: ClubService, useValue: jasmine.createSpyObj('ClubService', ['getMembershipStatus']) },
         { provide: AlertController, useValue: alertController },
         { provide: ToastController, useValue: toastController },
+        { provide: ActionSheetController, useValue: actionSheetController },
       ],
     }).compileComponents();
 
@@ -107,11 +117,11 @@ describe('CollectionDetailPage', () => {
 
   const text = () => (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
 
-  it('shows the server verified/awaiting totals in the progress bar', () => {
+  it('shows the server verified/pending totals in the progress bar', () => {
     fixture.detectChanges();
 
     expect(text()).toContain('₱4,500 verified');
-    expect(text()).toContain('₱1,200 awaiting verification');
+    expect(text()).toContain('₱1,200 pending');
     expect(text()).toContain('₱10,000 target');
   });
 
@@ -165,7 +175,7 @@ describe('CollectionDetailPage', () => {
       collectionService.getCollections.calls.reset();
     }
 
-    it('lets admins review an awaiting payment and delete any payment; payers only read', () => {
+    it('lets admins review a pending payment and delete any payment; payers only read', () => {
       openAs(payment({ status: 'pending' }), true);
       expect(page.canReview).toBeTrue();
       expect(page.canDelete).toBeTrue();
@@ -285,19 +295,19 @@ describe('CollectionDetailPage', () => {
       ] }));
     });
 
-    it('labels payment badges Verified / Awaiting Verification / Rejected', () => {
+    it('labels payment badges Verified / Pending / Rejected', () => {
       fixture.detectChanges();
 
       const badges = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.status-badge'))
         .map((b) => b.textContent?.trim());
-      expect(badges).toEqual(['Verified', 'Awaiting Verification', 'Rejected']);
+      expect(badges).toEqual(['Verified', 'Pending', 'Rejected']);
     });
 
-    it('never shows the old status words on the page', () => {
+    it('never shows retired status words on the page (specs 003 + 006)', () => {
       for (const admin of [false, true]) {
         page.isAdmin = admin;
         fixture.detectChanges();
-        expect(text()).not.toMatch(/confirmed|pending/i);
+        expect(text()).not.toMatch(/confirmed|awaiting/i);
       }
     });
   });
@@ -319,7 +329,7 @@ describe('CollectionDetailPage', () => {
       expect(cardText).toContain('Demo Payer');
       expect(cardText).toContain('₱1,200');
       expect(cardText).toContain('Oct 1, 2026');
-      expect(cardText).toContain('Awaiting Verification');
+      expect(cardText).toContain('Pending');
       for (const hidden of ['D. PAYER', '0917', 'REF123', 'June dues']) expect(cardText).not.toContain(hidden);
       expect(card.querySelector('img')).toBeNull();
     });
@@ -352,10 +362,12 @@ describe('CollectionDetailPage', () => {
     });
   });
 
-  describe('bulk verify (spec 004)', () => {
-    const bulkButton = () =>
-      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('ion-button'))
+  describe('bulk verify from the admin menu (specs 004 + 006 US2)', () => {
+    const bodyBulkButton = () =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('ion-content ion-button'))
         .find((b) => b.textContent?.includes('Bulk verify'));
+    const sheetTexts = () => sheet!.buttons.map((b: any) => b.text);
+    const bulkEntry = () => sheet!.buttons.find((b: any) => String(b.text).startsWith('Bulk verify'));
 
     function renderAs(admin: boolean, payments: Payment[]) {
       paymentService.getPayments.and.returnValue(of({ payments }));
@@ -363,27 +375,47 @@ describe('CollectionDetailPage', () => {
       fixture.detectChanges();
     }
 
-    it('is not offered to non-admins (FR-001)', () => {
-      renderAs(false, [payment({ status: 'pending' })]);
-      expect(bulkButton()).toBeUndefined();
+    it('lists the actions in order, with the pending count (FR-002, red-team F2)', async () => {
+      renderAs(true, [payment({ status: 'pending' }), payment({ _id: 'p2', status: 'pending' }), payment({ _id: 'p3', status: 'confirmed' })]);
+      await page.openAdminMenu();
+
+      expect(sheetTexts()).toEqual(['Edit collection', 'Bulk verify (2 pending)', 'Delete collection', 'Cancel']);
     });
 
-    it('opens the bulk verify window for admins with awaiting payments', () => {
-      renderAs(true, [payment({ status: 'pending' }), payment({ _id: 'p2', status: 'confirmed' })]);
+    it('opens the bulk verify window when payments are pending (US2 AC3)', async () => {
+      renderAs(true, [payment({ status: 'pending' })]);
+      await page.openAdminMenu();
 
-      expect(bulkButton()).toBeDefined();
-      expect(bulkButton()!.hasAttribute('disabled') && bulkButton()!.getAttribute('disabled') !== 'false').toBeFalse();
-      bulkButton()!.click();
+      await bulkEntry().handler();
+
       expect(page.showBulkVerify).toBeTrue();
     });
 
-    it('is disabled with a note when nothing awaits verification', () => {
+    it('says "No pending payments" and opens nothing when none are pending (US2 AC4)', async () => {
       renderAs(true, [payment({ status: 'confirmed' }), payment({ _id: 'p2', status: 'rejected' })]);
+      await page.openAdminMenu();
 
-      expect(page.pendingCount).toBe(0);
-      expect(text()).toContain('No payments awaiting verification');
-      bulkButton()!.click();
+      expect(bulkEntry().text).toBe('Bulk verify');
+      await bulkEntry().handler();
+
       expect(page.showBulkVerify).toBeFalse();
+      expect(toastController.create).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'No pending payments' }));
+    });
+
+    it('has no Bulk verify button or note in the page body (FR-003, US2 AC1)', () => {
+      renderAs(true, [payment({ status: 'pending' })]);
+      expect(bodyBulkButton()).toBeUndefined();
+      expect((fixture.nativeElement as HTMLElement).querySelector('.bulk-verify-section')).toBeNull();
+
+      renderAs(true, [payment({ status: 'confirmed' })]);
+      expect(text()).not.toContain('No payments');
+    });
+
+    it('is not offered to non-admins (US2 AC5)', async () => {
+      renderAs(false, [payment({ status: 'pending' })]);
+      await page.openAdminMenu();
+      expect(sheet).toBeNull();
+      expect(bodyBulkButton()).toBeUndefined();
     });
 
     it('opens the payment dialog for a tapped result (red-team F1)', () => {
@@ -551,6 +583,83 @@ describe('CollectionDetailPage', () => {
 
       expect(write).toHaveBeenCalledOnceWith(expectedUrl());
       expect(toastController.create).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Link copied' }));
+    });
+  });
+
+  describe('admin menu and editing (spec 006, US1)', () => {
+    const headerButtons = () =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('ion-header ion-button'));
+    const manageButton = () => headerButtons().find((b) => b.getAttribute('aria-label') === 'Manage collection');
+    const sheetButton = (text: string) => sheet!.buttons.find((b: any) => b.text === text);
+
+    function renderAs(admin: boolean) {
+      page.isAdmin = admin;
+      fixture.detectChanges();
+    }
+
+    it('gives admins a Manage collection button instead of the trash button (FR-001)', () => {
+      renderAs(true);
+      expect(manageButton()).toBeDefined();
+      expect(manageButton()!.querySelector('ion-icon')!.getAttribute('name')).toBe('create-outline');
+      expect(headerButtons().some((b) => b.querySelector('ion-icon')?.getAttribute('name') === 'trash-outline')).toBeFalse();
+    });
+
+    it('shows members no admin menu (US2 AC5)', () => {
+      renderAs(false);
+      expect(manageButton()).toBeUndefined();
+    });
+
+    it('opens a bottom sheet titled Manage collection (FR-002)', async () => {
+      renderAs(true);
+      await page.openAdminMenu();
+
+      expect(sheet!.header).toBe('Manage collection');
+      expect(sheetButton('Edit collection')).toBeDefined();
+      expect(sheetButton('Delete collection').role).toBe('destructive');
+      expect(sheetButton('Cancel').role).toBe('cancel');
+    });
+
+    it('keeps the delete confirmation (FR-004, US2 AC2)', async () => {
+      renderAs(true);
+      await page.openAdminMenu();
+
+      await sheetButton('Delete collection').handler();
+
+      expect(alertController.create).toHaveBeenCalledWith(jasmine.objectContaining({ header: 'Delete Collection' }));
+      expect(collectionService.deleteCollection).not.toHaveBeenCalled();
+    });
+
+    it('opens the edit form from the menu (US1)', async () => {
+      renderAs(true);
+      await page.openAdminMenu();
+
+      sheetButton('Edit collection').handler();
+
+      expect(page.showEditCollection).toBeTrue();
+    });
+
+    it('shows saved changes at once, then refreshes from the server (FR-008)', async () => {
+      renderAs(true);
+      page.openEditCollection();
+      collectionService.getCollections.calls.reset();
+      // Hold the refresh so the test sees the values applied before the server answers.
+      collectionService.getCollections.and.returnValue(new Subject<{ collections: Collection[] }>());
+
+      await page.onCollectionSaved(collection({ name: 'Renamed', visibility: 'members_only' }));
+      fixture.detectChanges();
+
+      expect(page.showEditCollection).toBeFalse();
+      expect(page.collection!.name).toBe('Renamed');
+      expect(page.collection!.visibility).toBe('members_only');
+      expect(collectionService.getCollections).toHaveBeenCalledOnceWith(CLUB_ID);
+      expect(toastController.create).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Collection updated' }));
+    });
+
+    it('closes the edit form with the page', () => {
+      renderAs(true);
+      page.openEditCollection();
+      page.ionViewWillLeave();
+      expect(page.showEditCollection).toBeFalse();
     });
   });
 });

@@ -10,8 +10,8 @@
       <ion-button *ngIf="collection" fill="clear" aria-label="Share collection" (click)="shareCollection()">
         <ion-icon slot="icon-only" name="share-social-outline"></ion-icon>
       </ion-button>
-      <ion-button *ngIf="isAdmin" fill="clear" color="danger" (click)="deleteCollection()">
-        <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+      <ion-button *ngIf="isAdmin" fill="clear" aria-label="Manage collection" (click)="openAdminMenu()">
+        <ion-icon slot="icon-only" name="create-outline"></ion-icon>
       </ion-button>
       <ion-button routerLink="/tabs/home" routerDirection="root" fill="clear">
         <ion-icon slot="icon-only" name="home-outline"></ion-icon>
@@ -73,15 +73,6 @@
       <ion-icon name="add-outline" slot="start"></ion-icon>
       Add Payment
     </ion-button>
-  </div>
-
-  <!-- Bulk verify from a GCash statement: admins only (spec 004) -->
-  <div *ngIf="isAdmin" class="bulk-verify-section">
-    <ion-button expand="block" fill="outline" class="bulk-verify-btn" [disabled]="pendingCount === 0" (click)="openBulkVerify()">
-      <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
-      Bulk verify
-    </ion-button>
-    <p *ngIf="!paymentsLoading && pendingCount === 0" class="bulk-verify-note">No payments awaiting verification</p>
   </div>
 
   <!-- Loading skeleton -->
@@ -148,6 +139,30 @@
           (changed)="refreshAfterBulkVerify()"
           (done)="closeBulkVerify()"
         ></app-bulk-verify>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Edit collection (spec 006): admins only -->
+  <ion-modal [isOpen]="showEditCollection" (willDismiss)="closeEditCollection()" class="edit-collection-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Edit collection</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeEditCollection()" aria-label="Close">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <app-edit-collection
+          *ngIf="collection"
+          [collection]="collection"
+          (saved)="onCollectionSaved($event)"
+          (cancelled)="closeEditCollection()"
+        ></app-edit-collection>
       </ion-content>
     </ng-template>
   </ion-modal>

@@ -31,8 +31,8 @@ function shortDate(day: string): string {
 
 /**
  * Bulk verify from a GCash statement (spec 004). The admin picks the PDF, gives
- * its password only when it is protected (D6), and sees every payment awaiting
- * verification grouped as matched, mismatch or not found. The file stays in
+ * its password only when it is protected (D6), and sees every pending payment
+ * grouped as matched, mismatch or not found. The file stays in
  * memory here only for password retries; the server keeps nothing.
  */
 @Component({

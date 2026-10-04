@@ -1,0 +1,48 @@
+<div class="edit-collection">
+  <ion-item [class.item-invalid]="errors.name">
+    <ion-label position="stacked">Name <span class="required-star">*</span></ion-label>
+    <ion-input [(ngModel)]="form.name" (ionInput)="validate()" placeholder="Required"></ion-input>
+  </ion-item>
+  <p *ngIf="errors.name" class="field-error" role="alert">{{ errors.name }}</p>
+
+  <ion-item [class.item-invalid]="errors.description">
+    <ion-label position="stacked">Description</ion-label>
+    <ion-textarea [(ngModel)]="form.description" (ionInput)="validate()" [autoGrow]="true" placeholder="Optional"></ion-textarea>
+  </ion-item>
+  <p *ngIf="errors.description" class="field-error" role="alert">{{ errors.description }}</p>
+
+  <ion-item [class.item-invalid]="errors.targetAmount">
+    <ion-label position="stacked">Target amount (₱)</ion-label>
+    <ion-input [(ngModel)]="form.target" (ionInput)="validate()" inputmode="decimal" placeholder="No target"></ion-input>
+  </ion-item>
+  <p *ngIf="errors.targetAmount" class="field-error" role="alert">{{ errors.targetAmount }}</p>
+  <p *ngIf="!errors.targetAmount" class="hint">Leave empty for no target.</p>
+
+  <div class="visibility">
+    <p class="group-label">Visibility</p>
+    <ion-segment [(ngModel)]="form.visibility" (ionChange)="validate()" aria-label="Visibility">
+      <ion-segment-button value="members_only">
+        <ion-icon name="lock-closed-outline"></ion-icon>
+        <ion-label>Members only</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="public">
+        <ion-icon name="globe-outline"></ion-icon>
+        <ion-label>Public</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+    <p class="hint">
+      {{ form.visibility === 'public'
+        ? 'Anyone with the link can see this collection, its payers and amounts.'
+        : 'Only club members can see this collection. Shared links show a generic preview.' }}
+    </p>
+  </div>
+  <p *ngIf="errors.visibility" class="field-error" role="alert">{{ errors.visibility }}</p>
+
+  <p *ngIf="saveError" class="field-error save-error" role="alert">{{ saveError }}</p>
+
+  <ion-button expand="block" class="amber-btn" [disabled]="!canSave" (click)="save()">
+    <ion-spinner *ngIf="saving" name="crescent"></ion-spinner>
+    <span *ngIf="!saving">{{ saveError ? 'Try again' : 'Save changes' }}</span>
+  </ion-button>
+  <ion-button expand="block" fill="clear" class="secondary-btn" (click)="onCancel()">Cancel</ion-button>
+</div>

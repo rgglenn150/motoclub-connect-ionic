@@ -13,7 +13,7 @@ import { Payment } from '../../../../models/payment.model';
 })
 export class PaymentDetailsComponent implements OnChanges {
   @Input() payment!: Payment;
-  /** Admin, and the payment is still awaiting verification. */
+  /** Admin, and the payment is still pending. */
   @Input() canReview = false;
   /** Admin. */
   @Input() canDelete = false;

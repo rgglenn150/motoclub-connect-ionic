@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Collection } from '../models/collection.model';
+import { Collection, CollectionEdit } from '../models/collection.model';
 
 export type { Collection };
 
@@ -20,8 +20,9 @@ export class CollectionService {
     return this.http.post<{ collection: Collection }>(`${this.baseUrl}/create`, data);
   }
 
-  updateCollection(collectionId: string, data: Partial<Collection>): Observable<{ collection: Collection }> {
-    return this.http.put<{ collection: Collection }>(`${this.baseUrl}/${collectionId}`, data);
+  /** Edit name, description, target and visibility (spec 006). Admins of the club only. */
+  updateCollection(collectionId: string, edit: CollectionEdit): Observable<{ collection: Collection }> {
+    return this.http.put<{ collection: Collection }>(`${this.baseUrl}/${collectionId}`, edit);
   }
 
   deleteCollection(collectionId: string): Observable<any> {

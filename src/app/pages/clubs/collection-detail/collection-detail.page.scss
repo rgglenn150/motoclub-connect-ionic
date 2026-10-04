@@ -181,7 +181,8 @@ ion-card {
 }
 
 .payment-modal,
-.bulk-verify-modal {
+.bulk-verify-modal,
+.edit-collection-modal {
   --height: 90%;
   --border-radius: 16px;
 
@@ -281,21 +282,4 @@ ion-card {
 
   h4 { margin: 0 0 8px; }
   p { margin: 0; font-size: 14px; }
-}
-
-.bulk-verify-section {
-  padding: 0 16px 8px;
-
-  .bulk-verify-btn {
-    --color: #F59E0B;
-    --border-color: #F59E0B;
-    min-height: 44px;
-  }
-
-  .bulk-verify-note {
-    margin: 4px 0 0;
-    text-align: center;
-    font-size: 13px;
-    color: var(--ion-color-medium);
-  }
 }
