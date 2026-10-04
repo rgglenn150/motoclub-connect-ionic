@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AlertController, IonicModule, ToastController } from '@ionic/angular';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { CollectionDetailPage } from './collection-detail.page';
@@ -411,6 +411,146 @@ describe('CollectionDetailPage', () => {
       page.openBulkVerify();
       page.ionViewWillLeave();
       expect(page.showBulkVerify).toBeFalse();
+    });
+  });
+
+  describe('share control (spec 005, FR-001)', () => {
+    const shareButton = () =>
+      (fixture.nativeElement as HTMLElement).querySelector('ion-button[aria-label="Share collection"]');
+
+    it('appears when a collection is displayed', () => {
+      fixture.detectChanges();
+
+      expect(shareButton()).not.toBeNull();
+    });
+
+    it('is absent while the collection is loading', () => {
+      collectionService.getCollections.and.returnValue(new Observable()); // never emits
+      fixture.detectChanges();
+
+      expect(page.collectionLoading).toBeTrue();
+      expect(shareButton()).toBeNull();
+    });
+
+    it('is absent when the collection fails to load', () => {
+      collectionService.getCollections.and.returnValue(throwError(() => new Error('offline')));
+      fixture.detectChanges();
+
+      expect(page.collectionError).toBeTrue();
+      expect(shareButton()).toBeNull();
+    });
+
+    it('is absent on the members-only denied page', () => {
+      collectionService.getCollections.and.returnValue(of({ collections: [] }));
+      fixture.detectChanges();
+
+      expect(page.accessDenied).toBeTrue();
+      expect(shareButton()).toBeNull();
+    });
+  });
+
+  describe('sharing (spec 005, US1)', () => {
+    const expectedUrl = () => `${window.location.origin}/clubs/${CLUB_ID}/collection/${COLLECTION_ID}`;
+    let share: jasmine.Spy;
+
+    beforeEach(() => {
+      share = jasmine.createSpy('share').and.resolveTo();
+      // navigator.share is a data property (not an accessor) in the test browser,
+      // so spyOnProperty can't intercept it — define an own property instead (research R6).
+      Object.defineProperty(navigator, 'share', { configurable: true, writable: true, value: share });
+    });
+
+    it('opens the device share sheet with the collection name, the club line and the plain address', async () => {
+      fixture.detectChanges();
+      await page.shareCollection();
+
+      expect(share).toHaveBeenCalledOnceWith({
+        title: 'Demo Fund',
+        text: 'A collection by Demo Riders',
+        url: expectedUrl(),
+      });
+    });
+
+    it('shares no amounts', async () => {
+      fixture.detectChanges();
+      await page.shareCollection();
+
+      const payload = share.calls.mostRecent().args[0] as ShareData;
+      expect(`${payload.title} ${payload.text ?? ''}`).not.toMatch(/[₱\d]/);
+    });
+
+    it('never shares the /payment variant, even when the page was opened from it', async () => {
+      const originalPath = window.location.pathname;
+      window.history.replaceState(null, '', '/clubs/club1/collection/col1/payment');
+      try {
+        fixture = TestBed.createComponent(CollectionDetailPage);
+        page = fixture.componentInstance;
+        fixture.detectChanges();
+        await page.shareCollection();
+
+        const payload = share.calls.mostRecent().args[0] as ShareData;
+        expect(payload.url).toBe(expectedUrl());
+      } finally {
+        window.history.replaceState(null, '', originalPath);
+      }
+    });
+  });
+
+  describe('share fallback (spec 005, US2)', () => {
+    const expectedUrl = () => `${window.location.origin}/clubs/${CLUB_ID}/collection/${COLLECTION_ID}`;
+    let write: jasmine.Spy;
+
+    const noShareApi = () =>
+      Object.defineProperty(navigator, 'share', { configurable: true, writable: true, value: undefined });
+
+    beforeEach(() => {
+      write = jasmine.createSpy('writeText').and.resolveTo();
+      spyOnProperty(navigator, 'clipboard', 'get').and.returnValue({ writeText: write } as any);
+    });
+
+    it('copies the address and confirms it when there is no share facility', async () => {
+      noShareApi();
+      fixture.detectChanges();
+
+      await page.shareCollection();
+
+      expect(write).toHaveBeenCalledOnceWith(expectedUrl());
+      expect(toastController.create).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Link copied' }));
+    });
+
+    it('shows the address for manual copy when the clipboard is blocked', async () => {
+      noShareApi();
+      write.and.rejectWith(new Error('denied'));
+      fixture.detectChanges();
+
+      await page.shareCollection();
+
+      expect(alertController.create).toHaveBeenCalledWith(
+        jasmine.objectContaining({ message: jasmine.stringContaining(expectedUrl()) })
+      );
+    });
+
+    it('stays silent when the user cancels the share sheet', async () => {
+      const share = jasmine.createSpy('share').and.rejectWith(new DOMException('cancel', 'AbortError'));
+      Object.defineProperty(navigator, 'share', { configurable: true, writable: true, value: share });
+      fixture.detectChanges();
+
+      await page.shareCollection();
+
+      expect(write).not.toHaveBeenCalled();
+      expect(toastController.create).not.toHaveBeenCalled();
+      expect(alertController.create).not.toHaveBeenCalled();
+    });
+
+    it('falls back to copying when the share call fails for another reason', async () => {
+      const share = jasmine.createSpy('share').and.rejectWith(new DOMException('blocked', 'NotAllowedError'));
+      Object.defineProperty(navigator, 'share', { configurable: true, writable: true, value: share });
+      fixture.detectChanges();
+
+      await page.shareCollection();
+
+      expect(write).toHaveBeenCalledOnceWith(expectedUrl());
+      expect(toastController.create).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Link copied' }));
     });
   });
 });
