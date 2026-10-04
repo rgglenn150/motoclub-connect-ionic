@@ -1,0 +1,131 @@
+:host {
+  display: block;
+}
+
+// Explicit dark palette, matching the Add Payment modal (global theme is light).
+$text: #F7FAFC;
+$label: #A0AEC0;
+
+.payment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  .amount {
+    font-size: 28px;
+    font-weight: 700;
+    color: #f59e0b;
+  }
+
+  ion-badge {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+.fields {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  dt {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: $label;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 15px;
+    color: $text;
+    word-break: break-word;
+  }
+
+  .reference {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .reference-value {
+    font-family: monospace;
+    font-size: 16px;
+    user-select: all;
+    -webkit-user-select: all;
+  }
+}
+
+.receipt-block {
+  h3 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: $label;
+  }
+
+  .receipt {
+    display: block;
+    width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+    border-radius: 8px;
+    background: var(--ion-color-step-100, rgba(148, 163, 184, 0.15));
+    cursor: zoom-in;
+  }
+
+  .hint,
+  .no-receipt {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: $label;
+  }
+
+  .receipt-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: $label;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .final-note {
+    margin: 0;
+    font-size: 13px;
+    color: $label;
+  }
+
+  .review {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+// Tap targets of at least 44px (ARCHITECT.md accessibility, spec 003 US4 AC8).
+.tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}

@@ -1,5 +1,6 @@
 import { booleanAttribute, Component, EventEmitter, Inject, Input, LOCALE_ID, OnInit, Output } from '@angular/core';
 import { formatCurrency } from '@angular/common';
+import { paymentStatusLabel } from '../../pipes/payment-status.pipe';
 
 export const NOTE_DISMISSED_KEY = 'mcc.progressNoteDismissed';
 
@@ -38,7 +39,7 @@ export class CollectionProgressComponent implements OnInit {
   @Input({ transform: booleanAttribute }) compact = false;
   @Input() loading = false;
   @Input() error = false;
-  /** Show the dismissible "confirmed vs pending" explanation (FR-018). */
+  /** Show the dismissible "verified vs awaiting" explanation (spec 001 FR-018, spec 003 FR-008). */
   @Input() showNote = false;
   @Output() retry = new EventEmitter<void>();
 
@@ -64,8 +65,10 @@ export class CollectionProgressComponent implements OnInit {
   }
 
   get ariaLabel(): string {
-    const parts = [`${this.peso(this.confirmed)} confirmed`];
-    if (this.pending > 0) parts.push(`${this.peso(this.pending)} pending`);
+    // Awaiting first, then verified (spec 003 FR-003).
+    const parts: string[] = [];
+    if (this.pending > 0) parts.push(`${this.peso(this.pending)} ${paymentStatusLabel('pending', 'lower')}`);
+    parts.push(`${this.peso(this.confirmed)} ${paymentStatusLabel('confirmed', 'lower')}`);
     const label = parts.join(', ');
     return this.hasTarget ? `${label} of ${this.peso(this.target!)}` : label;
   }

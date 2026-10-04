@@ -13,10 +13,10 @@
   </div>
 
   <ng-container *ngIf="!loading && !error">
-    <!-- Confirmed vs pending explanation -->
+    <!-- Verified vs awaiting explanation (spec 003) -->
     <div *ngIf="showNote && !noteDismissed" class="progress-note">
       <ion-note>
-        Confirmed = checked by an admin. Pending = awaiting review. Rejected payments aren't counted.
+        Verified = checked by an admin. Awaiting verification = not reviewed yet. Rejected payments aren't counted.
       </ion-note>
       <ion-button fill="clear" size="small" class="note-close" aria-label="Dismiss explanation" (click)="dismissNote()">
         <ion-icon slot="icon-only" name="close-outline"></ion-icon>
@@ -37,10 +37,10 @@
       <span *ngIf="p.pendingPct > 0" class="segment pending" [style.width.%]="p.pendingPct"></span>
     </div>
 
-    <!-- Text amounts: always present, never colour-only -->
+    <!-- Text amounts: always present, never colour-only. Awaiting first (spec 003). -->
     <div class="progress-labels">
-      <span class="label confirmed"><strong>{{ peso(confirmed) }}</strong> confirmed</span>
-      <span *ngIf="pending > 0" class="label pending"><strong>{{ peso(pending) }}</strong> pending</span>
+      <span *ngIf="pending > 0" class="label pending"><strong>{{ peso(pending) }}</strong> {{ 'pending' | paymentStatus:'lower' }}</span>
+      <span class="label confirmed"><strong>{{ peso(confirmed) }}</strong> {{ 'confirmed' | paymentStatus:'lower' }}</span>
       <span *ngIf="hasTarget" class="label target"><strong>{{ peso(target!) }}</strong> target</span>
     </div>
   </ng-container>

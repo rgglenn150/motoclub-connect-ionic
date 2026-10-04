@@ -2,23 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { Payment } from '../models/payment.model';
 
-export interface Payment {
-  _id: string;
-  collection: string;
-  club: string;
-  name: string;
-  accountName?: string;
-  amount: number;
-  referenceNumber: string;
-  phoneNumber?: string;
-  description?: string;
-  transactionDate?: string;
-  receiptUrl?: string;
-  createdBy: any;
-  createdAt: string;
-  status: 'pending' | 'confirmed' | 'rejected';
-}
+export type { Payment };
 
 /** A resolved status; payments only move pending → confirmed | rejected. */
 export type PaymentResolution = 'confirmed' | 'rejected';
