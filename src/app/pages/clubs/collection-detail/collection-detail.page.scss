@@ -294,6 +294,12 @@ ion-card {
     filter: blur(1px);
   }
 
+  .frosted-shield {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+  }
+
   .frosted-note {
     margin: 0 0 12px;
     padding: 10px 12px;

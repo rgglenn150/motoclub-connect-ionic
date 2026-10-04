@@ -227,33 +227,35 @@
         <!-- Frosted while the receipt is read, so nobody types values the reader then overwrites (spec 006 US4) -->
         <div class="payment-fields" [class.frosted]="isExtractingReceipt" [attr.aria-busy]="isExtractingReceipt">
           <p *ngIf="isExtractingReceipt" class="frosted-note" role="status">Reading receipt… some fields will fill in automatically.</p>
+          <!-- Catches taps on the frosted fields in every browser, whatever it does with disabled inputs -->
+          <div *ngIf="isExtractingReceipt" class="frosted-shield" aria-hidden="true"></div>
           <ion-item [class.item-invalid]="!paymentForm.name?.trim()">
             <ion-label position="stacked">Name <span class="required-star">*</span></ion-label>
-            <ion-input [disabled]="isExtractingReceipt" [(ngModel)]="paymentForm.name" placeholder="Required"></ion-input>
+            <ion-input [disabled]="isExtractingReceipt" [readonly]="isExtractingReceipt" [(ngModel)]="paymentForm.name" placeholder="Required"></ion-input>
           </ion-item>
           <ion-item>
             <ion-label position="stacked">Account Name</ion-label>
-            <ion-input [disabled]="isExtractingReceipt" [(ngModel)]="paymentForm.accountName" placeholder="Auto-filled from receipt"></ion-input>
+            <ion-input [disabled]="isExtractingReceipt" [readonly]="isExtractingReceipt" [(ngModel)]="paymentForm.accountName" placeholder="Auto-filled from receipt"></ion-input>
           </ion-item>
           <ion-item [class.item-invalid]="!paymentForm.amount">
             <ion-label position="stacked">Amount <span class="required-star">*</span></ion-label>
-            <ion-input [disabled]="isExtractingReceipt" type="number" [(ngModel)]="paymentForm.amount" placeholder="0.00"></ion-input>
+            <ion-input [disabled]="isExtractingReceipt" [readonly]="isExtractingReceipt" type="number" [(ngModel)]="paymentForm.amount" placeholder="0.00"></ion-input>
           </ion-item>
           <ion-item [class.item-invalid]="!paymentForm.referenceNumber?.trim()">
             <ion-label position="stacked">Reference Number <span class="required-star">*</span></ion-label>
-            <ion-input [disabled]="isExtractingReceipt" [(ngModel)]="paymentForm.referenceNumber" placeholder="Ref #"></ion-input>
+            <ion-input [disabled]="isExtractingReceipt" [readonly]="isExtractingReceipt" [(ngModel)]="paymentForm.referenceNumber" placeholder="Ref #"></ion-input>
           </ion-item>
           <ion-item>
             <ion-label position="stacked">Phone Number</ion-label>
-            <ion-input [disabled]="isExtractingReceipt" [(ngModel)]="paymentForm.phoneNumber" placeholder="e.g. 09XX XXX XXXX" type="tel"></ion-input>
+            <ion-input [disabled]="isExtractingReceipt" [readonly]="isExtractingReceipt" [(ngModel)]="paymentForm.phoneNumber" placeholder="e.g. 09XX XXX XXXX" type="tel"></ion-input>
           </ion-item>
           <ion-item>
             <ion-label position="stacked">Transaction Date &amp; Time</ion-label>
-            <ion-input [disabled]="isExtractingReceipt" [(ngModel)]="paymentForm.transactionDate" type="datetime-local"></ion-input>
+            <ion-input [disabled]="isExtractingReceipt" [readonly]="isExtractingReceipt" [(ngModel)]="paymentForm.transactionDate" type="datetime-local"></ion-input>
           </ion-item>
           <ion-item>
             <ion-label position="stacked">Description</ion-label>
-            <ion-input [disabled]="isExtractingReceipt" [(ngModel)]="paymentForm.description" placeholder="Optional note"></ion-input>
+            <ion-input [disabled]="isExtractingReceipt" [readonly]="isExtractingReceipt" [(ngModel)]="paymentForm.description" placeholder="Optional note"></ion-input>
           </ion-item>
         </div>
 
