@@ -20,6 +20,15 @@ export interface Payment {
   status: 'pending' | 'confirmed' | 'rejected';
 }
 
+/** A resolved status; payments only move pending → confirmed | rejected. */
+export type PaymentResolution = 'confirmed' | 'rejected';
+
+/** Body of the 409 returned when a payment is already resolved (contracts/payment.md). */
+export interface PaymentStatusConflict {
+  message: string;
+  status: PaymentResolution;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
   private baseUrl = `${environment.apiUrl}/payment`;
@@ -34,7 +43,7 @@ export class PaymentService {
     return this.http.post<{ payment: Payment }>(`${this.baseUrl}/create`, formData);
   }
 
-  updateStatus(paymentId: string, status: 'pending' | 'confirmed' | 'rejected'): Observable<{ payment: Payment }> {
+  updateStatus(paymentId: string, status: PaymentResolution): Observable<{ payment: Payment }> {
     return this.http.patch<{ payment: Payment }>(`${this.baseUrl}/${paymentId}/status`, { status });
   }
 

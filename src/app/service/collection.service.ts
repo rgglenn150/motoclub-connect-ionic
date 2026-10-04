@@ -2,20 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { Collection } from '../models/collection.model';
 
-export interface Collection {
-  _id: string;
-  club: string;
-  clubName?: string;
-  name: string;
-  description?: string;
-  targetAmount?: number;
-  visibility: 'public' | 'members_only';
-  status: 'open' | 'closed';
-  paymentCount: number;
-  totalCollected: number;
-  createdAt: string;
-}
+export type { Collection };
 
 @Injectable({ providedIn: 'root' })
 export class CollectionService {
