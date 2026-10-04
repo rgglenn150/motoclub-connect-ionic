@@ -55,16 +55,16 @@ describe('CollectionProgressComponent', () => {
 
   afterEach(() => localStorage.removeItem(NOTE_DISMISSED_KEY));
 
-  it('shows the bar unchanged, with awaiting listed before verified (spec 003)', () => {
+  it('shows the bar unchanged, with pending listed before verified (specs 003 + 006)', () => {
     create();
 
     expect(segment('confirmed')?.style.width).toBe('45%');
     expect(segment('pending')?.style.width).toBe('12%');
     const t = text();
-    expect(t).toContain('₱1,200 awaiting verification');
+    expect(t).toContain('₱1,200 pending');
     expect(t).toContain('₱4,500 verified');
     expect(t).toContain('₱10,000 target');
-    expect(t.indexOf('awaiting verification')).toBeLessThan(t.indexOf('verified', t.indexOf('awaiting verification') + 22));
+    expect(t.indexOf('pending')).toBeLessThan(t.indexOf('verified'));
     expect(t.indexOf('₱1,200')).toBeLessThan(t.indexOf('₱4,500'));
     expect(t.indexOf('₱4,500')).toBeLessThan(t.indexOf('₱10,000'));
   });
@@ -74,14 +74,14 @@ describe('CollectionProgressComponent', () => {
 
     const bar = el.querySelector('[role="progressbar"]')!;
     expect(bar.getAttribute('aria-valuenow')).toBe('45');
-    expect(bar.getAttribute('aria-label')).toBe('₱1,200 awaiting verification, ₱4,500 verified of ₱10,000');
+    expect(bar.getAttribute('aria-label')).toBe('₱1,200 pending, ₱4,500 verified of ₱10,000');
   });
 
-  it('hides the awaiting segment and label when nothing is awaiting', () => {
+  it('hides the pending segment and label when nothing is pending', () => {
     create({ pending: 0 });
 
     expect(segment('pending')).toBeNull();
-    expect(text()).not.toContain('awaiting');
+    expect(text()).not.toContain('pending');
     expect(text()).toContain('₱4,500 verified');
   });
 
@@ -96,7 +96,7 @@ describe('CollectionProgressComponent', () => {
     create({ target: undefined, confirmed: 500, pending: 250 });
 
     expect(el.querySelector('[role="progressbar"]')).toBeNull();
-    expect(text()).toContain('₱250 awaiting verification');
+    expect(text()).toContain('₱250 pending');
     expect(text()).toContain('₱500 verified');
     expect(text()).not.toContain('target');
   });
@@ -124,15 +124,15 @@ describe('CollectionProgressComponent', () => {
     expect(el.querySelector('.collection-progress.compact')).not.toBeNull();
   });
 
-  it('never shows the old status words (spec 003 SC-001)', () => {
+  it('never shows retired status words: confirmed, awaiting (specs 003 + 006)', () => {
     for (const inputs of [{}, { pending: 0 }, { confirmed: 0 }, { target: undefined }, { showNote: true }, { compact: true }]) {
       create(inputs);
-      expect(text()).not.toMatch(/confirmed|pending/i);
-      expect(el.querySelector('[role="progressbar"]')?.getAttribute('aria-label') ?? '').not.toMatch(/confirmed|pending/i);
+      expect(text()).not.toMatch(/confirmed|awaiting/i);
+      expect(el.querySelector('[role="progressbar"]')?.getAttribute('aria-label') ?? '').not.toMatch(/confirmed|awaiting/i);
     }
   });
 
-  describe('verified vs awaiting note', () => {
+  describe('verified vs pending note', () => {
     const note = () => el.querySelector('.progress-note');
 
     it('is shown only when asked for', () => {
@@ -141,7 +141,7 @@ describe('CollectionProgressComponent', () => {
 
       create({ showNote: true });
       expect(note()?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        "Verified = checked by an admin. Awaiting verification = not reviewed yet. Rejected payments aren't counted."
+        "Verified = checked by an admin. Pending = not reviewed yet. Rejected payments aren't counted."
       );
     });
 

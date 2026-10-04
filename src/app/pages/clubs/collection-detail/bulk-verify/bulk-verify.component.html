@@ -3,8 +3,8 @@
   <section *ngIf="state === 'pick'" class="pick">
     <ion-icon name="document-text-outline" class="hero-icon" aria-hidden="true"></ion-icon>
     <p class="intro">
-      Upload the club's GCash transaction history (PDF). It's read once to check the payments awaiting
-      verification, and never saved.
+      Upload the club's GCash transaction history (PDF). It's read once to check the pending payments,
+      and never saved.
     </p>
     <ion-button expand="block" class="amber-btn" (click)="fileInput.click()">
       <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
@@ -64,7 +64,7 @@
 
     <div *ngIf="result.summary.checked === 0" class="empty-state">
       <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
-      <p>No payments awaiting verification.</p>
+      <p>No pending payments.</p>
     </div>
 
     <ng-container
