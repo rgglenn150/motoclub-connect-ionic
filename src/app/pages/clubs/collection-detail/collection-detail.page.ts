@@ -41,6 +41,13 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
   showPaymentModal = false;
   selectedPayment: Payment | null = null;
 
+  // Bulk verify from a GCash statement (spec 004): admins only.
+  showBulkVerify = false;
+
+  get pendingCount(): number {
+    return this.payments.filter(p => p.status === 'pending').length;
+  }
+
   get clubName(): string | null {
     return this.collection?.clubName || null;
   }
@@ -73,6 +80,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
   ionViewWillLeave() {
     this.showAddPaymentModal = false;
     this.showPaymentModal = false;
+    this.showBulkVerify = false;
   }
 
   private checkAdminStatus() {
@@ -141,6 +149,27 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
   closePayment() {
     this.showPaymentModal = false;
     this.selectedPayment = null;
+  }
+
+  openBulkVerify() {
+    if (!this.isAdmin || this.pendingCount === 0) return;
+    this.showBulkVerify = true;
+  }
+
+  closeBulkVerify() {
+    this.showBulkVerify = false;
+  }
+
+  /** After any bulk verify attempt: the server is the only source of statuses and totals (spec 004, red-team F3). */
+  refreshAfterBulkVerify() {
+    this.loadPayments();
+    this.loadCollection();
+  }
+
+  /** A bulk verify result was tapped: check it in the payment dialog (spec 004, red-team F1). */
+  openPaymentById(paymentId: string) {
+    const payment = this.payments.find(p => p._id === paymentId);
+    if (payment) this.openPayment(payment);
   }
 
   openAddPaymentModal() {
