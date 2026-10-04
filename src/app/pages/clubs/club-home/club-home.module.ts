@@ -10,6 +10,8 @@ import { NetworkIndicatorModule } from '../../../components/network-indicator/ne
 import { ClubHomePage } from './club-home.page';
 import { SharedModule } from '../../../shared/shared.module';
 
+import { CollectionProgressModule } from '../../../components/collection-progress/collection-progress.module';
+
 @NgModule({
   imports: [
     CommonModule,
@@ -17,7 +19,8 @@ import { SharedModule } from '../../../shared/shared.module';
     IonicModule,
     ClubHomePageRoutingModule,
     NetworkIndicatorModule,
-    SharedModule
+    SharedModule,
+    CollectionProgressModule
   ],
   declarations: [ClubHomePage]
 })

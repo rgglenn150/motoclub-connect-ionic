@@ -1,0 +1,47 @@
+<div class="collection-progress" [class.compact]="compact">
+  <!-- Loading -->
+  <div *ngIf="loading" class="progress-skeleton">
+    <ion-skeleton-text animated class="skeleton-bar"></ion-skeleton-text>
+    <ion-skeleton-text animated class="skeleton-label"></ion-skeleton-text>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!loading && error" class="progress-error">
+    <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
+    <span>Couldn't load progress.</span>
+    <ion-button size="small" fill="outline" (click)="retry.emit()">Retry</ion-button>
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <!-- Confirmed vs pending explanation -->
+    <div *ngIf="showNote && !noteDismissed" class="progress-note">
+      <ion-note>
+        Confirmed = checked by an admin. Pending = awaiting review. Rejected payments aren't counted.
+      </ion-note>
+      <ion-button fill="clear" size="small" class="note-close" aria-label="Dismiss explanation" (click)="dismissNote()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </div>
+
+    <!-- Bar (only with a target) -->
+    <div
+      *ngIf="percents as p"
+      class="progress-bar"
+      role="progressbar"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [attr.aria-valuenow]="round(p.confirmedPct)"
+      [attr.aria-label]="ariaLabel"
+    >
+      <span class="segment confirmed" [style.width.%]="p.confirmedPct"></span>
+      <span *ngIf="p.pendingPct > 0" class="segment pending" [style.width.%]="p.pendingPct"></span>
+    </div>
+
+    <!-- Text amounts: always present, never colour-only -->
+    <div class="progress-labels">
+      <span class="label confirmed"><strong>{{ peso(confirmed) }}</strong> confirmed</span>
+      <span *ngIf="pending > 0" class="label pending"><strong>{{ peso(pending) }}</strong> pending</span>
+      <span *ngIf="hasTarget" class="label target"><strong>{{ peso(target!) }}</strong> target</span>
+    </div>
+  </ng-container>
+</div>

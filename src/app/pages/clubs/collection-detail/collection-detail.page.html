@@ -23,7 +23,7 @@
   </ion-refresher>
 
   <!-- Members Only / access denied state -->
-  <ng-container *ngIf="!collectionLoading && !collection">
+  <ng-container *ngIf="!collectionLoading && !collection && !collectionError">
     <div class="access-denied-container">
       <ion-icon name="lock-closed-outline"></ion-icon>
       <h2>Members Only</h2>
@@ -49,23 +49,19 @@
   </div>
 
   <!-- Collection summary -->
-  <div class="collection-summary" *ngIf="collection">
-    <div class="summary-stat">
-      <strong>{{ totalCollected | currency:'PHP':'symbol' }}</strong>
-      <span>Total Collected</span>
+  <div class="collection-summary" *ngIf="collection || collectionError || collectionLoading">
+    <app-collection-progress
+      [confirmed]="collection?.confirmedTotal ?? 0"
+      [pending]="collection?.pendingTotal ?? 0"
+      [target]="collection?.targetAmount"
+      [loading]="collectionLoading && !collection"
+      [error]="collectionError"
+      [showNote]="true"
+      (retry)="loadCollection()"
+    ></app-collection-progress>
+    <div class="summary-count" *ngIf="collection">
+      <strong>{{ payments.length }}</strong> {{ payments.length === 1 ? 'payment' : 'payments' }}
     </div>
-    <div class="summary-divider"></div>
-    <div class="summary-stat">
-      <strong>{{ payments.length }}</strong>
-      <span>Payments</span>
-    </div>
-    <ng-container *ngIf="collection.targetAmount">
-      <div class="summary-divider"></div>
-      <div class="summary-stat">
-        <strong>{{ collection.targetAmount | currency:'PHP':'symbol' }}</strong>
-        <span>Target</span>
-      </div>
-    </ng-container>
   </div>
 
   <!-- Add Payment button -->
@@ -100,8 +96,8 @@
           <ion-badge
             [color]="p.status === 'confirmed' ? 'success' : p.status === 'rejected' ? 'danger' : 'warning'"
             class="status-badge"
-            [class.clickable]="isAdmin"
-            (click)="isAdmin && changeStatus(p)">
+            [class.clickable]="isAdmin && p.status === 'pending'"
+            (click)="isAdmin && p.status === 'pending' && changeStatus(p)">
             {{ p.status | titlecase }}
           </ion-badge>
         </div>

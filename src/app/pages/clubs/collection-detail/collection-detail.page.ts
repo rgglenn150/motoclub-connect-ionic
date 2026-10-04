@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertController, ToastController, ViewWillLeave } from '@ionic/angular';
-import { CollectionService, Collection } from '../../../service/collection.service';
-import { PaymentService, Payment } from '../../../service/payment.service';
+import { CollectionService } from '../../../service/collection.service';
+import { Collection } from '../../../models/collection.model';
+import { PaymentService, Payment, PaymentResolution, PaymentStatusConflict } from '../../../service/payment.service';
+import { HttpErrorResponse } from '@angular/common/http';
 import { UserStateService } from '../../../service/user-state.service';
 import { ClubService } from '../../../service/club.service';
 
@@ -17,6 +19,8 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
 
   collection: Collection | null = null;
   collectionLoading = false;
+  /** Network/server failure, as opposed to a collection the viewer can't see. */
+  collectionError = false;
 
   payments: Payment[] = [];
   paymentsLoading = false;
@@ -35,10 +39,6 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
 
   get clubName(): string | null {
     return this.collection?.clubName || null;
-  }
-
-  get totalCollected(): number {
-    return this.payments.reduce((s, p) => s + p.amount, 0);
   }
 
   constructor(
@@ -82,19 +82,26 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     });
   }
 
+  /**
+   * Loads the collection, including its confirmed/pending totals. Also called
+   * after payments change: the server is the only source of the totals.
+   */
   loadCollection(autoOpenPayment = false) {
     this.collectionLoading = true;
+    this.collectionError = false;
     this.collectionService.getCollections(this.clubId).subscribe({
       next: (res) => {
         this.collection = res.collections.find(c => c._id === this.collectionId) || null;
         this.collectionLoading = false;
-        if (!this.collection) {
-          this.accessDenied = true;
-        } else if (autoOpenPayment) {
+        this.accessDenied = !this.collection;
+        if (this.collection && autoOpenPayment) {
           this.openAddPaymentModal();
         }
       },
-      error: () => { this.collectionLoading = false; }
+      error: () => {
+        this.collectionLoading = false;
+        this.collectionError = true;
+      }
     });
   }
 
@@ -178,10 +185,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     this.paymentService.createPayment(formData).subscribe({
       next: (res) => {
         this.payments.unshift(res.payment);
-        if (this.collection) {
-          this.collection.totalCollected += res.payment.amount;
-          this.collection.paymentCount += 1;
-        }
+        this.loadCollection();
         this.isSavingPayment = false;
         this.closeAddPaymentModal();
       },
@@ -194,24 +198,40 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     });
   }
 
+  /**
+   * Resolve a pending payment. Confirmed and rejected are final (spec 001,
+   * Story 5): a mistake is fixed by deleting the payment and adding it again.
+   */
   async changeStatus(payment: Payment) {
+    if (payment.status !== 'pending') return;
     const alert = await this.alertController.create({
-      header: 'Update Status',
+      header: 'Review Payment',
+      message: 'This is final. To undo it later, delete the payment and add it again.',
       inputs: [
-        { type: 'radio', label: 'Pending',   value: 'pending',   checked: payment.status === 'pending' },
-        { type: 'radio', label: 'Confirmed', value: 'confirmed', checked: payment.status === 'confirmed' },
-        { type: 'radio', label: 'Rejected',  value: 'rejected',  checked: payment.status === 'rejected' },
+        { type: 'radio', label: 'Confirm', value: 'confirmed', checked: true },
+        { type: 'radio', label: 'Reject',  value: 'rejected' },
       ],
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         {
-          text: 'Update',
-          handler: (status: 'pending' | 'confirmed' | 'rejected') => {
-            if (!status || status === payment.status) return;
+          text: 'Save',
+          handler: (status: PaymentResolution) => {
+            if (!status) return;
             this.paymentService.updateStatus(payment._id, status).subscribe({
-              next: (res) => { payment.status = res.payment.status; },
-              error: async () => {
-                const toast = await this.toastController.create({ message: 'Failed to update status', duration: 2000, color: 'danger' });
+              next: (res) => {
+                payment.status = res.payment.status;
+                this.loadCollection();
+              },
+              error: async (err: HttpErrorResponse) => {
+                let message = 'Failed to update status';
+                if (err.status === 409) {
+                  // Already resolved (e.g. by another admin): show what the server has.
+                  const conflict = err.error as PaymentStatusConflict;
+                  payment.status = conflict.status;
+                  message = conflict.message;
+                  this.loadCollection();
+                }
+                const toast = await this.toastController.create({ message, duration: 3000, color: 'danger' });
                 await toast.present();
               }
             });
@@ -264,10 +284,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
             this.paymentService.deletePayment(payment._id).subscribe({
               next: () => {
                 this.payments = this.payments.filter(p => p._id !== payment._id);
-                if (this.collection) {
-                  this.collection.totalCollected -= payment.amount;
-                  this.collection.paymentCount -= 1;
-                }
+                this.loadCollection();
               },
               error: async () => {
                 const toast = await this.toastController.create({ message: 'Failed to delete payment', duration: 2000, color: 'danger' });

@@ -526,15 +526,13 @@
                 </ion-badge>
               </div>
               <p *ngIf="c.description" class="collection-description">{{ c.description }}</p>
+              <app-collection-progress
+                compact
+                [confirmed]="c.confirmedTotal"
+                [pending]="c.pendingTotal"
+                [target]="c.targetAmount"
+              ></app-collection-progress>
               <div class="collection-stats">
-                <div class="stat">
-                  <span class="stat-value">{{ c.totalCollected | currency:'PHP':'symbol' }}</span>
-                  <span class="stat-label">Collected</span>
-                </div>
-                <div class="stat" *ngIf="c.targetAmount">
-                  <span class="stat-value">{{ c.targetAmount | currency:'PHP':'symbol' }}</span>
-                  <span class="stat-label">Target</span>
-                </div>
                 <div class="stat">
                   <span class="stat-value">{{ c.paymentCount }}</span>
                   <span class="stat-label">Payments</span>
