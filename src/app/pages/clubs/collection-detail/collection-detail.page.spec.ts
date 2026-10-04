@@ -694,6 +694,28 @@ describe('CollectionDetailPage', () => {
       expect(form().textContent).toContain('some fields will fill in automatically');
     });
 
+    it('also makes the fields read-only and covers them with a tap shield (AC1, any browser)', () => {
+      page.isExtractingReceipt = true;
+      fixture.detectChanges();
+
+      expect(inputs().every((i) => i.readonly)).toBeTrue();
+      expect(form().querySelector('.payment-fields .frosted-shield')).not.toBeNull();
+    });
+
+    it('drops focus from a field when reading starts (keyboard already open)', () => {
+      const field = document.createElement('input');
+      document.body.appendChild(field);
+      field.focus();
+      paymentService.extractReceipt.and.returnValue(new Subject<any>());
+      const file = new File(['x'], 'r.png', { type: 'image/png' });
+
+      page.onReceiptSelected({ target: { files: [file] } } as any);
+
+      expect(document.activeElement).not.toBe(field);
+      expect(page.isExtractingReceipt).toBeTrue();
+      field.remove();
+    });
+
     it('unlocks the fields when reading ends (AC2)', () => {
       page.isExtractingReceipt = true;
       fixture.detectChanges();
@@ -701,6 +723,8 @@ describe('CollectionDetailPage', () => {
       fixture.detectChanges();
 
       expect(inputs().some((i) => i.disabled)).toBeFalse();
+      expect(inputs().some((i) => i.readonly)).toBeFalse();
+      expect(form().querySelector('.payment-fields .frosted-shield')).toBeNull();
       expect(save().disabled).toBeFalse();
       expect(form().querySelector('.payment-fields')!.classList).not.toContain('frosted');
     });

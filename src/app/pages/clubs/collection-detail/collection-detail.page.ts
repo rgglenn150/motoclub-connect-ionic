@@ -254,6 +254,8 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     reader.onload = (e) => { this.receiptPreviewUrl = e.target?.result as string; };
     reader.readAsDataURL(file);
     this.isExtractingReceipt = true;
+    // A field focused before the photo was picked would keep its keyboard (spec 006 US4).
+    (document.activeElement as HTMLElement | null)?.blur();
     this.paymentService.extractReceipt(file).subscribe({
       next: (data) => {
         if (data.name) this.paymentForm.accountName = data.name;
