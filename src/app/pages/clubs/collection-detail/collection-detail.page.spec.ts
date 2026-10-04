@@ -662,4 +662,47 @@ describe('CollectionDetailPage', () => {
       expect(page.showEditCollection).toBeFalse();
     });
   });
+
+  describe('Add Payment while a receipt is read (spec 006, US4)', () => {
+    // Ionic moves presented modals to the document, so earlier tests' modals can linger: use the newest.
+    const form = () => Array.from(document.querySelectorAll<HTMLElement>('ion-modal.add-payment-modal')).pop()!;
+    const inputs = () => Array.from(form().querySelectorAll('.payment-fields ion-input')) as any[];
+    const save = () => form().querySelector('ion-button.save-payment-btn') as any;
+
+    beforeEach(async () => {
+      fixture.detectChanges();
+      page.openAddPaymentModal();
+      page.paymentForm = { ...page.paymentForm, name: 'Demo Payer', amount: 500, referenceNumber: 'R9' };
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    });
+
+    afterEach(() => {
+      page.closeAddPaymentModal();
+      fixture.detectChanges();
+    });
+
+    it('frosts and disables the fields and Save while reading, with a note (AC1)', () => {
+      page.isExtractingReceipt = true;
+      fixture.detectChanges();
+
+      expect(inputs().length).toBe(7);
+      expect(inputs().every((i) => i.disabled)).toBeTrue();
+      expect(save().disabled).toBeTrue();
+      expect(form().querySelector('.payment-fields')!.classList).toContain('frosted');
+      expect(form().textContent).toContain('some fields will fill in automatically');
+    });
+
+    it('unlocks the fields when reading ends (AC2)', () => {
+      page.isExtractingReceipt = true;
+      fixture.detectChanges();
+      page.isExtractingReceipt = false;
+      fixture.detectChanges();
+
+      expect(inputs().some((i) => i.disabled)).toBeFalse();
+      expect(save().disabled).toBeFalse();
+      expect(form().querySelector('.payment-fields')!.classList).not.toContain('frosted');
+    });
+  });
 });
