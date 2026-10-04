@@ -1,0 +1,117 @@
+<div class="bulk-verify">
+  <!-- 1. Pick the statement -->
+  <section *ngIf="state === 'pick'" class="pick">
+    <ion-icon name="document-text-outline" class="hero-icon" aria-hidden="true"></ion-icon>
+    <p class="intro">
+      Upload the club's GCash transaction history (PDF). It's read once to check the payments awaiting
+      verification, and never saved.
+    </p>
+    <ion-button expand="block" class="amber-btn" (click)="fileInput.click()">
+      <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+      Choose PDF
+    </ion-button>
+    <input #fileInput type="file" accept="application/pdf,.pdf" hidden (change)="onFileSelected($event)" />
+    <p *ngIf="fileError" class="field-error" role="alert">{{ fileError }}</p>
+  </section>
+
+  <!-- 2. Password, only for protected PDFs (D6) -->
+  <section *ngIf="state === 'password'" class="password">
+    <p class="file-name">
+      <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+      {{ file?.name }}
+    </p>
+    <p class="hint">This PDF is password-protected. Enter its password.</p>
+    <ion-item [class.item-invalid]="passwordError">
+      <ion-label position="stacked">PDF password</ion-label>
+      <ion-input
+        type="password"
+        [(ngModel)]="password"
+        autocomplete="off"
+        (keyup.enter)="submitPassword()"
+      ></ion-input>
+    </ion-item>
+    <p *ngIf="passwordError" class="field-error" role="alert">{{ passwordError }}</p>
+    <ion-button expand="block" class="amber-btn" [disabled]="!password" (click)="submitPassword()">
+      Check payments
+    </ion-button>
+    <ion-button expand="block" fill="clear" class="secondary-btn" (click)="reset()">Choose another file</ion-button>
+  </section>
+
+  <!-- 3. Reading -->
+  <section *ngIf="state === 'checking'" class="checking" aria-live="polite">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Reading statement…</p>
+  </section>
+
+  <!-- Error with retry -->
+  <section *ngIf="state === 'error'" class="error-state" role="alert">
+    <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+    <p>{{ errorMessage }}</p>
+    <ion-button class="amber-btn" (click)="retry()">Try again</ion-button>
+    <ion-button fill="clear" class="secondary-btn" (click)="reset()">Choose another file</ion-button>
+  </section>
+
+  <!-- 4. Results -->
+  <section *ngIf="state === 'results' && result" class="results">
+    <div class="summary">
+      <p class="counts">
+        {{ result.summary.checked }} checked · {{ result.summary.matched }} matched ·
+        {{ result.summary.mismatched }} mismatch · {{ result.summary.notFound }} not found
+      </p>
+      <p class="total">Matched total <strong>{{ matchedTotal }}</strong></p>
+      <p class="period">Statement {{ period }} · {{ result.statement.entryCount }} transactions</p>
+    </div>
+
+    <div *ngIf="result.summary.checked === 0" class="empty-state">
+      <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
+      <p>No payments awaiting verification.</p>
+    </div>
+
+    <ng-container
+      *ngTemplateOutlet="group; context: { title: 'Matched', rows: matched, kind: 'matched' }"
+    ></ng-container>
+    <ng-container
+      *ngTemplateOutlet="group; context: { title: 'Mismatch', rows: mismatched, kind: 'mismatch' }"
+    ></ng-container>
+    <ng-container
+      *ngTemplateOutlet="group; context: { title: 'Not found in statement', rows: notFound, kind: 'not-found' }"
+    ></ng-container>
+
+    <ion-button expand="block" fill="clear" class="secondary-btn" (click)="reset()">Check another statement</ion-button>
+
+    <div *ngIf="matched.length" class="verify-bar">
+      <ion-button expand="block" class="amber-btn" [disabled]="selectedCount === 0 || verifying" (click)="verifySelected()">
+        <ion-spinner *ngIf="verifying" name="crescent"></ion-spinner>
+        <span *ngIf="!verifying">Verify selected ({{ selectedCount }})</span>
+      </ion-button>
+    </div>
+  </section>
+</div>
+
+<ng-template #group let-title="title" let-rows="rows" let-kind="kind">
+  <div *ngIf="rows.length" class="group" [ngClass]="kind">
+    <div class="group-heading">
+      <h3>{{ title }} <span class="count">({{ rows.length }})</span></h3>
+      <button *ngIf="kind === 'matched'" type="button" class="select-all" (click)="toggleAll()">
+        {{ allSelected ? 'Clear all' : 'Select all' }}
+      </button>
+    </div>
+    <div *ngFor="let r of rows" class="result-row" [attr.data-payment-id]="r.paymentId">
+      <ion-checkbox
+        *ngIf="kind === 'matched'"
+        [checked]="isSelected(r.paymentId)"
+        (ionChange)="toggle(r.paymentId, $event.detail.checked)"
+        [attr.aria-label]="'Select ' + r.name"
+      ></ion-checkbox>
+      <button type="button" class="result-main" (click)="openPayment.emit(r.paymentId)">
+        <span class="line">
+          <span class="name">{{ r.name }}</span>
+          <span class="amount">{{ amountText(r.amount) }}</span>
+        </span>
+        <span class="ref">Ref {{ r.referenceNumber }}</span>
+        <span *ngFor="let reason of r.reasons" class="reason">{{ reasonText(reason) }}</span>
+        <span *ngFor="let note of r.notes" class="note">{{ noteText(note) }}</span>
+      </button>
+    </div>
+  </div>
+</ng-template>

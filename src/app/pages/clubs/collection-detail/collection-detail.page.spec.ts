@@ -8,6 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { CollectionDetailPage } from './collection-detail.page';
 import { PaymentDetailsComponent } from './payment-details/payment-details.component';
+import { BulkVerifyComponent } from './bulk-verify/bulk-verify.component';
 import { CollectionService } from '../../../service/collection.service';
 import { PaymentService } from '../../../service/payment.service';
 import { Payment } from '../../../models/payment.model';
@@ -73,7 +74,7 @@ describe('CollectionDetailPage', () => {
     localStorage.removeItem('token');
     collectionService = jasmine.createSpyObj('CollectionService', ['getCollections', 'deleteCollection']);
     collectionService.getCollections.and.returnValue(of({ collections: [collection()] }));
-    paymentService = jasmine.createSpyObj('PaymentService', ['getPayments', 'createPayment', 'updateStatus', 'deletePayment', 'extractReceipt']);
+    paymentService = jasmine.createSpyObj('PaymentService', ['getPayments', 'createPayment', 'updateStatus', 'deletePayment', 'extractReceipt', 'checkStatement', 'bulkVerify']);
     paymentService.getPayments.and.returnValue(of({ payments: [payment()] }));
 
     alertController = jasmine.createSpyObj('AlertController', ['create']);
@@ -86,7 +87,7 @@ describe('CollectionDetailPage', () => {
     toastController.create.and.resolveTo({ present: () => Promise.resolve() } as any);
 
     await TestBed.configureTestingModule({
-      declarations: [CollectionDetailPage, PaymentDetailsComponent],
+      declarations: [CollectionDetailPage, PaymentDetailsComponent, BulkVerifyComponent],
       imports: [IonicModule.forRoot(), FormsModule, RouterTestingModule, CollectionProgressModule, SharedModule],
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ clubId: CLUB_ID, collectionId: COLLECTION_ID }) } } },
@@ -348,6 +349,68 @@ describe('CollectionDetailPage', () => {
 
       expect(cards()[0].classList).toContain('openable');
       expect(cards()[1].classList).not.toContain('openable');
+    });
+  });
+
+  describe('bulk verify (spec 004)', () => {
+    const bulkButton = () =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('ion-button'))
+        .find((b) => b.textContent?.includes('Bulk verify'));
+
+    function renderAs(admin: boolean, payments: Payment[]) {
+      paymentService.getPayments.and.returnValue(of({ payments }));
+      page.isAdmin = admin;
+      fixture.detectChanges();
+    }
+
+    it('is not offered to non-admins (FR-001)', () => {
+      renderAs(false, [payment({ status: 'pending' })]);
+      expect(bulkButton()).toBeUndefined();
+    });
+
+    it('opens the bulk verify window for admins with awaiting payments', () => {
+      renderAs(true, [payment({ status: 'pending' }), payment({ _id: 'p2', status: 'confirmed' })]);
+
+      expect(bulkButton()).toBeDefined();
+      expect(bulkButton()!.hasAttribute('disabled') && bulkButton()!.getAttribute('disabled') !== 'false').toBeFalse();
+      bulkButton()!.click();
+      expect(page.showBulkVerify).toBeTrue();
+    });
+
+    it('is disabled with a note when nothing awaits verification', () => {
+      renderAs(true, [payment({ status: 'confirmed' }), payment({ _id: 'p2', status: 'rejected' })]);
+
+      expect(page.pendingCount).toBe(0);
+      expect(text()).toContain('No payments awaiting verification');
+      bulkButton()!.click();
+      expect(page.showBulkVerify).toBeFalse();
+    });
+
+    it('opens the payment dialog for a tapped result (red-team F1)', () => {
+      renderAs(true, [payment({ _id: 'p1' }), payment({ _id: 'p2', name: 'Second' })]);
+
+      page.openPaymentById('p2');
+
+      expect(page.showPaymentModal).toBeTrue();
+      expect(page.selectedPayment?.name).toBe('Second');
+    });
+
+    it('reloads payments and totals after a bulk verify, success or not (red-team F3)', () => {
+      renderAs(true, [payment()]);
+      paymentService.getPayments.calls.reset();
+      collectionService.getCollections.calls.reset();
+
+      page.refreshAfterBulkVerify();
+
+      expect(paymentService.getPayments).toHaveBeenCalledOnceWith(COLLECTION_ID);
+      expect(collectionService.getCollections).toHaveBeenCalledOnceWith(CLUB_ID);
+    });
+
+    it('closes with the page', () => {
+      renderAs(true, [payment()]);
+      page.openBulkVerify();
+      page.ionViewWillLeave();
+      expect(page.showBulkVerify).toBeFalse();
     });
   });
 });

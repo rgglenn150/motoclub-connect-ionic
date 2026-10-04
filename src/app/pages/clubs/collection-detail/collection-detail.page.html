@@ -72,6 +72,15 @@
     </ion-button>
   </div>
 
+  <!-- Bulk verify from a GCash statement: admins only (spec 004) -->
+  <div *ngIf="isAdmin" class="bulk-verify-section">
+    <ion-button expand="block" fill="outline" class="bulk-verify-btn" [disabled]="pendingCount === 0" (click)="openBulkVerify()">
+      <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
+      Bulk verify
+    </ion-button>
+    <p *ngIf="!paymentsLoading && pendingCount === 0" class="bulk-verify-note">No payments awaiting verification</p>
+  </div>
+
   <!-- Loading skeleton -->
   <div *ngIf="paymentsLoading" class="payments-skeleton">
     <ion-card *ngFor="let i of [1,2,3]" class="payment-card-skeleton">
@@ -115,6 +124,30 @@
       <p *ngIf="isAdmin || collection?.visibility === 'public'">Tap "Add Payment" to record the first payment.</p>
     </div>
   </div>
+
+  <!-- Bulk verify (spec 004). Tapping a result opens the payment dialog on top. -->
+  <ion-modal [isOpen]="showBulkVerify" (willDismiss)="closeBulkVerify()" class="bulk-verify-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Bulk verify</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeBulkVerify()" aria-label="Close">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <app-bulk-verify
+          [collectionId]="collectionId"
+          (openPayment)="openPaymentById($event)"
+          (changed)="refreshAfterBulkVerify()"
+          (done)="closeBulkVerify()"
+        ></app-bulk-verify>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 
   <!-- Payment dialog: admins and the payer (spec 003, US4/US5) -->
   <ion-modal [isOpen]="showPaymentModal" (willDismiss)="closePayment()" class="payment-modal">
