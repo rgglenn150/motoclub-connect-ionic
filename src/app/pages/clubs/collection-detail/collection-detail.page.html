@@ -85,33 +85,26 @@
 
   <!-- Payments list -->
   <div *ngIf="!paymentsLoading">
-    <ion-card *ngFor="let p of payments" class="payment-card">
+    <!-- Cards show only public fields; details open in the payment dialog (spec 003) -->
+    <ion-card
+      *ngFor="let p of payments"
+      class="payment-card"
+      [class.openable]="p.detailsVisible"
+      [button]="p.detailsVisible"
+      (click)="openPayment(p)"
+    >
       <ion-card-content>
         <div class="payment-info">
           <span class="payment-name">{{ p.name }}</span>
-          <span class="payment-amount">{{ p.amount | currency:'PHP':'symbol' }}</span>
+          <span class="payment-amount">{{ p.amount | currency:'PHP':'symbol':'1.0-2' }}</span>
         </div>
         <div class="payment-meta-row">
-          <span class="payment-ref">Ref: {{ p.referenceNumber }}</span>
+          <span class="payment-date">{{ (p.transactionDate || p.createdAt) | date:'MMM d, y' }}</span>
           <ion-badge
             [color]="p.status === 'confirmed' ? 'success' : p.status === 'rejected' ? 'danger' : 'warning'"
-            class="status-badge"
-            [class.clickable]="isAdmin && p.status === 'pending'"
-            (click)="isAdmin && p.status === 'pending' && changeStatus(p)">
-            {{ p.status | titlecase }}
+            class="status-badge">
+            {{ p.status | paymentStatus }}
           </ion-badge>
-        </div>
-        <div class="payment-extra" *ngIf="p.accountName || p.phoneNumber || p.transactionDate || p.description">
-          <span *ngIf="p.accountName" class="payment-extra-item">Acct: {{ p.accountName }}</span>
-          <span *ngIf="p.phoneNumber" class="payment-extra-item">{{ p.phoneNumber }}</span>
-          <span *ngIf="p.transactionDate" class="payment-extra-item">{{ p.transactionDate | date:'MMM d, y, h:mm a' }}</span>
-          <span *ngIf="p.description" class="payment-extra-item payment-desc">{{ p.description }}</span>
-        </div>
-        <img *ngIf="p.receiptUrl" [src]="p.receiptUrl" class="receipt-thumb" alt="Receipt" />
-        <div *ngIf="isAdmin" class="payment-actions">
-          <ion-button fill="clear" color="danger" size="small" (click)="deletePayment(p)">
-            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-          </ion-button>
         </div>
       </ion-card-content>
     </ion-card>
@@ -122,6 +115,36 @@
       <p *ngIf="isAdmin || collection?.visibility === 'public'">Tap "Add Payment" to record the first payment.</p>
     </div>
   </div>
+
+  <!-- Payment dialog: admins and the payer (spec 003, US4/US5) -->
+  <ion-modal [isOpen]="showPaymentModal" (willDismiss)="closePayment()" class="payment-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Payment</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closePayment()" aria-label="Close">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <app-payment-details
+          *ngIf="selectedPayment"
+          [payment]="selectedPayment"
+          [canReview]="canReview"
+          [canDelete]="canDelete"
+          [busy]="isPaymentActionBusy"
+          (verify)="verifyPayment()"
+          (reject)="rejectPayment()"
+          (remove)="deleteSelected()"
+          (copyRef)="copyReference()"
+          (openReceipt)="openReceipt()"
+        ></app-payment-details>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 
   <!-- Add Payment Modal -->
   <ion-modal [isOpen]="showAddPaymentModal" (willDismiss)="closeAddPaymentModal()" class="add-payment-modal">

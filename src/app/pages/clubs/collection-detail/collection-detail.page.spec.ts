@@ -7,12 +7,15 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { CollectionDetailPage } from './collection-detail.page';
+import { PaymentDetailsComponent } from './payment-details/payment-details.component';
 import { CollectionService } from '../../../service/collection.service';
-import { PaymentService, Payment } from '../../../service/payment.service';
+import { PaymentService } from '../../../service/payment.service';
+import { Payment } from '../../../models/payment.model';
 import { UserStateService } from '../../../service/user-state.service';
 import { ClubService } from '../../../service/club.service';
 import { Collection } from '../../../models/collection.model';
 import { CollectionProgressModule } from '../../../components/collection-progress/collection-progress.module';
+import { SharedModule } from '../../../shared/shared.module';
 
 const CLUB_ID = 'club1';
 const COLLECTION_ID = 'col1';
@@ -46,6 +49,7 @@ const payment = (overrides: Partial<Payment> = {}): Payment => ({
   createdBy: null,
   createdAt: '2026-10-01T00:00:00Z',
   status: 'pending',
+  detailsVisible: true,
   ...overrides,
 });
 
@@ -82,8 +86,8 @@ describe('CollectionDetailPage', () => {
     toastController.create.and.resolveTo({ present: () => Promise.resolve() } as any);
 
     await TestBed.configureTestingModule({
-      declarations: [CollectionDetailPage],
-      imports: [IonicModule.forRoot(), FormsModule, RouterTestingModule, CollectionProgressModule],
+      declarations: [CollectionDetailPage, PaymentDetailsComponent],
+      imports: [IonicModule.forRoot(), FormsModule, RouterTestingModule, CollectionProgressModule, SharedModule],
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ clubId: CLUB_ID, collectionId: COLLECTION_ID }) } } },
         { provide: CollectionService, useValue: collectionService },
@@ -102,11 +106,11 @@ describe('CollectionDetailPage', () => {
 
   const text = () => (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
 
-  it('shows the server confirmed/pending totals in the progress bar', () => {
+  it('shows the server verified/awaiting totals in the progress bar', () => {
     fixture.detectChanges();
 
-    expect(text()).toContain('₱4,500 confirmed');
-    expect(text()).toContain('₱1,200 pending');
+    expect(text()).toContain('₱4,500 verified');
+    expect(text()).toContain('₱1,200 awaiting verification');
     expect(text()).toContain('₱10,000 target');
   });
 
@@ -128,7 +132,7 @@ describe('CollectionDetailPage', () => {
     fixture.detectChanges();
 
     expect(page.collectionError).toBeFalse();
-    expect(text()).toContain('₱4,500 confirmed');
+    expect(text()).toContain('₱4,500 verified');
   });
 
   it('still shows "Members Only" when the collection is not visible', () => {
@@ -151,81 +155,199 @@ describe('CollectionDetailPage', () => {
     expect(collectionService.getCollections).toHaveBeenCalledOnceWith(CLUB_ID);
   });
 
-  it('re-fetches the collection after a payment is deleted', async () => {
-    fixture.detectChanges();
-    paymentService.deletePayment.and.returnValue(of({}));
-    collectionService.getCollections.calls.reset();
+  describe('payment dialog actions (spec 003, US2 + US4)', () => {
+    function openAs(p: Payment, admin: boolean) {
+      fixture.detectChanges();          // first render loads once; then set state directly
+      page.payments = [p];
+      page.isAdmin = admin;
+      page.openPayment(p);
+      collectionService.getCollections.calls.reset();
+    }
 
-    await page.deletePayment(page.payments[0]);
-    await pressAlertButton('Delete');
+    it('lets admins review an awaiting payment and delete any payment; payers only read', () => {
+      openAs(payment({ status: 'pending' }), true);
+      expect(page.canReview).toBeTrue();
+      expect(page.canDelete).toBeTrue();
 
-    expect(page.payments.length).toBe(0);
-    expect(collectionService.getCollections).toHaveBeenCalledOnceWith(CLUB_ID);
-  });
+      openAs(payment({ status: 'confirmed' }), true);
+      expect(page.canReview).toBeFalse();
+      expect(page.canDelete).toBeTrue();
 
-  it('re-fetches the collection after a payment status changes', async () => {
-    fixture.detectChanges();
-    paymentService.updateStatus.and.returnValue(of({ payment: payment({ status: 'confirmed' }) }));
-    collectionService.getCollections.calls.reset();
-
-    await page.changeStatus(page.payments[0]);
-    await pressAlertButton(alertButtons[alertButtons.length - 1].text, 'confirmed');
-
-    expect(page.payments[0].status).toBe('confirmed');
-    expect(collectionService.getCollections).toHaveBeenCalledOnceWith(CLUB_ID);
-    expect(alertInputs.length).toBeGreaterThan(0);
-  });
-
-  describe('payment status (Story 5)', () => {
-    it('offers only Confirm and Reject for a pending payment', async () => {
-      fixture.detectChanges();
-
-      await page.changeStatus(page.payments[0]);
-
-      expect(alertInputs.map((i) => i.value)).toEqual(['confirmed', 'rejected']);
+      openAs(payment({ status: 'pending' }), false);
+      expect(page.canReview).toBeFalse();
+      expect(page.canDelete).toBeFalse();
     });
 
-    it('offers no status change for a resolved payment', async () => {
-      paymentService.getPayments.and.returnValue(of({ payments: [payment({ status: 'confirmed' })] }));
-      fixture.detectChanges();
-      alertController.create.calls.reset();
+    for (const [action, status, label] of [
+      ['verifyPayment', 'confirmed', 'Verify'],
+      ['rejectPayment', 'rejected', 'Reject'],
+    ] as const) {
+      it(`${label} asks to confirm it is final, then updates the payment and the totals`, async () => {
+        openAs(payment({ status: 'pending' }), true);
+        paymentService.updateStatus.and.returnValue(of({ payment: payment({ status }) }));
 
-      await page.changeStatus(page.payments[0]);
+        await page[action]();
+        expect(alertButtons.map((b) => b.text)).toEqual(['Cancel', label]);
+        expect(paymentService.updateStatus).not.toHaveBeenCalled();
+        await pressAlertButton(label);
 
-      expect(alertController.create).not.toHaveBeenCalled();
-    });
-
-    it('makes only pending badges tappable for admins', () => {
-      paymentService.getPayments.and.returnValue(
-        of({ payments: [payment({ _id: 'p1' }), payment({ _id: 'p2', status: 'rejected' })] })
-      );
-      page.isAdmin = true;
-      fixture.detectChanges();
-
-      const badges = (fixture.nativeElement as HTMLElement).querySelectorAll('.status-badge');
-      expect(badges[0].classList).toContain('clickable');
-      expect(badges[1].classList).not.toContain('clickable');
-    });
+        expect(paymentService.updateStatus).toHaveBeenCalledOnceWith('p1', status);
+        expect(page.selectedPayment?.status).toBe(status);
+        expect(page.payments[0].status).toBe(status);
+        expect(collectionService.getCollections).toHaveBeenCalledOnceWith(CLUB_ID);
+      });
+    }
 
     it('shows the server message and the real status on a 409', async () => {
-      fixture.detectChanges();
+      openAs(payment({ status: 'pending' }), true);
       paymentService.updateStatus.and.returnValue(
         throwError(() => new HttpErrorResponse({
           status: 409,
           error: { message: "Payment is already rejected and can't be changed.", status: 'rejected' },
         }))
       );
-      collectionService.getCollections.calls.reset();
 
-      await page.changeStatus(page.payments[0]);
-      await pressAlertButton(alertButtons[alertButtons.length - 1].text, 'confirmed');
+      await page.verifyPayment();
+      await pressAlertButton('Verify');
       await fixture.whenStable();
 
-      expect(page.payments[0].status).toBe('rejected');
+      expect(page.selectedPayment?.status).toBe('rejected');
       expect(toastController.create).toHaveBeenCalledWith(
         jasmine.objectContaining({ message: "Payment is already rejected and can't be changed." })
       );
       expect(collectionService.getCollections).toHaveBeenCalledOnceWith(CLUB_ID);
+    });
+
+    it('deletes only after confirmation, then closes the dialog and updates the totals', async () => {
+      openAs(payment({ status: 'confirmed' }), true);
+      paymentService.deletePayment.and.returnValue(of({}));
+
+      await page.deleteSelected();
+      expect(alertButtons.map((b) => b.text)).toEqual(['Cancel', 'Delete']);
+      expect(paymentService.deletePayment).not.toHaveBeenCalled();
+      await pressAlertButton('Delete');
+
+      expect(paymentService.deletePayment).toHaveBeenCalledOnceWith('p1');
+      expect(page.payments.length).toBe(0);
+      expect(page.showPaymentModal).toBeFalse();
+      expect(collectionService.getCollections).toHaveBeenCalledOnceWith(CLUB_ID);
+    });
+
+    it('copies the reference number, or explains how to copy it by hand', async () => {
+      openAs(payment({ referenceNumber: 'REF123' }), true);
+      const write = jasmine.createSpy('writeText').and.resolveTo();
+      spyOnProperty(navigator, 'clipboard', 'get').and.returnValue({ writeText: write } as any);
+
+      await page.copyReference();
+      expect(write).toHaveBeenCalledWith('REF123');
+      expect(toastController.create).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Reference number copied' }));
+
+      write.and.rejectWith(new Error('denied'));
+      await page.copyReference();
+      expect(toastController.create).toHaveBeenCalledWith(
+        jasmine.objectContaining({ message: "Couldn't copy. Press and hold the number to select it." })
+      );
+    });
+
+    it('opens the receipt full size in a new tab', () => {
+      openAs(payment({ receiptUrl: 'https://res.cloudinary.com/demo/r.jpg' }), true);
+      const open = spyOn(window, 'open');
+
+      page.openReceipt();
+
+      expect(open).toHaveBeenCalledWith('https://res.cloudinary.com/demo/r.jpg', '_blank', 'noopener');
+    });
+
+    it('closes the dialog when leaving the page', () => {
+      openAs(payment(), true);
+      page.ionViewWillLeave();
+      expect(page.showPaymentModal).toBeFalse();
+    });
+
+    it('cards have no delete button and no tappable badge', () => {
+      paymentService.getPayments.and.returnValue(of({ payments: [payment(), payment({ _id: 'p2', status: 'confirmed' })] }));
+      page.isAdmin = true;
+      fixture.detectChanges();
+
+      const list = fixture.nativeElement as HTMLElement;
+      expect(list.querySelector('.payment-card ion-button')).toBeNull();
+      expect(list.querySelector('.status-badge.clickable')).toBeNull();
+    });
+  });
+
+  describe('status wording (spec 003, US1)', () => {
+    beforeEach(() => {
+      paymentService.getPayments.and.returnValue(of({ payments: [
+        payment({ _id: 'p1', status: 'confirmed' }),
+        payment({ _id: 'p2', status: 'pending' }),
+        payment({ _id: 'p3', status: 'rejected' }),
+      ] }));
+    });
+
+    it('labels payment badges Verified / Awaiting Verification / Rejected', () => {
+      fixture.detectChanges();
+
+      const badges = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.status-badge'))
+        .map((b) => b.textContent?.trim());
+      expect(badges).toEqual(['Verified', 'Awaiting Verification', 'Rejected']);
+    });
+
+    it('never shows the old status words on the page', () => {
+      for (const admin of [false, true]) {
+        page.isAdmin = admin;
+        fixture.detectChanges();
+        expect(text()).not.toMatch(/confirmed|pending/i);
+      }
+    });
+  });
+
+  describe('payment cards and privacy (spec 003, US5)', () => {
+    const cards = () => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.payment-card'));
+
+    it('cards show only name, amount, date and status, even for admins', () => {
+      paymentService.getPayments.and.returnValue(of({ payments: [payment({
+        accountName: 'D. PAYER', phoneNumber: '09171234567', referenceNumber: 'REF123',
+        receiptUrl: 'https://res.cloudinary.com/demo/r.jpg', description: 'June dues',
+        transactionDate: '2026-10-01T08:00:00Z',
+      })] }));
+      page.isAdmin = true;
+      fixture.detectChanges();
+
+      const card = cards()[0];
+      const cardText = card.textContent!.replace(/\s+/g, ' ');
+      expect(cardText).toContain('Demo Payer');
+      expect(cardText).toContain('₱1,200');
+      expect(cardText).toContain('Oct 1, 2026');
+      expect(cardText).toContain('Awaiting Verification');
+      for (const hidden of ['D. PAYER', '0917', 'REF123', 'June dues']) expect(cardText).not.toContain(hidden);
+      expect(card.querySelector('img')).toBeNull();
+    });
+
+    it('opens the payment dialog only when details are visible', () => {
+      paymentService.getPayments.and.returnValue(of({ payments: [
+        payment({ _id: 'mine', detailsVisible: true }),
+        payment({ _id: 'theirs', detailsVisible: false, referenceNumber: undefined }),
+      ] }));
+      fixture.detectChanges();
+
+      cards()[1].click();
+      expect(page.showPaymentModal).toBeFalse();
+      expect(page.selectedPayment).toBeNull();
+
+      cards()[0].click();
+      expect(page.showPaymentModal).toBeTrue();
+      expect(page.selectedPayment?._id).toBe('mine');
+    });
+
+    it('marks only openable cards as buttons', () => {
+      paymentService.getPayments.and.returnValue(of({ payments: [
+        payment({ _id: 'a', detailsVisible: true }),
+        payment({ _id: 'b', detailsVisible: false }),
+      ] }));
+      fixture.detectChanges();
+
+      expect(cards()[0].classList).toContain('openable');
+      expect(cards()[1].classList).not.toContain('openable');
     });
   });
 });

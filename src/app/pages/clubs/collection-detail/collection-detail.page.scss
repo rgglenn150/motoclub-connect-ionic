@@ -96,6 +96,10 @@ ion-card {
 }
 
 .payment-card {
+  &.openable {
+    cursor: pointer;
+  }
+
   margin: 8px 16px;
   border-radius: 12px;
 
@@ -125,46 +129,23 @@ ion-card {
     margin-top: 4px;
   }
 
-  .payment-ref {
+  .payment-date {
     font-size: 12px;
     color: var(--ion-color-medium);
   }
 
   .status-badge {
     font-size: 11px;
-    &.clickable { cursor: pointer; }
   }
 
-  .payment-extra {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 4px;
-  }
 
-  .payment-extra-item {
-    font-size: 12px;
-    color: var(--ion-color-medium);
-  }
 
   .payment-desc {
     width: 100%;
     font-style: italic;
   }
 
-  .receipt-thumb {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-top: 8px;
-  }
 
-  .payment-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 4px;
-  }
 }
 
 .receipt-upload-area {
@@ -197,6 +178,26 @@ ion-card {
 
 .item-invalid {
   --border-color: #FC8181;
+}
+
+.payment-modal {
+  --height: 90%;
+  --border-radius: 16px;
+
+  // Same explicit dark palette as the Add Payment modal (the global theme is light).
+  ion-header ion-toolbar {
+    --background: #2D3748;
+    --color: #F7FAFC;
+    --border-color: #4A5568;
+
+    ion-title { color: #F7FAFC; font-weight: 600; }
+    ion-buttons ion-button { --color: #F7FAFC; }
+  }
+
+  ion-content {
+    --background: #1A202C;
+    --color: #F7FAFC;
+  }
 }
 
 .add-payment-modal {
