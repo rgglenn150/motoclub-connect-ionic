@@ -1,0 +1,111 @@
+// Amber accent matches the collection screens and the share card.
+$accent: #f59e0b;
+
+:host {
+  display: block;
+}
+
+.collection-progress {
+  --bar-height: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &.compact {
+    --bar-height: 6px;
+    gap: 6px;
+
+    .progress-labels {
+      font-size: 12px;
+    }
+  }
+}
+
+.progress-bar {
+  display: flex;
+  width: 100%;
+  height: var(--bar-height);
+  border-radius: calc(var(--bar-height) / 2);
+  overflow: hidden;
+  background: var(--ion-color-step-150, rgba(148, 163, 184, 0.25));
+
+  .segment {
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+
+  .confirmed {
+    background: $accent;
+  }
+
+  .pending {
+    background: rgba($accent, 0.4);
+  }
+}
+
+.progress-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+
+  strong {
+    color: var(--ion-text-color);
+  }
+
+  .confirmed strong {
+    color: $accent;
+  }
+}
+
+.progress-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 4px 8px 12px;
+  border-radius: 8px;
+  background: rgba($accent, 0.1);
+
+  ion-note {
+    --color: var(--ion-text-color);
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+    padding-top: 4px;
+    opacity: 0.85;
+  }
+
+  // Tap target ≥ 44 px (ARCHITECT.md accessibility).
+  .note-close {
+    --color: var(--ion-color-medium);
+    min-width: 44px;
+    min-height: 44px;
+    margin: -8px 0;
+  }
+}
+
+.progress-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+
+  ion-button {
+    min-height: 44px;
+    margin-left: auto;
+  }
+}
+
+.progress-skeleton {
+  .skeleton-bar {
+    height: var(--bar-height);
+    border-radius: 6px;
+  }
+
+  .skeleton-label {
+    width: 60%;
+    height: 14px;
+  }
+}
