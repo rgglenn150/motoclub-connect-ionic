@@ -39,7 +39,7 @@ export class PaymentService {
   }
 
   /**
-   * Check the collection's awaiting payments against a GCash statement (spec 004).
+   * Check the collection's pending payments against a GCash statement (spec 004).
    * The password is sent only when given, and the server never stores either.
    */
   checkStatement(collectionId: string, file: File, password?: string): Observable<StatementCheckResponse> {

@@ -1,0 +1,92 @@
+:host {
+  display: block;
+}
+
+// Explicit dark palette, matching the page's other modals (global theme is light).
+$text: #F7FAFC;
+$label: #A0AEC0;
+$surface: #2D3748;
+$border: #4A5568;
+$amber: #F59E0B;
+
+.edit-collection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  color: $text;
+}
+
+ion-item {
+  --background: #{$surface};
+  --color: #{$text};
+  --border-color: #{$border};
+  border-radius: 8px;
+  margin-top: 4px;
+
+  ion-label { color: $label !important; }
+  ion-input,
+  ion-textarea { --color: #{$text}; --placeholder-color: #718096; }
+
+  &.item-invalid {
+    --border-color: #FC8181;
+  }
+}
+
+.required-star {
+  color: #FC8181;
+}
+
+.field-error {
+  color: #FC8181;
+  font-size: 13px;
+  margin: 0 4px;
+}
+
+.hint {
+  color: $label;
+  font-size: 13px;
+  margin: 0 4px;
+}
+
+.visibility {
+  margin-top: 8px;
+
+  .group-label {
+    color: $label;
+    font-size: 12px;
+    margin: 0 4px 6px;
+  }
+
+  ion-segment {
+    --background: #{$surface};
+  }
+
+  ion-segment-button {
+    min-height: 44px;
+    --color: #{$label};
+    --color-checked: #000000;
+    --indicator-color: #{$amber};
+  }
+
+  .hint {
+    margin-top: 6px;
+  }
+}
+
+.save-error {
+  margin-top: 8px;
+}
+
+.amber-btn {
+  --background: #{$amber};
+  --background-activated: #d88b0a;
+  --color: #000000;
+  min-height: 44px;
+  margin-top: 16px;
+}
+
+.secondary-btn {
+  --color: #{$label};
+  min-height: 44px;
+}

@@ -3,12 +3,12 @@ import { Pipe, PipeTransform } from '@angular/core';
 export type PaymentStatus = 'pending' | 'confirmed' | 'rejected';
 
 /**
- * How payment statuses are worded for people (spec 003). The stored values stay
+ * How payment statuses are worded for people (spec 003; "Pending" from spec 006). The stored values stay
  * pending / confirmed / rejected; same mapping as the backend's STATUS_LABEL.
  */
 const LABELS: Record<PaymentStatus, { title: string; lower: string }> = {
   confirmed: { title: 'Verified', lower: 'verified' },
-  pending: { title: 'Awaiting Verification', lower: 'awaiting verification' },
+  pending: { title: 'Pending', lower: 'pending' },
   rejected: { title: 'Rejected', lower: 'rejected' },
 };
 

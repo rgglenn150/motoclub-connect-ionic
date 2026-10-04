@@ -50,7 +50,7 @@ describe('PaymentDetailsComponent (spec 003, US4)', () => {
   it('shows every detail of the payment', () => {
     create();
 
-    for (const shown of ['Demo Payer', 'D. PAYER', '₱1,200', 'REF123', '09171234567', 'June dues', 'payer', 'Awaiting Verification', 'Oct 1, 2026']) {
+    for (const shown of ['Demo Payer', 'D. PAYER', '₱1,200', 'REF123', '09171234567', 'June dues', 'payer', 'Pending', 'Oct 1, 2026']) {
       expect(text()).toContain(shown);
     }
   });
@@ -133,10 +133,10 @@ describe('PaymentDetailsComponent (spec 003, US4)', () => {
     expect(button('copy-ref')).not.toBeNull();
   });
 
-  it('never shows the old status words', () => {
+  it('never shows retired status words (specs 003 + 006)', () => {
     for (const status of ['pending', 'confirmed', 'rejected'] as const) {
       create({ payment: full({ status }), canReview: status === 'pending', canDelete: true });
-      expect(text()).not.toMatch(/confirmed|pending/i);
+      expect(text()).not.toMatch(/confirmed|awaiting/i);
     }
   });
 

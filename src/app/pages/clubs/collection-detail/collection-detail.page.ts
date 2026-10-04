@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertController, ToastController, ViewWillLeave } from '@ionic/angular';
+import { ActionSheetButton, ActionSheetController, AlertController, ToastController, ViewWillLeave } from '@ionic/angular';
 import { CollectionService } from '../../../service/collection.service';
 import { Collection } from '../../../models/collection.model';
 import { PaymentService, Payment, PaymentResolution, PaymentStatusConflict } from '../../../service/payment.service';
@@ -44,6 +44,9 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
   // Bulk verify from a GCash statement (spec 004): admins only.
   showBulkVerify = false;
 
+  // Edit collection (spec 006): admins only.
+  showEditCollection = false;
+
   get pendingCount(): number {
     return this.payments.filter(p => p.status === 'pending').length;
   }
@@ -61,6 +64,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     private clubService: ClubService,
     private alertController: AlertController,
     private toastController: ToastController,
+    private actionSheetController: ActionSheetController,
   ) {}
 
   ngOnInit() {
@@ -81,6 +85,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     this.showAddPaymentModal = false;
     this.showPaymentModal = false;
     this.showBulkVerify = false;
+    this.showEditCollection = false;
   }
 
   private checkAdminStatus() {
@@ -151,8 +156,63 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     this.selectedPayment = null;
   }
 
-  openBulkVerify() {
-    if (!this.isAdmin || this.pendingCount === 0) return;
+  /** Every collection-level admin action in one bottom sheet (spec 006, FR-001/FR-002). */
+  async openAdminMenu() {
+    if (!this.isAdmin) return;
+    const sheet = await this.actionSheetController.create({
+      header: 'Manage collection',
+      buttons: this.adminMenuButtons(),
+    });
+    await sheet.present();
+  }
+
+  private adminMenuButtons(): ActionSheetButton[] {
+    return [
+      { text: 'Edit collection', icon: 'create-outline', handler: () => this.openEditCollection() },
+      {
+        text: this.pendingCount > 0 ? `Bulk verify (${this.pendingCount} pending)` : 'Bulk verify',
+        icon: 'checkmark-done-outline',
+        handler: () => this.openBulkVerify(),
+      },
+      { text: 'Delete collection', role: 'destructive', icon: 'trash-outline', handler: () => this.deleteCollection() },
+      { text: 'Cancel', role: 'cancel' },
+    ];
+  }
+
+  openEditCollection() {
+    if (!this.isAdmin || !this.collection) return;
+    this.showEditCollection = true;
+  }
+
+  closeEditCollection() {
+    this.showEditCollection = false;
+  }
+
+  /** Show the saved values at once, then re-read totals from the server (spec 006 FR-008). */
+  async onCollectionSaved(updated: Collection) {
+    if (this.collection) {
+      this.collection = {
+        ...this.collection,
+        name: updated.name,
+        description: updated.description,
+        targetAmount: updated.targetAmount,
+        visibility: updated.visibility,
+      };
+    }
+    this.showEditCollection = false;
+    this.loadCollection();
+    const toast = await this.toastController.create({ message: 'Collection updated', duration: 2000, color: 'success', position: 'top' });
+    await toast.present();
+  }
+
+  /** Bulk verify lives in the admin menu (spec 006 D3); with nothing pending it only says so. */
+  async openBulkVerify() {
+    if (!this.isAdmin) return;
+    if (this.pendingCount === 0) {
+      const toast = await this.toastController.create({ message: 'No pending payments', duration: 2000, position: 'top' });
+      await toast.present();
+      return;
+    }
     this.showBulkVerify = true;
   }
 
@@ -248,7 +308,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
 
   isPaymentActionBusy = false;
 
-  /** Admin, and the open payment is still awaiting verification. */
+  /** Admin, and the open payment is still pending. */
   get canReview(): boolean {
     return this.isAdmin && this.selectedPayment?.status === 'pending';
   }
