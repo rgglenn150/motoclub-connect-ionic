@@ -23,24 +23,33 @@
       </ion-button>
     </div>
 
-    <!-- Bar (only with a target) -->
+    <!-- Without a target the bar is the verified vs pending split of money collected (spec 007) -->
+    <p *ngIf="bar.mode === 'split'" class="split-caption">Verified vs pending</p>
+
+    <!-- Toward a target: a progress bar (unchanged, spec 001) -->
     <div
-      *ngIf="percents as p"
+      *ngIf="bar.mode === 'target'"
       class="progress-bar"
       role="progressbar"
       aria-valuemin="0"
       aria-valuemax="100"
-      [attr.aria-valuenow]="round(p.confirmedPct)"
+      [attr.aria-valuenow]="round(bar.confirmedPct)"
       [attr.aria-label]="ariaLabel"
     >
-      <span class="segment confirmed" [style.width.%]="p.confirmedPct"></span>
-      <span *ngIf="p.pendingPct > 0" class="segment pending" [style.width.%]="p.pendingPct"></span>
+      <span class="segment confirmed" [style.width.%]="bar.confirmedPct"></span>
+      <span *ngIf="bar.pendingPct > 0" class="segment pending" [style.width.%]="bar.pendingPct"></span>
+    </div>
+
+    <!-- Split: a labelled picture, never announced as a completion percentage (spec 007 D4) -->
+    <div *ngIf="bar.mode === 'split'" class="progress-bar split" role="img" [attr.aria-label]="ariaLabel">
+      <span class="segment confirmed" [class.min-visible]="confirmed > 0" [style.width.%]="bar.confirmedPct"></span>
+      <span *ngIf="pending > 0" class="segment pending" [class.min-visible]="true" [style.width.%]="bar.pendingPct"></span>
     </div>
 
     <!-- Text amounts: always present, never colour-only. Pending first (spec 003). -->
     <div class="progress-labels">
-      <span *ngIf="pending > 0" class="label pending"><strong>{{ peso(pending) }}</strong> {{ 'pending' | paymentStatus:'lower' }}</span>
-      <span class="label confirmed"><strong>{{ peso(confirmed) }}</strong> {{ 'confirmed' | paymentStatus:'lower' }}</span>
+      <span *ngIf="pending > 0" class="label pending"><strong>{{ peso(pending) }}</strong> {{ 'pending' | paymentStatus:'lower' }}<ng-container *ngIf="shares"> · {{ shares.pending }}</ng-container></span>
+      <span class="label confirmed"><strong>{{ peso(confirmed) }}</strong> {{ 'confirmed' | paymentStatus:'lower' }}<ng-container *ngIf="shares"> · {{ shares.confirmed }}</ng-container></span>
       <span *ngIf="hasTarget" class="label target"><strong>{{ peso(target!) }}</strong> target</span>
     </div>
   </ng-container>

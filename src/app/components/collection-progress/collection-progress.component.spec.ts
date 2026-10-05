@@ -5,8 +5,51 @@ import { SharedModule } from '../../shared/shared.module';
 import {
   CollectionProgressComponent,
   NOTE_DISMISSED_KEY,
+  progressBar,
   progressPercents,
+  progressSplit,
 } from './collection-progress.component';
+
+// Spec 007 research R2. COPY — keep identical to
+// motoclub-connect-backend/test/collectionProgress.test.js
+// [verified, pending, confirmedPct, pendingPct, confirmedShare, pendingShare]
+const SPLIT_CASES: [number, number, number, number, string | null, string | null][] = [
+  [4500, 1200, 78.94736842105263, 21.052631578947366, '79%', '21%'],
+  [100, 0, 100, 0, '100%', '0%'],
+  [0, 0, 0, 0, null, null],
+  [0, 1200, 0, 100, '0%', '100%'],
+  [1, 2, 33.33333333333333, 66.66666666666667, '33%', '67%'],
+  [2, 1, 66.66666666666666, 33.33333333333334, '67%', '33%'],
+  [100000, 1, 99.99900000999989, 0.0009999900001063771, '99%', '<1%'],
+  [-50, 100, 0, 100, '0%', '100%'],
+  [1000.5, 0.5, 99.95004995004995, 0.04995004995005235, '99%', '<1%'],
+];
+
+describe('progressSplit (spec 007)', () => {
+  for (const [c, p, cPct, pPct, cShare, pShare] of SPLIT_CASES) {
+    it(`splits ${c} verified / ${p} pending`, () => {
+      const split = progressSplit(c, p);
+      expect(split.confirmedPct).toBeCloseTo(cPct, 9);
+      expect(split.pendingPct).toBeCloseTo(pPct, 9);
+      expect(split.confirmedShare).toBe(cShare);
+      expect(split.pendingShare).toBe(pShare);
+    });
+  }
+});
+
+describe('progressBar (spec 007)', () => {
+  it('measures toward a positive target exactly as progressPercents does', () => {
+    expect(progressBar(4500, 1200, 10000)).toEqual({ mode: 'target', ...progressPercents(4500, 1200, 10000)! });
+  });
+
+  it('splits collected money without a positive target', () => {
+    for (const target of [undefined, 0, -5]) {
+      const bar = progressBar(4500, 1200, target);
+      expect(bar.mode).toBe('split');
+      expect(bar.mode === 'split' && bar.confirmedShare).toBe('79%');
+    }
+  });
+});
 
 describe('progressPercents', () => {
   it('splits the bar into confirmed and pending shares of the target', () => {
@@ -92,13 +135,76 @@ describe('CollectionProgressComponent', () => {
     expect(text()).toContain('₱0 verified');
   });
 
-  it('shows amounts without a bar when there is no target', () => {
-    create({ target: undefined, confirmed: 500, pending: 250 });
+  describe('without a target: verified vs pending split (spec 007)', () => {
+    const caption = () => el.querySelector('.split-caption')?.textContent?.trim();
+    const bar = () => el.querySelector<HTMLElement>('.progress-bar')!;
 
-    expect(el.querySelector('[role="progressbar"]')).toBeNull();
-    expect(text()).toContain('₱250 pending');
-    expect(text()).toContain('₱500 verified');
-    expect(text()).not.toContain('target');
+    it('splits collected money with a caption and shares (US1 AC1)', () => {
+      create({ target: undefined, confirmed: 4500, pending: 1200 });
+
+      expect(caption()).toBe('Verified vs pending');
+      expect(parseFloat(segment('confirmed')!.style.width)).toBeCloseTo(78.947, 2);
+      expect(parseFloat(segment('pending')!.style.width)).toBeCloseTo(21.053, 2);
+      expect(text()).toContain('₱1,200 pending · 21%');
+      expect(text()).toContain('₱4,500 verified · 79%');
+      expect(text()).not.toContain('target');
+    });
+
+    it('is fully verified with no pending segment (AC2)', () => {
+      create({ target: undefined, confirmed: 4500, pending: 0 });
+
+      expect(segment('confirmed')!.style.width).toBe('100%');
+      expect(segment('pending')).toBeNull();
+      expect(text()).toContain('₱4,500 verified · 100%');
+    });
+
+    it('shows only pending money as a full lighter bar', () => {
+      create({ target: undefined, confirmed: 0, pending: 1200 });
+
+      expect(segment('pending')!.style.width).toBe('100%');
+      expect(text()).toContain('₱1,200 pending · 100%');
+      expect(text()).toContain('₱0 verified · 0%');
+    });
+
+    it('shows an empty bar with the caption when nothing is collected (AC3, FR-002)', () => {
+      create({ target: undefined, confirmed: 0, pending: 0 });
+
+      expect(bar()).not.toBeNull();
+      expect(caption()).toBe('Verified vs pending');
+      expect(segment('pending')).toBeNull();
+      expect(segment('confirmed')!.style.width).toBe('0%');
+      expect(text()).toContain('₱0 verified');
+      expect(text()).not.toContain('%');
+    });
+
+    it('keeps a tiny share visible and labels it "<1%" (FR-004)', () => {
+      create({ target: undefined, confirmed: 100000, pending: 1 });
+
+      expect(segment('pending')!.classList).toContain('min-visible');
+      expect(text()).toContain('₱1 pending · <1%');
+      expect(text()).toContain('₱100,000 verified · 99%');
+    });
+
+    it('is a labelled picture for screen readers, never a completion percentage (AC6, D4)', () => {
+      create({ target: undefined, confirmed: 4500, pending: 1200 });
+
+      expect(bar().getAttribute('role')).toBe('img');
+      expect(bar().getAttribute('aria-label')).toBe('Verified vs pending: ₱1,200 pending, 21%; ₱4,500 verified, 79%');
+      expect(bar().hasAttribute('aria-valuenow')).toBeFalse();
+      expect(el.querySelector('[role="progressbar"]')).toBeNull();
+    });
+
+    it('keeps the caption on compact cards (FR-009)', () => {
+      create({ target: undefined, compact: true });
+      expect(caption()).toBe('Verified vs pending');
+    });
+
+    it('leaves target collections unchanged: no caption, no shares (AC4, D6)', () => {
+      create();
+      expect(caption()).toBeUndefined();
+      expect(text()).not.toContain('%');
+      expect(bar().getAttribute('role')).toBe('progressbar');
+    });
   });
 
   it('shows a skeleton while loading', () => {
