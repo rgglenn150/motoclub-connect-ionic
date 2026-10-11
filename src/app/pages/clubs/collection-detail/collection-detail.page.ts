@@ -1,19 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ActionSheetButton, ActionSheetController, AlertController, ToastController, ViewWillLeave } from '@ionic/angular';
+import { ActionSheetButton, ActionSheetController, AlertController, IonModal, ToastController, ViewWillLeave } from '@ionic/angular';
+import { Subscription } from 'rxjs';
 import { CollectionService } from '../../../service/collection.service';
 import { Collection } from '../../../models/collection.model';
-import { PaymentService, Payment, PaymentResolution, PaymentStatusConflict } from '../../../service/payment.service';
+import { PaymentService, Payment, PaymentResolution, PaymentStatusConflict, receiptErrorMessage } from '../../../service/payment.service';
+import { RECEIPT_ERROR_MESSAGES, ReceiptErrorCode } from '../../../models/payment.model';
+import { ReceiptImageService } from '../../../service/receipt-image.service';
+import { DialogHistoryService } from '../../../service/dialog-history.service';
+import { DialogHost } from '../../../guards/close-dialogs.guard';
+import { EditCollectionComponent } from './edit-collection/edit-collection.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { UserStateService } from '../../../service/user-state.service';
 import { ClubService } from '../../../service/club.service';
+
+/** Same limit as the server's receipt upload (spec 008, contracts). */
+const MAX_RECEIPT_BYTES = 10 * 1024 * 1024;
+
+/** The dialogs on this page that Back closes first (spec 008 D7). */
+type DialogId = 'payment' | 'addPayment' | 'bulkVerify' | 'editCollection';
 
 @Component({
   selector: 'app-collection-detail',
   templateUrl: './collection-detail.page.html',
   styleUrls: ['./collection-detail.page.scss'],
 })
-export class CollectionDetailPage implements OnInit, ViewWillLeave {
+export class CollectionDetailPage implements OnInit, ViewWillLeave, DialogHost {
   clubId: string = '';
   collectionId: string = '';
 
@@ -36,6 +48,11 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
   receiptPreviewUrl: string | null = null;
   isExtractingReceipt = false;
   isSavingPayment = false;
+  /** Only the latest receipt pick may fill the form (spec 008 FR-008). */
+  private receiptPickSeq = 0;
+  private extractSub?: Subscription;
+  /** The date Add Payment opened with, to tell a touched form from an untouched one (D9). */
+  private addPaymentOpenedDate = '';
 
   // Payment dialog (spec 003): admins, and the payer for their own payment.
   showPaymentModal = false;
@@ -46,6 +63,9 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
 
   // Edit collection (spec 006): admins only.
   showEditCollection = false;
+
+  @ViewChildren(IonModal) private modals?: QueryList<IonModal>;
+  @ViewChild(EditCollectionComponent) private editCollection?: EditCollectionComponent;
 
   get pendingCount(): number {
     return this.payments.filter(p => p.status === 'pending').length;
@@ -65,6 +85,8 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     private alertController: AlertController,
     private toastController: ToastController,
     private actionSheetController: ActionSheetController,
+    private receiptImage: ReceiptImageService,
+    private dialogs: DialogHistoryService,
   ) {}
 
   ngOnInit() {
@@ -78,14 +100,34 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
 
   /**
    * Inline ion-modals are teleported to <ion-app> while presented, so they are
-   * not removed with this page when the router destroys it. Close them before
-   * leaving, otherwise an orphaned (and unstyled) modal is left over the next page.
+   * not removed with this page when the router destroys it. The leave guard
+   * awaits this before the route changes, otherwise an orphaned (and blank)
+   * modal is left over the next page (spec 008 #95, research R7).
    */
+  async closeDialogs(): Promise<void> {
+    // The navigation in flight owns the history stack: forget layers, don't pop them.
+    this.dialogs.reset();
+    await this.dialogs.dismissPrompts();
+    await Promise.all((this.modals?.toArray() ?? []).map((modal) => modal.dismiss()));
+    this.clearDialogFlags();
+  }
+
+  /** Fallback in case the guard timed out: at least don't leave flags set. */
   ionViewWillLeave() {
+    this.dialogs.reset();
+    this.clearDialogFlags();
+  }
+
+  private clearDialogFlags() {
     this.showAddPaymentModal = false;
     this.showPaymentModal = false;
     this.showBulkVerify = false;
     this.showEditCollection = false;
+  }
+
+  /** Back closes this dialog instead of leaving the page (spec 008 FR-009). */
+  private openLayer(id: DialogId, onBack: () => boolean) {
+    this.dialogs.push({ id, onBack });
   }
 
   private checkAdminStatus() {
@@ -149,11 +191,16 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
     if (!payment.detailsVisible) return;
     this.selectedPayment = payment;
     this.showPaymentModal = true;
+    this.openLayer('payment', () => {
+      this.closePayment();
+      return true;
+    });
   }
 
   closePayment() {
     this.showPaymentModal = false;
     this.selectedPayment = null;
+    this.dialogs.closed('payment');
   }
 
   /** Every collection-level admin action in one bottom sheet (spec 006, FR-001/FR-002). */
@@ -182,10 +229,19 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
   openEditCollection() {
     if (!this.isAdmin || !this.collection) return;
     this.showEditCollection = true;
+    this.openLayer('editCollection', () => {
+      if (!this.editCollection?.isDirty) {
+        this.closeEditCollection();
+        return true;
+      }
+      this.confirmDiscard(() => this.closeEditCollection());
+      return false;
+    });
   }
 
   closeEditCollection() {
     this.showEditCollection = false;
+    this.dialogs.closed('editCollection');
   }
 
   /** Show the saved values at once, then re-read totals from the server (spec 006 FR-008). */
@@ -199,7 +255,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
         visibility: updated.visibility,
       };
     }
-    this.showEditCollection = false;
+    this.closeEditCollection();
     this.loadCollection();
     const toast = await this.toastController.create({ message: 'Collection updated', duration: 2000, color: 'success', position: 'top' });
     await toast.present();
@@ -214,10 +270,15 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
       return;
     }
     this.showBulkVerify = true;
+    this.openLayer('bulkVerify', () => {
+      this.closeBulkVerify();
+      return true;
+    });
   }
 
   closeBulkVerify() {
     this.showBulkVerify = false;
+    this.dialogs.closed('bulkVerify');
   }
 
   /** After any bulk verify attempt: the server is the only source of statuses and totals (spec 004, red-team F3). */
@@ -233,31 +294,92 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
   }
 
   openAddPaymentModal() {
-    this.paymentForm = { name: '', accountName: '', amount: null, referenceNumber: '', phoneNumber: '', description: '', transactionDate: this.nowLocalDatetime() };
+    this.addPaymentOpenedDate = this.nowLocalDatetime();
+    this.paymentForm = { name: '', accountName: '', amount: null, referenceNumber: '', phoneNumber: '', description: '', transactionDate: this.addPaymentOpenedDate };
     this.receiptFile = null;
     this.receiptPreviewUrl = null;
     this.showAddPaymentModal = true;
+    this.openLayer('addPayment', () => {
+      if (!this.addPaymentDirty) {
+        this.closeAddPaymentModal();
+        return true;
+      }
+      this.confirmDiscard(() => this.closeAddPaymentModal());
+      return false;
+    });
   }
 
   closeAddPaymentModal() {
     this.showAddPaymentModal = false;
     this.receiptFile = null;
     this.receiptPreviewUrl = null;
+    // A late read result for a closed form is ignored (spec 008 edge case).
+    this.receiptPickSeq++;
+    this.extractSub?.unsubscribe();
+    this.isExtractingReceipt = false;
+    this.dialogs.closed('addPayment');
   }
 
-  onReceiptSelected(event: globalThis.Event) {
+  /** Anything typed or a receipt picked (spec 008 D9). */
+  get addPaymentDirty(): boolean {
+    const f = this.paymentForm;
+    return (
+      !!this.receiptFile ||
+      [f.name, f.accountName, f.referenceNumber, f.phoneNumber, f.description].some((v) => !!v?.trim()) ||
+      f.amount != null ||
+      f.transactionDate !== this.addPaymentOpenedDate
+    );
+  }
+
+  /** Back on a touched form asks first; Keep editing leaves everything as it was (D9). */
+  private async confirmDiscard(discard: () => void) {
+    const alert = await this.alertController.create({
+      header: 'Discard changes?',
+      message: "What you've entered will be lost.",
+      buttons: [
+        { text: 'Keep editing', role: 'cancel' },
+        { text: 'Discard', role: 'destructive', handler: discard },
+      ],
+    });
+    await alert.present();
+  }
+
+  /**
+   * Prepare the picked photo on the device (spec 008 Story 1), then read it.
+   * The receipt stays attached whatever the reading outcome (D5).
+   */
+  async onReceiptSelected(event: globalThis.Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
-    const file = input.files[0];
-    this.receiptFile = file;
-    const reader = new FileReader();
-    reader.onload = (e) => { this.receiptPreviewUrl = e.target?.result as string; };
-    reader.readAsDataURL(file);
-    this.isExtractingReceipt = true;
+    const picked = input.files[0];
+    const seq = ++this.receiptPickSeq;
+    this.extractSub?.unsubscribe();
     // A field focused before the photo was picked would keep its keyboard (spec 006 US4).
     (document.activeElement as HTMLElement | null)?.blur();
-    this.paymentService.extractReceipt(file).subscribe({
+    if (!picked.type.startsWith('image/')) {
+      this.isExtractingReceipt = false;
+      await this.showReceiptError('UNSUPPORTED_FORMAT');
+      return;
+    }
+
+    this.isExtractingReceipt = true;
+    const file = await this.receiptImage.prepare(picked);
+    if (seq !== this.receiptPickSeq) return;
+    this.receiptFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (seq === this.receiptPickSeq) this.receiptPreviewUrl = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    if (file.size > MAX_RECEIPT_BYTES) {
+      this.isExtractingReceipt = false;
+      await this.showReceiptError('FILE_TOO_LARGE');
+      return;
+    }
+
+    this.extractSub = this.paymentService.extractReceipt(file).subscribe({
       next: (data) => {
+        if (seq !== this.receiptPickSeq) return;
         if (data.name) this.paymentForm.accountName = data.name;
         if (data.amount) this.paymentForm.amount = data.amount;
         if (data.referenceNumber) this.paymentForm.referenceNumber = data.referenceNumber;
@@ -269,12 +391,20 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave {
         this.isExtractingReceipt = false;
       },
       error: async (err) => {
+        if (seq !== this.receiptPickSeq) return;
         this.isExtractingReceipt = false;
-        const msg = err?.error?.message || 'Could not read receipt. Please fill in the fields manually.';
-        const toast = await this.toastController.create({ message: msg, duration: 3000, color: 'warning', position: 'top' });
-        await toast.present();
+        await this.showReceiptMessage(receiptErrorMessage(err));
       }
     });
+  }
+
+  private showReceiptError(code: ReceiptErrorCode) {
+    return this.showReceiptMessage(RECEIPT_ERROR_MESSAGES[code]);
+  }
+
+  private async showReceiptMessage(message: string) {
+    const toast = await this.toastController.create({ message, duration: 3000, color: 'warning', position: 'top' });
+    await toast.present();
   }
 
   savePayment() {

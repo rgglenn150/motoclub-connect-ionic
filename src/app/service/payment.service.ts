@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Payment } from '../models/payment.model';
+import { Payment, RECEIPT_ERROR_MESSAGES, ReceiptError, ReceiptErrorCode, ReceiptExtraction } from '../models/payment.model';
 import { BulkVerifyResponse, StatementCheckResponse } from '../models/statement-check.model';
 
 export type { Payment };
@@ -14,6 +14,21 @@ export type PaymentResolution = 'confirmed' | 'rejected';
 export interface PaymentStatusConflict {
   message: string;
   status: PaymentResolution;
+}
+
+/** Why a receipt upload failed: status 0 never reached the API (spec 008, contracts). */
+export function receiptErrorCode(err: unknown): ReceiptErrorCode {
+  if (!(err instanceof HttpErrorResponse)) return 'UNKNOWN';
+  if (err.status === 0) return 'NO_CONNECTION';
+  const code = (err.error as Partial<ReceiptError> | null)?.code;
+  return code && code in RECEIPT_ERROR_MESSAGES ? code : 'UNKNOWN';
+}
+
+/** The message to show for a failed receipt upload (spec 008 FR-005). */
+export function receiptErrorMessage(err: unknown): string {
+  const code = receiptErrorCode(err);
+  if (code !== 'UNKNOWN') return RECEIPT_ERROR_MESSAGES[code];
+  return (err as HttpErrorResponse | null)?.error?.message || RECEIPT_ERROR_MESSAGES.UNKNOWN;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -54,9 +69,9 @@ export class PaymentService {
     return this.http.post<BulkVerifyResponse>(`${this.baseUrl}/collection/${collectionId}/bulk-verify`, { paymentIds });
   }
 
-  extractReceipt(file: File): Observable<{ name: string; amount: number; referenceNumber: string; phoneNumber: string; transactionDateTime: string }> {
+  extractReceipt(file: File): Observable<ReceiptExtraction> {
     const formData = new FormData();
     formData.append('receipt', file);
-    return this.http.post<{ name: string; amount: number; referenceNumber: string; phoneNumber: string; transactionDateTime: string }>(`${this.baseUrl}/extract-receipt`, formData);
+    return this.http.post<ReceiptExtraction>(`${this.baseUrl}/extract-receipt`, formData);
   }
 }
