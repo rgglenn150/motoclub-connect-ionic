@@ -4,7 +4,7 @@ import { ActionSheetButton, ActionSheetController, AlertController, IonModal, To
 import { Subscription } from 'rxjs';
 import { CollectionService } from '../../../service/collection.service';
 import { Collection } from '../../../models/collection.model';
-import { PaymentService, Payment, PaymentResolution, PaymentStatusConflict, receiptErrorMessage } from '../../../service/payment.service';
+import { PaymentService, Payment, PaymentResolution, PaymentStatusConflict, receiptErrorCode, receiptErrorMessage } from '../../../service/payment.service';
 import { RECEIPT_ERROR_MESSAGES, ReceiptErrorCode } from '../../../models/payment.model';
 import { ReceiptImageService } from '../../../service/receipt-image.service';
 import { DialogHistoryService } from '../../../service/dialog-history.service';
@@ -429,7 +429,9 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave, DialogHost {
       },
       error: async (err) => {
         this.isSavingPayment = false;
-        const msg = err?.error?.message || 'Failed to save payment.';
+        // Receipt and connection failures read the same as on extract (spec 008 US3 AC7).
+        const code = receiptErrorCode(err);
+        const msg = code !== 'UNKNOWN' ? RECEIPT_ERROR_MESSAGES[code] : err?.error?.message || 'Failed to save payment.';
         const toast = await this.toastController.create({ message: msg, duration: 3000, color: 'danger', position: 'top' });
         await toast.present();
       }

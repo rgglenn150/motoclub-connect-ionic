@@ -894,6 +894,28 @@ describe('CollectionDetailPage', () => {
 
       expect(toastMessages()).toContain(RECEIPT_ERROR_MESSAGES.FILE_TOO_LARGE);
     });
+
+    it('says to check the connection when saving never arrives (US3 AC4, AC7)', async () => {
+      paymentService.createPayment.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+      page.paymentForm = { ...page.paymentForm, name: 'Demo Payer', amount: 500, referenceNumber: 'R10' };
+
+      page.savePayment();
+      await fixture.whenStable();
+
+      expect(toastMessages()).toContain(RECEIPT_ERROR_MESSAGES.NO_CONNECTION);
+    });
+
+    it('keeps the server message for other save errors', async () => {
+      paymentService.createPayment.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'Reference number already used' } })),
+      );
+      page.paymentForm = { ...page.paymentForm, name: 'Demo Payer', amount: 500, referenceNumber: 'R11' };
+
+      page.savePayment();
+      await fixture.whenStable();
+
+      expect(toastMessages()).toContain('Reference number already used');
+    });
   });
 
   describe('Back closes dialogs (spec 008, US2)', () => {

@@ -21,7 +21,8 @@ export function receiptErrorCode(err: unknown): ReceiptErrorCode {
   if (!(err instanceof HttpErrorResponse)) return 'UNKNOWN';
   if (err.status === 0) return 'NO_CONNECTION';
   const code = (err.error as Partial<ReceiptError> | null)?.code;
-  return code && code in RECEIPT_ERROR_MESSAGES ? code : 'UNKNOWN';
+  // Own keys only: `in` would also match inherited names such as "constructor".
+  return code && Object.prototype.hasOwnProperty.call(RECEIPT_ERROR_MESSAGES, code) ? code : 'UNKNOWN';
 }
 
 /** The message to show for a failed receipt upload (spec 008 FR-005). */

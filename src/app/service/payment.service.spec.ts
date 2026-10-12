@@ -26,6 +26,11 @@ describe('receiptErrorMessage', () => {
     expect(receiptErrorMessage(err)).toBe('Failed to read receipt. Please fill in the fields manually.');
   });
 
+  it('ignores codes that are only inherited object keys', () => {
+    expect(receiptErrorCode(httpError(400, { code: 'constructor' }))).toBe('UNKNOWN');
+    expect(receiptErrorCode(httpError(400, { code: 'toString' }))).toBe('UNKNOWN');
+  });
+
   it('falls back to the generic message', () => {
     expect(receiptErrorMessage(httpError(500, { error: 'File too large' }))).toBe(RECEIPT_ERROR_MESSAGES.UNKNOWN);
     expect(receiptErrorMessage(new Error('boom'))).toBe(RECEIPT_ERROR_MESSAGES.UNKNOWN);
