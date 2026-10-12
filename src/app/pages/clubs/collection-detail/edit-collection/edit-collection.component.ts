@@ -65,6 +65,18 @@ export class EditCollectionComponent implements OnInit {
     this.validate();
   }
 
+  /** Something differs from the saved collection: Back asks before discarding (spec 008 D9). */
+  get isDirty(): boolean {
+    const c = this.collection;
+    const f = this.form;
+    return (
+      f.name.trim() !== (c.name ?? '').trim() ||
+      f.description.trim() !== (c.description ?? '').trim() ||
+      String(f.target ?? '').trim() !== (c.targetAmount != null ? String(c.targetAmount) : '') ||
+      f.visibility !== c.visibility
+    );
+  }
+
   get canSave(): boolean {
     return !this.saving && Object.keys(this.errors).length === 0;
   }

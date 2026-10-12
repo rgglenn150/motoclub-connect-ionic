@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -18,6 +18,31 @@ import { ClubService } from '../../../service/club.service';
 import { Collection } from '../../../models/collection.model';
 import { CollectionProgressModule } from '../../../components/collection-progress/collection-progress.module';
 import { SharedModule } from '../../../shared/shared.module';
+import { BROWSER_HISTORY, BrowserHistory } from '../../../service/dialog-history.service';
+import { ReceiptImageService } from '../../../service/receipt-image.service';
+import { RECEIPT_ERROR_MESSAGES } from '../../../models/payment.model';
+
+/** A history stack that fires popstate like a browser, so specs never touch the real one. */
+class FakeHistory implements BrowserHistory {
+  entries: any[] = [{ page: true }];
+  index = 0;
+  get state() {
+    return this.entries[this.index];
+  }
+  pushState(state: any) {
+    this.entries.splice(this.index + 1);
+    this.entries.push(state);
+    this.index++;
+  }
+  back() {
+    setTimeout(() => this.go(-1));
+  }
+  /** What the person's Back press does. */
+  go(delta: number) {
+    this.index += delta;
+    window.dispatchEvent(new PopStateEvent('popstate', { state: this.state }));
+  }
+}
 
 const CLUB_ID = 'club1';
 const COLLECTION_ID = 'col1';
@@ -66,6 +91,8 @@ describe('CollectionDetailPage', () => {
   let toastController: jasmine.SpyObj<ToastController>;
   let actionSheetController: jasmine.SpyObj<ActionSheetController>;
   let sheet: { header?: string; buttons: any[] } | null;
+  let history: FakeHistory;
+  let receiptImage: jasmine.SpyObj<ReceiptImageService>;
 
   /** Runs the handler of the alert button with the given text. */
   async function pressAlertButton(text: string, value?: unknown) {
@@ -89,6 +116,9 @@ describe('CollectionDetailPage', () => {
     toastController = jasmine.createSpyObj('ToastController', ['create']);
     toastController.create.and.resolveTo({ present: () => Promise.resolve() } as any);
     sheet = null;
+    history = new FakeHistory();
+    receiptImage = jasmine.createSpyObj('ReceiptImageService', ['prepare']);
+    receiptImage.prepare.and.callFake(async (file: File) => file);
     actionSheetController = jasmine.createSpyObj('ActionSheetController', ['create']);
     actionSheetController.create.and.callFake(async (opts: any) => {
       sheet = opts;
@@ -107,6 +137,8 @@ describe('CollectionDetailPage', () => {
         { provide: AlertController, useValue: alertController },
         { provide: ToastController, useValue: toastController },
         { provide: ActionSheetController, useValue: actionSheetController },
+        { provide: BROWSER_HISTORY, useValue: history },
+        { provide: ReceiptImageService, useValue: receiptImage },
       ],
     }).compileComponents();
 
@@ -664,8 +696,11 @@ describe('CollectionDetailPage', () => {
   });
 
   describe('Add Payment while a receipt is read (spec 006, US4)', () => {
-    // Ionic moves presented modals to the document, so earlier tests' modals can linger: use the newest.
-    const form = () => Array.from(document.querySelectorAll<HTMLElement>('ion-modal.add-payment-modal')).pop()!;
+    // Ionic moves presented modals to the document, so earlier tests' modals can linger: use the newest with content.
+    const form = () =>
+      Array.from(document.querySelectorAll<HTMLElement>('ion-modal.add-payment-modal'))
+        .filter((m) => m.querySelector('.payment-fields'))
+        .pop()!;
     const inputs = () => Array.from(form().querySelectorAll('.payment-fields ion-input')) as any[];
     const save = () => form().querySelector('ion-button.save-payment-btn') as any;
 
@@ -678,8 +713,9 @@ describe('CollectionDetailPage', () => {
       fixture.detectChanges();
     });
 
-    afterEach(() => {
-      page.closeAddPaymentModal();
+    // Wait for the dismissal, so no blank modal outlives the fixture (spec 008 #95).
+    afterEach(async () => {
+      await page.closeDialogs();
       fixture.detectChanges();
     });
 
@@ -727,6 +763,272 @@ describe('CollectionDetailPage', () => {
       expect(form().querySelector('.payment-fields .frosted-shield')).toBeNull();
       expect(save().disabled).toBeFalse();
       expect(form().querySelector('.payment-fields')!.classList).not.toContain('frosted');
+    });
+  });
+
+  describe('receipt photos (spec 008, US1 + US3)', () => {
+    const photo = (type = 'image/heic', size = 4) => new File([new Uint8Array(size)], 'IMG_0001.heic', { type });
+    const prepared = new File([new Uint8Array(8)], 'IMG_0001.jpg', { type: 'image/jpeg' });
+    const pick = (file: File) => page.onReceiptSelected({ target: { files: [file] } } as any);
+    const toastMessages = () => toastController.create.calls.allArgs().map(([opts]: any[]) => opts.message);
+
+    beforeEach(() => {
+      fixture.detectChanges();
+      page.openAddPaymentModal();
+    });
+
+    it('reads and stores the prepared image, not the original (FR-001, FR-003)', async () => {
+      receiptImage.prepare.and.resolveTo(prepared);
+      paymentService.extractReceipt.and.returnValue(of({ name: 'Juan', amount: 500, referenceNumber: 'R5', phoneNumber: null, transactionDateTime: null }));
+      paymentService.createPayment.and.returnValue(new Subject<any>());
+
+      await pick(photo());
+
+      expect(paymentService.extractReceipt).toHaveBeenCalledOnceWith(prepared);
+      expect(page.receiptFile).toBe(prepared);
+      expect(page.paymentForm.referenceNumber).toBe('R5');
+      expect(page.isExtractingReceipt).toBeFalse();
+
+      page.paymentForm.name = 'Juan';
+      page.savePayment();
+      const sent = paymentService.createPayment.calls.mostRecent().args[0] as FormData;
+      expect(sent.get('receipt')).toEqual(prepared);
+    });
+
+    it('keeps the fields frozen while the photo is prepared (US1 AC5)', async () => {
+      let finish!: (f: File) => void;
+      receiptImage.prepare.and.returnValue(new Promise<File>((r) => (finish = r)));
+      paymentService.extractReceipt.and.returnValue(new Subject<any>());
+
+      const done = pick(photo());
+
+      expect(page.isExtractingReceipt).toBeTrue();
+      expect(paymentService.extractReceipt).not.toHaveBeenCalled();
+      finish(prepared);
+      await done;
+      expect(paymentService.extractReceipt).toHaveBeenCalled();
+      expect(page.isExtractingReceipt).toBeTrue();
+    });
+
+    it('only the latest pick fills the form (FR-008)', async () => {
+      const first = new Subject<any>();
+      const second = new Subject<any>();
+      paymentService.extractReceipt.and.returnValues(first, second);
+
+      await pick(photo('image/jpeg'));
+      await pick(photo('image/png'));
+      first.next({ name: 'Old', amount: 1, referenceNumber: 'OLD', phoneNumber: null, transactionDateTime: null });
+      second.next({ name: 'New', amount: 2, referenceNumber: 'NEW', phoneNumber: null, transactionDateTime: null });
+
+      expect(page.paymentForm.referenceNumber).toBe('NEW');
+      expect(page.paymentForm.amount).toBe(2);
+    });
+
+    it('ignores a late result after Add Payment closed', async () => {
+      const result = new Subject<any>();
+      paymentService.extractReceipt.and.returnValue(result);
+      await pick(photo());
+
+      page.closeAddPaymentModal();
+      result.next({ name: 'Late', amount: 9, referenceNumber: 'LATE', phoneNumber: null, transactionDateTime: null });
+
+      expect(page.paymentForm.referenceNumber).not.toBe('LATE');
+      expect(page.isExtractingReceipt).toBeFalse();
+    });
+
+    it('rejects a file that is not an image without attaching it', async () => {
+      await pick(new File(['%PDF'], 'r.pdf', { type: 'application/pdf' }));
+
+      expect(receiptImage.prepare).not.toHaveBeenCalled();
+      expect(paymentService.extractReceipt).not.toHaveBeenCalled();
+      expect(page.receiptFile).toBeNull();
+      expect(page.isExtractingReceipt).toBeFalse();
+      expect(toastMessages()).toContain(RECEIPT_ERROR_MESSAGES.UNSUPPORTED_FORMAT);
+    });
+
+    it('says "too large" without sending a photo it could not shrink (US3 AC1)', async () => {
+      const huge = photo('image/heic', 10 * 1024 * 1024 + 1);
+      receiptImage.prepare.and.resolveTo(huge);
+
+      await pick(huge);
+
+      expect(paymentService.extractReceipt).not.toHaveBeenCalled();
+      expect(page.receiptFile).toBe(huge);
+      expect(page.isExtractingReceipt).toBeFalse();
+      expect(toastMessages()).toContain(RECEIPT_ERROR_MESSAGES.FILE_TOO_LARGE);
+    });
+
+    for (const code of ['UNSUPPORTED_FORMAT', 'READER_UNAVAILABLE', 'UNREADABLE'] as const) {
+      it(`shows the ${code} message and keeps the receipt (US3, D5)`, async () => {
+        paymentService.extractReceipt.and.returnValue(
+          throwError(() => new HttpErrorResponse({ status: 422, error: { code, message: 'x' } })),
+        );
+        const file = photo('image/jpeg');
+
+        await pick(file);
+        await fixture.whenStable();
+
+        expect(toastMessages()).toContain(RECEIPT_ERROR_MESSAGES[code]);
+        expect(page.receiptFile).toBe(file);
+        expect(page.isExtractingReceipt).toBeFalse();
+      });
+    }
+
+    it('says to check the connection when the request never arrives (US3 AC4)', async () => {
+      paymentService.extractReceipt.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+
+      await pick(photo('image/jpeg'));
+      await fixture.whenStable();
+
+      expect(toastMessages()).toContain(RECEIPT_ERROR_MESSAGES.NO_CONNECTION);
+    });
+
+    it('shows the specific message when saving fails on the receipt (US3 AC7)', async () => {
+      paymentService.createPayment.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 413, error: { code: 'FILE_TOO_LARGE', message: RECEIPT_ERROR_MESSAGES.FILE_TOO_LARGE } })),
+      );
+      page.paymentForm = { ...page.paymentForm, name: 'Demo Payer', amount: 500, referenceNumber: 'R9' };
+
+      page.savePayment();
+      await fixture.whenStable();
+
+      expect(toastMessages()).toContain(RECEIPT_ERROR_MESSAGES.FILE_TOO_LARGE);
+    });
+
+    it('says to check the connection when saving never arrives (US3 AC4, AC7)', async () => {
+      paymentService.createPayment.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+      page.paymentForm = { ...page.paymentForm, name: 'Demo Payer', amount: 500, referenceNumber: 'R10' };
+
+      page.savePayment();
+      await fixture.whenStable();
+
+      expect(toastMessages()).toContain(RECEIPT_ERROR_MESSAGES.NO_CONNECTION);
+    });
+
+    it('keeps the server message for other save errors', async () => {
+      paymentService.createPayment.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'Reference number already used' } })),
+      );
+      page.paymentForm = { ...page.paymentForm, name: 'Demo Payer', amount: 500, referenceNumber: 'R11' };
+
+      page.savePayment();
+      await fixture.whenStable();
+
+      expect(toastMessages()).toContain('Reference number already used');
+    });
+  });
+
+  describe('Back closes dialogs (spec 008, US2)', () => {
+    const back = async () => {
+      history.go(-1);
+      await fixture.whenStable();
+    };
+
+    beforeEach(() => {
+      paymentService.getPayments.and.returnValue(of({ payments: [payment()] }));
+      fixture.detectChanges();
+      page.isAdmin = true;
+    });
+
+    it('closes the payment dialog and stays on the page (AC1)', async () => {
+      page.openPayment(payment());
+      expect(history.index).toBe(1);
+
+      await back();
+
+      expect(page.showPaymentModal).toBeFalse();
+      expect(page.selectedPayment).toBeNull();
+      expect(history.index).toBe(0);
+    });
+
+    it('closes bulk verify, edit collection and an untouched Add Payment the same way (AC3, AC9)', async () => {
+      await page.openBulkVerify();
+      await back();
+      expect(page.showBulkVerify).toBeFalse();
+
+      page.openEditCollection();
+      await back();
+      expect(page.showEditCollection).toBeFalse();
+
+      page.openAddPaymentModal();
+      await back();
+      expect(page.showAddPaymentModal).toBeFalse();
+      expect(alertController.create).not.toHaveBeenCalled();
+      expect(history.index).toBe(0);
+    });
+
+    it('closes only the payment dialog opened over bulk verify (AC4)', async () => {
+      await page.openBulkVerify();
+      page.openPaymentById('p1');
+      expect(history.index).toBe(2);
+
+      await back();
+
+      expect(page.showPaymentModal).toBeFalse();
+      expect(page.showBulkVerify).toBeTrue();
+    });
+
+    it('a close button removes the entry, so one Back leaves the page (AC6)', fakeAsync(() => {
+      page.openPayment(payment());
+      page.closePayment();
+      tick();
+
+      expect(history.index).toBe(0);
+    }));
+
+    it('the /payment link pushes Add Payment like any dialog (AC7)', () => {
+      page.loadCollection(true);
+      expect(page.showAddPaymentModal).toBeTrue();
+      expect(history.index).toBe(1);
+    });
+
+    it('asks before discarding a touched Add Payment; Keep editing keeps it (AC8)', async () => {
+      page.openAddPaymentModal();
+      page.paymentForm.name = 'Half typed';
+
+      await back();
+
+      expect(alertController.create).toHaveBeenCalledWith(jasmine.objectContaining({ header: 'Discard changes?' }));
+      expect(page.showAddPaymentModal).toBeTrue();
+      expect(page.paymentForm.name).toBe('Half typed');
+      expect(history.index).toBe(1);
+      expect(alertButtons.find((b) => b.text === 'Keep editing').role).toBe('cancel');
+    });
+
+    it('Discard closes the touched Add Payment and removes its entry (AC8)', fakeAsync(() => {
+      page.openAddPaymentModal();
+      page.receiptFile = new File(['x'], 'r.jpg', { type: 'image/jpeg' });
+      history.go(-1);
+      tick();
+
+      pressAlertButton('Discard');
+      tick();
+
+      expect(page.showAddPaymentModal).toBeFalse();
+      expect(history.index).toBe(0);
+    }));
+
+    it('asks before discarding a changed Edit Collection (AC8)', async () => {
+      page.openEditCollection();
+      (page as any).editCollection = { isDirty: true };
+
+      await back();
+
+      expect(alertController.create).toHaveBeenCalledWith(jasmine.objectContaining({ header: 'Discard changes?' }));
+      expect(page.showEditCollection).toBeTrue();
+    });
+
+    it('closeDialogs closes everything without touching history (AC5, FR-011)', async () => {
+      await page.openBulkVerify();
+      page.openPaymentById('p1');
+
+      await page.closeDialogs();
+
+      expect(page.showBulkVerify).toBeFalse();
+      expect(page.showPaymentModal).toBeFalse();
+      expect(history.index).toBe(2);
+      history.go(-1); // the leftover entry no longer closes anything
+      expect(page.showBulkVerify).toBeFalse();
     });
   });
 });
