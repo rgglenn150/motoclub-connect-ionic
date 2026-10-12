@@ -225,4 +225,33 @@ describe('EditCollectionComponent (spec 006, US1)', () => {
     expect(cancelled).toBe(1);
     expect(collectionService.updateCollection).not.toHaveBeenCalled();
   });
+
+  describe('isDirty (spec 008 D9)', () => {
+    it('is clean when opened, and when only whitespace changes', () => {
+      create();
+      expect(component.isDirty).toBeFalse();
+      component.form.name = ' Redcross Donations ';
+      expect(component.isDirty).toBeFalse();
+    });
+
+    it('is dirty after any field changes', () => {
+      for (const change of [
+        { name: 'Renamed' },
+        { description: '' },
+        { target: '6000' },
+        { visibility: 'public' as const },
+      ]) {
+        create();
+        Object.assign(component.form, change);
+        expect(component.isDirty).withContext(JSON.stringify(change)).toBeTrue();
+      }
+    });
+
+    it('treats an empty target as matching no target', () => {
+      create(collection({ targetAmount: undefined }));
+      expect(component.isDirty).toBeFalse();
+      component.form.target = '100';
+      expect(component.isDirty).toBeTrue();
+    });
+  });
 });
