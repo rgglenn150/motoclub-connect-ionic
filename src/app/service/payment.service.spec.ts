@@ -1,6 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { environment } from 'src/environments/environment';
 import { RECEIPT_ERROR_MESSAGES } from '../models/payment.model';
-import { receiptErrorCode, receiptErrorMessage } from './payment.service';
+import { PaymentService, receiptErrorCode, receiptErrorMessage } from './payment.service';
 
 // Spec 008 FR-005: each receipt failure names its cause (contracts/README.md).
 describe('receiptErrorMessage', () => {
@@ -34,5 +37,38 @@ describe('receiptErrorMessage', () => {
   it('falls back to the generic message', () => {
     expect(receiptErrorMessage(httpError(500, { error: 'File too large' }))).toBe(RECEIPT_ERROR_MESSAGES.UNKNOWN);
     expect(receiptErrorMessage(new Error('boom'))).toBe(RECEIPT_ERROR_MESSAGES.UNKNOWN);
+  });
+});
+
+// Spec 008 FR-015: receipt uploads skip the service worker (research R12).
+describe('PaymentService receipt uploads', () => {
+  let service: PaymentService;
+  let httpMock: HttpTestingController;
+  const base = `${environment.apiUrl}/payment`;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [HttpClientTestingModule] });
+    service = TestBed.inject(PaymentService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('sends extract-receipt with ngsw-bypass', () => {
+    const file = new File([new Uint8Array(8)], 'receipt.jpg', { type: 'image/jpeg' });
+    service.extractReceipt(file).subscribe();
+    const req = httpMock.expectOne((r) => r.url === `${base}/extract-receipt`);
+    expect(req.request.params.get('ngsw-bypass')).toBe('true');
+    expect((req.request.body as FormData).get('receipt')).toBe(file);
+    req.flush({});
+  });
+
+  it('sends create with ngsw-bypass', () => {
+    const formData = new FormData();
+    service.createPayment(formData).subscribe();
+    const req = httpMock.expectOne((r) => r.url === `${base}/create`);
+    expect(req.request.params.get('ngsw-bypass')).toBe('true');
+    expect(req.request.body).toBe(formData);
+    req.flush({ payment: {} });
   });
 });
