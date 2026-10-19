@@ -10,6 +10,12 @@ export type { Payment };
 /** A resolved status; payments only move pending → confirmed | rejected. */
 export type PaymentResolution = 'confirmed' | 'rejected';
 
+/**
+ * Receipt uploads skip the service worker: on iOS, its re-sent POST can reach
+ * the server with a broken body (spec 008 FR-015, research R12).
+ */
+const UPLOAD_PARAMS = { 'ngsw-bypass': 'true' };
+
 /** Body of the 409 returned when a payment is already resolved (contracts/payment.md). */
 export interface PaymentStatusConflict {
   message: string;
@@ -43,7 +49,7 @@ export class PaymentService {
   }
 
   createPayment(formData: FormData): Observable<{ payment: Payment }> {
-    return this.http.post<{ payment: Payment }>(`${this.baseUrl}/create`, formData);
+    return this.http.post<{ payment: Payment }>(`${this.baseUrl}/create`, formData, { params: UPLOAD_PARAMS });
   }
 
   updateStatus(paymentId: string, status: PaymentResolution): Observable<{ payment: Payment }> {
@@ -73,6 +79,6 @@ export class PaymentService {
   extractReceipt(file: File): Observable<ReceiptExtraction> {
     const formData = new FormData();
     formData.append('receipt', file);
-    return this.http.post<ReceiptExtraction>(`${this.baseUrl}/extract-receipt`, formData);
+    return this.http.post<ReceiptExtraction>(`${this.baseUrl}/extract-receipt`, formData, { params: UPLOAD_PARAMS });
   }
 }
