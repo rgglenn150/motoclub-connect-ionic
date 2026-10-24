@@ -41,6 +41,8 @@ export class OfficialMembersPage implements OnInit, OnDestroy, ViewWillEnter {
   // Loading and error states
   loading: boolean = false;
   isRefreshing: boolean = false;
+  // Search in flight — kept separate from `loading` so the searchbar stays mounted while typing
+  searching: boolean = false;
   error: string = '';
   currentError: ErrorInfo | null = null;
 
@@ -138,7 +140,8 @@ export class OfficialMembersPage implements OnInit, OnDestroy, ViewWillEnter {
    */
   private setupSearchDebouncer() {
     this.searchSubscription = this.searchSubject.pipe(
-      debounceTime(250)
+      // Long enough to span a natural pause between letters on a phone keyboard
+      debounceTime(450)
     ).subscribe(query => {
       this.performSearch(query);
     });
@@ -286,7 +289,7 @@ export class OfficialMembersPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
-    this.loading = true;
+    this.searching = true;
     this.error = '';
 
     this.officialMemberService.searchOfficialMembers(
@@ -298,7 +301,7 @@ export class OfficialMembersPage implements OnInit, OnDestroy, ViewWillEnter {
       }
     ).pipe(
       finalize(() => {
-        this.loading = false;
+        this.searching = false;
       })
     ).subscribe({
       next: (members) => {
