@@ -1,0 +1,117 @@
+<div class="remit-dialog">
+  <p class="available">
+    Available to remit: <strong>{{ availableToRemit | currency:'PHP':'symbol':'1.0-2' }}</strong>
+  </p>
+  <p *ngIf="nothingAvailable" class="field-error" role="alert">Nothing is available to remit yet.</p>
+
+  <ion-item [class.item-invalid]="errors.amount">
+    <ion-label position="stacked">Amount (₱) <span class="required-star">*</span></ion-label>
+    <ion-input [(ngModel)]="form.amount" (ionInput)="validate()" inputmode="decimal" placeholder="Required"></ion-input>
+  </ion-item>
+  <p *ngIf="errors.amount" class="field-error" role="alert">{{ errors.amount }}</p>
+
+  <div class="recipient-type">
+    <p class="group-label">Recipient</p>
+    <ion-segment [(ngModel)]="form.recipientType" (ionChange)="validate()" aria-label="Recipient">
+      <ion-segment-button value="member">
+        <ion-icon name="person-outline"></ion-icon>
+        <ion-label>Club member</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="external">
+        <ion-icon name="business-outline"></ion-icon>
+        <ion-label>External</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <ng-container *ngIf="form.recipientType === 'member'">
+  <ion-item [class.item-invalid]="errors.memberId">
+    <ion-label position="stacked">Club member <span class="required-star">*</span></ion-label>
+    <ion-select
+      [(ngModel)]="form.memberId"
+      (ionChange)="validate()"
+      interface="action-sheet"
+      placeholder="{{ membersLoading ? 'Loading members…' : 'Pick a member' }}"
+      [disabled]="membersLoading || membersError"
+    >
+      <ion-select-option *ngFor="let m of members" [value]="m._id">{{ m.user.name }}</ion-select-option>
+    </ion-select>
+  </ion-item>
+  <p *ngIf="errors.memberId" class="field-error" role="alert">{{ errors.memberId }}</p>
+  <p *ngIf="membersError" class="field-error" role="alert">
+    Couldn't load the club's members.
+    <ion-button fill="clear" size="small" (click)="loadMembers()">Retry</ion-button>
+  </p>
+  </ng-container>
+
+  <ng-container *ngIf="form.recipientType === 'external'">
+    <ion-item [class.item-invalid]="errors.recipientName">
+      <ion-label position="stacked">Recipient name <span class="required-star">*</span></ion-label>
+      <ion-input [(ngModel)]="form.recipientName" (ionInput)="validate()" placeholder="e.g. Casa Verde Events"></ion-input>
+    </ion-item>
+    <p *ngIf="errors.recipientName" class="field-error" role="alert">{{ errors.recipientName }}</p>
+
+    <ion-item [class.item-invalid]="errors.recipientAccount">
+      <ion-label position="stacked">Account details</ion-label>
+      <ion-input [(ngModel)]="form.recipientAccount" (ionInput)="validate()" placeholder="Optional, e.g. GCash name and number"></ion-input>
+    </ion-item>
+    <p *ngIf="errors.recipientAccount" class="field-error" role="alert">{{ errors.recipientAccount }}</p>
+    <p *ngIf="!errors.recipientAccount" class="hint">Only club admins see account details.</p>
+  </ng-container>
+
+  <ion-item [class.item-invalid]="errors.remittedOn">
+    <ion-label position="stacked">Date</ion-label>
+    <ion-input type="date" [(ngModel)]="form.remittedOn" (ionInput)="validate()" [max]="today"></ion-input>
+  </ion-item>
+  <p *ngIf="errors.remittedOn" class="field-error" role="alert">{{ errors.remittedOn }}</p>
+
+  <ion-item [class.item-invalid]="errors.note">
+    <ion-label position="stacked">Note</ion-label>
+    <ion-textarea [(ngModel)]="form.note" (ionInput)="validate()" [autoGrow]="true" placeholder="Optional"></ion-textarea>
+  </ion-item>
+  <p *ngIf="errors.note" class="field-error" role="alert">{{ errors.note }}</p>
+
+  <div class="visibility">
+    <p class="group-label">Who can see this record</p>
+    <ion-segment [(ngModel)]="form.visibility" aria-label="Who can see this record">
+      <ion-segment-button value="admins">
+        <ion-label>Admins</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="members">
+        <ion-label>Members</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="public">
+        <ion-label>Public</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+    <p class="hint">{{ visibilityHint }}</p>
+  </div>
+
+  <div class="proof">
+    <p class="group-label">Proof of remittance</p>
+    <img *ngIf="proofPreviewUrl" [src]="proofPreviewUrl" class="proof-preview" alt="Proof of remittance preview" />
+    <div *ngIf="preparingProof" class="preparing" role="status">
+      <ion-spinner name="crescent"></ion-spinner>
+      <span>Preparing photo…</span>
+    </div>
+    <ion-button *ngIf="!proofFile" expand="block" fill="outline" class="proof-btn" (click)="proofInput.click()" [disabled]="preparingProof">
+      <ion-icon name="camera-outline" slot="start"></ion-icon>
+      Attach photo (optional)
+    </ion-button>
+    <ion-button *ngIf="proofFile" expand="block" fill="clear" class="secondary-btn" (click)="removeProof()">
+      <ion-icon name="trash-outline" slot="start"></ion-icon>
+      Remove photo
+    </ion-button>
+    <input #proofInput type="file" accept="image/*" hidden (change)="onProofSelected($event)" />
+    <p *ngIf="proofError" class="field-error" role="alert">{{ proofError }}</p>
+    <p class="hint">Only club admins see the photo.</p>
+  </div>
+
+  <p *ngIf="saveError" class="field-error save-error" role="alert">{{ saveError }}</p>
+
+  <ion-button expand="block" class="amber-btn" [disabled]="!canSave" (click)="save()">
+    <ion-spinner *ngIf="saving" name="crescent"></ion-spinner>
+    <span *ngIf="!saving">Record remittance</span>
+  </ion-button>
+  <ion-button expand="block" fill="clear" class="secondary-btn" (click)="cancelled.emit()">Cancel</ion-button>
+</div>

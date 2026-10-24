@@ -132,6 +132,15 @@ export class NotificationsPage implements OnInit, OnDestroy {
         // Navigate to club admin panel or members management
         this.router.navigate(['/clubs', clubId, 'members']);
         break;
+      case 'remittance_recorded':
+      case 'remittance_voided':
+        // Open the collection the money came from (spec 009 Story 6).
+        if (notification.data?.collectionId) {
+          this.router.navigate(['/clubs', clubId, 'collection', notification.data.collectionId]);
+        } else {
+          this.router.navigate(['/clubs', clubId]);
+        }
+        break;
       case 'request_approved':
       case 'request_rejected':
       case 'new_member':
