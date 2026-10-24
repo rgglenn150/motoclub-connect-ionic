@@ -581,8 +581,12 @@ export class PlacesService {
           default:
             return 'unknown';
         }
+      } else if (navigator.permissions?.query) {
+        // Reading the permission state never triggers the browser prompt
+        const status = await navigator.permissions.query({ name: 'geolocation' });
+        return status.state;
       } else {
-        // For web platform, we can't easily check permission status without triggering a request
+        // No Permissions API: the state can't be read without triggering a request
         return 'unknown';
       }
     } catch (error) {

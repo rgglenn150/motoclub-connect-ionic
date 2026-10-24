@@ -70,6 +70,8 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
   // Saved location fallback properties
   public showEnableLocationPrompt: boolean = false;
   public savedLocation: { latitude: number; longitude: number; updatedAt?: Date } | null = null;
+  // Weather is for the saved/default location, not a fresh GPS read
+  public usingFallbackLocation: boolean = false;
   private readonly LOCATION_UPDATE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours in ms
 
   constructor(
@@ -93,10 +95,10 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         // Reload weather data when preferences change
-        this.fetchWeatherData();
+        this.fetchWeatherData(false, false);
       });
 
-    this.fetchWeatherData();
+    this.fetchWeatherData(false, false);
   }
 
   /**
@@ -170,13 +172,17 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
    * Fetches weather data using the WeatherService and updates component state.
    * Now includes enhanced location services integration with detailed metadata.
    * Also supports saved location fallback when GPS is unavailable.
+   * @param allowPrompt - false on page load: GPS is read only if permission is already
+   *   granted, so loading the page never pops the browser location prompt
    */
   public async fetchWeatherData(
-    useHighAccuracy: boolean = false
+    useHighAccuracy: boolean = false,
+    allowPrompt: boolean = true
   ): Promise<void> {
     this.isLoading = true;
     this.hasError = false;
     this.showEnableLocationPrompt = false; // Reset the prompt when fetching
+    this.usingFallbackLocation = false;
     this.locationName = 'Loading...'; // Reset location name
     this.cdr.markForCheck();
 
@@ -186,8 +192,11 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
     let obtainedLatitude: number | null = null;
     let obtainedLongitude: number | null = null;
 
+    const canReadGps =
+      allowPrompt || this.locationMetadata.permissionStatus === 'granted';
+
     // Check if we should try to get fresh location data
-    if (preferences.useGps) {
+    if (preferences.useGps && canReadGps) {
       try {
         this.isGettingLocation = true;
         this.cdr.markForCheck();
@@ -206,6 +215,7 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
 
           // Mark that we successfully obtained GPS location
           gpsLocationObtained = true;
+          this.locationMetadata.permissionStatus = 'granted';
           obtainedLatitude = currentLocation.lat;
           obtainedLongitude = currentLocation.lng;
 
@@ -230,7 +240,7 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
         this.isGettingLocation = false;
         this.cdr.markForCheck();
       }
-    } else if (preferences.preferredLocation) {
+    } else if (!preferences.useGps && preferences.preferredLocation) {
       // Use preferred location from settings
       const coords = preferences.preferredLocation.coordinates;
       this.locationMetadata.source = 'default';
@@ -240,10 +250,8 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
         coords.longitude
       );
     } else {
-      // Default to service's current location handling
-      this.locationMetadata.source = 'default';
-      weatherObservable =
-        this.weatherService.getCurrentWeatherForCurrentLocation();
+      // GPS not readable without prompting: use saved location or default
+      weatherObservable = this.getSavedLocationWeather(false);
     }
 
     // If we got GPS location, check if we should save it to the database
@@ -765,8 +773,10 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
   /**
    * Get weather using saved location as fallback
    * Returns the weather observable or sets showEnableLocationPrompt if no saved location
+   * @param showPromptIfMissing - show the enable-location state when there is no saved location
    */
-  private getSavedLocationWeather() {
+  private getSavedLocationWeather(showPromptIfMissing: boolean = true) {
+    this.usingFallbackLocation = true;
     if (this.savedLocation) {
       console.log('Using saved location for weather:', this.savedLocation);
       this.locationMetadata.source = 'cached';
@@ -776,12 +786,15 @@ export class WeatherWidget2Component implements OnInit, OnDestroy {
         this.savedLocation.longitude
       );
     } else {
-      console.log('No saved location available, showing enable location prompt');
-      this.showEnableLocationPrompt = true;
-      this.isLoading = false;
-      this.cdr.markForCheck();
-      // Return default weather as fallback
-      return this.weatherService.getCurrentWeatherForCurrentLocation();
+      if (showPromptIfMissing) {
+        console.log('No saved location available, showing enable location prompt');
+        this.showEnableLocationPrompt = true;
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      }
+      // Return default weather as fallback (never reads GPS)
+      this.locationMetadata.source = 'default';
+      return this.weatherService.getDefaultLocationWeather();
     }
   }
 
