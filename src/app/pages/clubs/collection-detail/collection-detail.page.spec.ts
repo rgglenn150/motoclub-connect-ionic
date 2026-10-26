@@ -10,6 +10,11 @@ import { CollectionDetailPage } from './collection-detail.page';
 import { PaymentDetailsComponent } from './payment-details/payment-details.component';
 import { BulkVerifyComponent } from './bulk-verify/bulk-verify.component';
 import { EditCollectionComponent } from './edit-collection/edit-collection.component';
+import { RemittancesComponent } from './remittances/remittances.component';
+import { RemitDialogComponent } from './remit-dialog/remit-dialog.component';
+import { RemittanceDetailsComponent } from './remittance-details/remittance-details.component';
+import { RemittanceService } from '../../../service/remittance.service';
+import { RemittanceListResponse } from '../../../models/remittance.model';
 import { CollectionService } from '../../../service/collection.service';
 import { PaymentService } from '../../../service/payment.service';
 import { Payment } from '../../../models/payment.model';
@@ -80,6 +85,11 @@ const payment = (overrides: Partial<Payment> = {}): Payment => ({
   ...overrides,
 });
 
+const remittanceList = (overrides: Partial<RemittanceListResponse['summary']> = {}): RemittanceListResponse => ({
+  summary: { verifiedTotal: 4500, remittedTotal: 1000, availableToRemit: 3500, hasHidden: false, ...overrides },
+  remittances: [],
+});
+
 describe('CollectionDetailPage', () => {
   let fixture: ComponentFixture<CollectionDetailPage>;
   let page: CollectionDetailPage;
@@ -93,6 +103,8 @@ describe('CollectionDetailPage', () => {
   let sheet: { header?: string; buttons: any[] } | null;
   let history: FakeHistory;
   let receiptImage: jasmine.SpyObj<ReceiptImageService>;
+  let remittanceService: jasmine.SpyObj<RemittanceService>;
+  let clubService: jasmine.SpyObj<ClubService>;
 
   /** Runs the handler of the alert button with the given text. */
   async function pressAlertButton(text: string, value?: unknown) {
@@ -119,6 +131,10 @@ describe('CollectionDetailPage', () => {
     history = new FakeHistory();
     receiptImage = jasmine.createSpyObj('ReceiptImageService', ['prepare']);
     receiptImage.prepare.and.callFake(async (file: File) => file);
+    remittanceService = jasmine.createSpyObj('RemittanceService', ['list', 'create', 'void']);
+    remittanceService.list.and.returnValue(of(remittanceList()));
+    clubService = jasmine.createSpyObj('ClubService', ['getMembershipStatus', 'getClubMembers']);
+    clubService.getClubMembers.and.returnValue(of([]));
     actionSheetController = jasmine.createSpyObj('ActionSheetController', ['create']);
     actionSheetController.create.and.callFake(async (opts: any) => {
       sheet = opts;
@@ -126,14 +142,15 @@ describe('CollectionDetailPage', () => {
     });
 
     await TestBed.configureTestingModule({
-      declarations: [CollectionDetailPage, PaymentDetailsComponent, BulkVerifyComponent, EditCollectionComponent],
+      declarations: [CollectionDetailPage, PaymentDetailsComponent, BulkVerifyComponent, EditCollectionComponent, RemittancesComponent, RemitDialogComponent, RemittanceDetailsComponent],
       imports: [IonicModule.forRoot(), FormsModule, RouterTestingModule, CollectionProgressModule, SharedModule],
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ clubId: CLUB_ID, collectionId: COLLECTION_ID }) } } },
         { provide: CollectionService, useValue: collectionService },
         { provide: PaymentService, useValue: paymentService },
         { provide: UserStateService, useValue: {} },
-        { provide: ClubService, useValue: jasmine.createSpyObj('ClubService', ['getMembershipStatus']) },
+        { provide: ClubService, useValue: clubService },
+        { provide: RemittanceService, useValue: remittanceService },
         { provide: AlertController, useValue: alertController },
         { provide: ToastController, useValue: toastController },
         { provide: ActionSheetController, useValue: actionSheetController },
@@ -274,6 +291,37 @@ describe('CollectionDetailPage', () => {
       expect(page.payments.length).toBe(0);
       expect(page.showPaymentModal).toBeFalse();
       expect(collectionService.getCollections).toHaveBeenCalledOnceWith(CLUB_ID);
+    });
+
+    it("explains a refused delete with the server's message (spec 009 S5 AC1)", async () => {
+      openAs(payment({ status: 'confirmed' }), true);
+      paymentService.deletePayment.and.returnValue(
+        throwError(() => new HttpErrorResponse({
+          status: 409,
+          error: { code: 'REMITTED_EXCEEDS_VERIFIED', message: '₱500 of this payment has already been remitted. Void a remittance first.', shortfall: 500 },
+        })),
+      );
+
+      await page.deleteSelected();
+      await pressAlertButton('Delete');
+      await fixture.whenStable();
+
+      expect(toastController.create).toHaveBeenCalledWith(
+        jasmine.objectContaining({ message: '₱500 of this payment has already been remitted. Void a remittance first.' })
+      );
+      expect(page.payments.length).toBe(1);
+      expect(page.showPaymentModal).toBeTrue();
+    });
+
+    it('keeps the generic message when the server gives none', async () => {
+      openAs(payment({ status: 'confirmed' }), true);
+      paymentService.deletePayment.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+
+      await page.deleteSelected();
+      await pressAlertButton('Delete');
+      await fixture.whenStable();
+
+      expect(toastController.create).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Failed to delete the payment.' }));
     });
 
     it('copies the reference number, or explains how to copy it by hand', async () => {
@@ -1029,6 +1077,128 @@ describe('CollectionDetailPage', () => {
       expect(history.index).toBe(2);
       history.go(-1); // the leftover entry no longer closes anything
       expect(page.showBulkVerify).toBeFalse();
+    });
+  });
+  describe('remittances (spec 009, US1)', () => {
+    // Presented modals are moved to the document: close them so none outlive this test (spec 008 #95).
+    afterEach(async () => {
+      await page.closeDialogs();
+      fixture.detectChanges();
+    });
+
+    const remitButton = () =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('ion-button')).find((b) => b.textContent?.includes('Remit'));
+
+    it('loads the remittance summary with the page', () => {
+      fixture.detectChanges();
+
+      expect(remittanceService.list).toHaveBeenCalledWith(COLLECTION_ID);
+      expect(page.remittanceSummary?.availableToRemit).toBe(3500);
+      expect(text()).toContain('Remittances');
+    });
+
+    it('shows Remit to admins only (S1 AC6)', () => {
+      fixture.detectChanges();
+      expect(remitButton()).toBeUndefined();
+
+      page.isAdmin = true;
+      fixture.detectChanges();
+      expect(remitButton()).toBeDefined();
+    });
+
+    it('does not open the dialog for non-admins', () => {
+      fixture.detectChanges();
+
+      page.openRemit();
+
+      expect(page.showRemitDialog).toBeFalse();
+    });
+
+    it('Back closes the Remit dialog and stays on the page', async () => {
+      fixture.detectChanges();
+      page.isAdmin = true;
+
+      page.openRemit();
+      expect(page.showRemitDialog).toBeTrue();
+      expect(history.index).toBe(1);
+
+      history.go(-1);
+      await fixture.whenStable();
+
+      expect(page.showRemitDialog).toBeFalse();
+      expect(history.index).toBe(0);
+    });
+
+    it('closes and refreshes after a remittance is recorded', () => {
+      fixture.detectChanges();
+      page.isAdmin = true;
+      page.openRemit();
+      remittanceService.list.calls.reset();
+      remittanceService.list.and.returnValue(of(remittanceList({ remittedTotal: 2000, availableToRemit: 2500 })));
+
+      page.onRemitted({ remittance: {} as any, summary: remittanceList({ remittedTotal: 2000, availableToRemit: 2500 }).summary });
+
+      expect(page.showRemitDialog).toBeFalse();
+      expect(remittanceService.list).toHaveBeenCalledOnceWith(COLLECTION_ID);
+      expect(page.remittanceSummary?.availableToRemit).toBe(2500);
+    });
+
+    it('opens a tapped remittance in its own dialog, which Back closes (S2 AC4)', async () => {
+      fixture.detectChanges();
+      const record = { ...remittanceList().summary, _id: 'r1' } as any;
+
+      page.openRemittance(record);
+      expect(page.showRemittanceModal).toBeTrue();
+      expect(page.selectedRemittance).toBe(record);
+      expect(history.index).toBe(1);
+
+      history.go(-1);
+      await fixture.whenStable();
+
+      expect(page.showRemittanceModal).toBeFalse();
+      expect(page.selectedRemittance).toBeNull();
+    });
+
+    it('shows the voided record and refreshes the totals after a void (S4)', () => {
+      fixture.detectChanges();
+      page.openRemittance({ _id: 'r1', status: 'active' } as any);
+      remittanceService.list.calls.reset();
+      const summary = remittanceList({ remittedTotal: 0, availableToRemit: 4500 }).summary;
+      remittanceService.list.and.returnValue(of({ summary, remittances: [] }));
+
+      page.onRemittanceVoided({ remittance: { _id: 'r1', status: 'voided' } as any, summary });
+
+      expect(page.selectedRemittance?.status).toBe('voided');
+      expect(page.remittanceSummary).toEqual(summary);
+      expect(remittanceService.list).toHaveBeenCalledOnceWith(COLLECTION_ID);
+    });
+
+    it('says that deleting the collection also needs its remittances voided (S5 AC4)', async () => {
+      fixture.detectChanges();
+
+      await page.deleteCollection();
+
+      expect(alertController.create).toHaveBeenCalledWith(jasmine.objectContaining({
+        message: jasmine.stringMatching(/remittances must be voided first/),
+      }));
+    });
+
+    it('refreshes the summary when payments change, since verified may have moved', () => {
+      fixture.detectChanges();
+      remittanceService.list.calls.reset();
+
+      page.refreshAfterBulkVerify();
+
+      expect(remittanceService.list).toHaveBeenCalledWith(COLLECTION_ID);
+    });
+
+    it('shows an error with retry when remittances fail to load, and the rest of the page still works', () => {
+      remittanceService.list.and.returnValue(throwError(() => new Error('offline')));
+      fixture.detectChanges();
+
+      expect(page.remittancesError).toBeTrue();
+      expect(text()).toContain("Couldn't load remittances");
+      expect(text()).toContain('₱4,500 verified');
     });
   });
 });

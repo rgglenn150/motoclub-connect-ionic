@@ -1,0 +1,58 @@
+<section class="remittances" aria-labelledby="remittances-title">
+  <h3 id="remittances-title" class="section-title">Remittances</h3>
+
+  <div *ngIf="loading && !summary" class="remittances-skeleton">
+    <ion-skeleton-text animated style="width: 100%; height: 56px; margin-bottom: 8px;"></ion-skeleton-text>
+    <ion-skeleton-text animated style="width: 70%; height: 18px;"></ion-skeleton-text>
+  </div>
+
+  <div *ngIf="error && !loading" class="remittances-error" role="alert">
+    <p>Couldn't load remittances.</p>
+    <ion-button fill="outline" size="small" class="remittances-retry" (click)="retry.emit()">
+      <ion-icon name="refresh" slot="start"></ion-icon>
+      Retry
+    </ion-button>
+  </div>
+
+  <ng-container *ngIf="summary && !error">
+    <div class="summary-strip">
+      <div class="figure remit-verified">
+        <span class="label">Verified</span>
+        <span class="value">{{ summary.verifiedTotal | currency:'PHP':'symbol':'1.0-2' }}</span>
+      </div>
+      <div class="figure remit-remitted">
+        <span class="label">Remitted</span>
+        <span class="value">{{ summary.remittedTotal | currency:'PHP':'symbol':'1.0-2' }}</span>
+      </div>
+      <div class="figure remit-available">
+        <span class="label">Available</span>
+        <span class="value">{{ summary.availableToRemit | currency:'PHP':'symbol':'1.0-2' }}</span>
+      </div>
+    </div>
+
+    <p *ngIf="summary.hasHidden" class="hidden-note">
+      <ion-icon name="eye-off-outline"></ion-icon>
+      Some remittances are visible to admins only.
+    </p>
+
+    <ion-card *ngFor="let r of remittances" class="remittance-card" [class.voided]="r.status === 'voided'" [button]="true" (click)="open.emit(r)">
+      <ion-card-content>
+        <div class="remittance-row">
+          <span class="recipient">{{ r.recipientName }}</span>
+          <span class="amount">{{ r.amount | currency:'PHP':'symbol':'1.0-2' }}</span>
+        </div>
+        <div class="remittance-meta">
+          <span>{{ r.remittedOn | date:'MMM d, y' }}</span>
+          <span *ngIf="r.status === 'voided'" class="voided-label">Voided</span>
+          <span *ngIf="r.detailsVisible && r.status !== 'voided'" class="visibility-label">{{ visibilityLabel(r) }}</span>
+        </div>
+        <p *ngIf="r.note" class="note">{{ r.note }}</p>
+      </ion-card-content>
+    </ion-card>
+
+    <div *ngIf="remittances.length === 0" class="empty-state">
+      <ion-icon name="swap-horizontal-outline" color="medium"></ion-icon>
+      <p>No remittances yet.</p>
+    </div>
+  </ng-container>
+</section>

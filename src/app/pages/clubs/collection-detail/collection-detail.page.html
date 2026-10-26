@@ -67,6 +67,24 @@
     </div>
   </div>
 
+  <!-- Remittances (spec 009): summary and list for every viewer, Remit for admins -->
+  <ng-container *ngIf="collection">
+    <app-remittances
+      [summary]="remittanceSummary"
+      [remittances]="remittances"
+      [loading]="remittancesLoading"
+      [error]="remittancesError"
+      (retry)="loadRemittances()"
+      (open)="openRemittance($event)"
+    ></app-remittances>
+    <div *ngIf="isAdmin" class="remit-section">
+      <ion-button expand="block" fill="outline" class="remit-btn" (click)="openRemit()">
+        <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
+        Remit
+      </ion-button>
+    </div>
+  </ng-container>
+
   <!-- Add Payment button -->
   <div *ngIf="isAdmin || collection?.visibility === 'public'" class="add-payment-section">
     <ion-button expand="block" (click)="openAddPaymentModal()" class="amber-btn">
@@ -139,6 +157,54 @@
           (changed)="refreshAfterBulkVerify()"
           (done)="closeBulkVerify()"
         ></app-bulk-verify>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Remit (spec 009): admins only -->
+  <ion-modal [isOpen]="showRemitDialog" (willDismiss)="closeRemit()" class="remit-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Remit</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeRemit()" aria-label="Close">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <app-remit-dialog
+          [collectionId]="collectionId"
+          [clubId]="clubId"
+          [availableToRemit]="remittanceSummary?.availableToRemit ?? 0"
+          (saved)="onRemitted($event)"
+          (cancelled)="closeRemit()"
+        ></app-remit-dialog>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Remittance details (spec 009): anyone who can see the record -->
+  <ion-modal [isOpen]="showRemittanceModal" (willDismiss)="closeRemittance()" class="remittance-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Remittance</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeRemittance()" aria-label="Close">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <app-remittance-details
+          *ngIf="selectedRemittance"
+          [remittance]="selectedRemittance"
+          (voided)="onRemittanceVoided($event)"
+        ></app-remittance-details>
       </ion-content>
     </ng-template>
   </ion-modal>

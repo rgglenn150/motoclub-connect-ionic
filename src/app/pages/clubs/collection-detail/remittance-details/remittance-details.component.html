@@ -1,0 +1,63 @@
+<div class="remittance-details" *ngIf="remittance">
+  <div class="headline">
+    <span class="recipient">{{ remittance.recipientName }}</span>
+    <span class="amount">{{ remittance.amount | currency:'PHP':'symbol':'1.0-2' }}</span>
+  </div>
+
+  <p *ngIf="remittance.status === 'voided'" class="voided-banner">
+    <ion-icon name="ban-outline"></ion-icon>
+    Voided — not counted as remitted
+  </p>
+
+  <dl>
+    <dt>Date</dt>
+    <dd>{{ remittance.remittedOn | date:'MMM d, y' }}</dd>
+
+    <dt>Recipient</dt>
+    <dd>{{ remittance.recipientType === 'member' ? 'Club member' : 'External' }}</dd>
+
+    <ng-container *ngIf="remittance.note">
+      <dt>Note</dt>
+      <dd class="note">{{ remittance.note }}</dd>
+    </ng-container>
+
+    <ng-container *ngIf="remittance.detailsVisible">
+      <ng-container *ngIf="remittance.recipientAccount">
+        <dt>Account</dt>
+        <dd>{{ remittance.recipientAccount }}</dd>
+      </ng-container>
+
+      <dt>Visible to</dt>
+      <dd>{{ visibilityLabel }}</dd>
+
+      <ng-container *ngIf="remittance.recordedBy">
+        <dt>Recorded by</dt>
+        <dd>{{ remittance.recordedBy.username }} · {{ remittance.createdAt | date:'MMM d, y, h:mm a' }}</dd>
+      </ng-container>
+
+      <ng-container *ngIf="remittance.status === 'voided'">
+        <dt>Voided by</dt>
+        <dd>{{ remittance.voidedBy?.username }} · {{ remittance.voidedAt | date:'MMM d, y, h:mm a' }}</dd>
+        <dt>Reason</dt>
+        <dd>{{ remittance.voidReason }}</dd>
+      </ng-container>
+    </ng-container>
+  </dl>
+
+  <img
+    *ngIf="remittance.detailsVisible && remittance.proofUrl"
+    class="proof"
+    [src]="remittance.proofUrl"
+    alt="Proof of remittance"
+    (click)="openProof()"
+  />
+
+  <p *ngIf="voidError" class="void-error" role="alert">{{ voidError }}</p>
+  <ion-button *ngIf="canVoid" expand="block" fill="outline" color="danger" class="void-btn" [disabled]="voiding" (click)="confirmVoid()">
+    <ion-spinner *ngIf="voiding" name="crescent"></ion-spinner>
+    <ng-container *ngIf="!voiding">
+      <ion-icon name="ban-outline" slot="start"></ion-icon>
+      Void
+    </ng-container>
+  </ion-button>
+</div>

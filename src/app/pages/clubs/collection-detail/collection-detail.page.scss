@@ -91,6 +91,16 @@ ion-card {
   }
 }
 
+.remit-section {
+  margin: 8px 16px 0;
+
+  .remit-btn {
+    --border-color: #F59E0B;
+    --color: #F59E0B;
+    min-height: 44px;
+  }
+}
+
 .add-payment-section {
   padding: 4px 16px 8px;
 }
@@ -182,7 +192,9 @@ ion-card {
 
 .payment-modal,
 .bulk-verify-modal,
-.edit-collection-modal {
+.edit-collection-modal,
+.remit-modal,
+.remittance-modal {
   --height: 90%;
   --border-radius: 16px;
 

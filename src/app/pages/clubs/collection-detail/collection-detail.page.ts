@@ -13,12 +13,14 @@ import { EditCollectionComponent } from './edit-collection/edit-collection.compo
 import { HttpErrorResponse } from '@angular/common/http';
 import { UserStateService } from '../../../service/user-state.service';
 import { ClubService } from '../../../service/club.service';
+import { RemittanceService } from '../../../service/remittance.service';
+import { Remittance, RemittanceChangeResponse, RemittanceSummary } from '../../../models/remittance.model';
 
 /** Same limit as the server's receipt upload (spec 008, contracts). */
 const MAX_RECEIPT_BYTES = 10 * 1024 * 1024;
 
 /** The dialogs on this page that Back closes first (spec 008 D7). */
-type DialogId = 'payment' | 'addPayment' | 'bulkVerify' | 'editCollection';
+type DialogId = 'payment' | 'addPayment' | 'bulkVerify' | 'editCollection' | 'remit' | 'remittance';
 
 @Component({
   selector: 'app-collection-detail',
@@ -64,6 +66,15 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave, DialogHost {
   // Edit collection (spec 006): admins only.
   showEditCollection = false;
 
+  // Remittances (spec 009): the summary and list for every viewer, Remit for admins.
+  remittanceSummary: RemittanceSummary | null = null;
+  remittances: Remittance[] = [];
+  remittancesLoading = false;
+  remittancesError = false;
+  showRemitDialog = false;
+  showRemittanceModal = false;
+  selectedRemittance: Remittance | null = null;
+
   @ViewChildren(IonModal) private modals?: QueryList<IonModal>;
   @ViewChild(EditCollectionComponent) private editCollection?: EditCollectionComponent;
 
@@ -87,6 +98,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave, DialogHost {
     private actionSheetController: ActionSheetController,
     private receiptImage: ReceiptImageService,
     private dialogs: DialogHistoryService,
+    private remittanceService: RemittanceService,
   ) {}
 
   ngOnInit() {
@@ -123,6 +135,8 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave, DialogHost {
     this.showPaymentModal = false;
     this.showBulkVerify = false;
     this.showEditCollection = false;
+    this.showRemitDialog = false;
+    this.showRemittanceModal = false;
   }
 
   /** Back closes this dialog instead of leaving the page (spec 008 FR-009). */
@@ -144,9 +158,11 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave, DialogHost {
 
   /**
    * Loads the collection, including its confirmed/pending totals. Also called
-   * after payments change: the server is the only source of the totals.
+   * after payments change: the server is the only source of the totals. The
+   * remittance summary is reloaded with it, since verified may have moved (spec 009).
    */
   loadCollection(autoOpenPayment = false) {
+    this.loadRemittances();
     this.collectionLoading = true;
     this.collectionError = false;
     this.collectionService.getCollections(this.clubId).subscribe({
@@ -163,6 +179,71 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave, DialogHost {
         this.collectionError = true;
       }
     });
+  }
+
+  /** Summary and the records this viewer may see; a failure leaves the rest of the page working (spec 009 S3 AC6). */
+  loadRemittances() {
+    this.remittancesLoading = true;
+    this.remittancesError = false;
+    this.remittanceService.list(this.collectionId).subscribe({
+      next: (res) => {
+        this.remittanceSummary = res.summary;
+        this.remittances = res.remittances;
+        this.remittancesLoading = false;
+      },
+      error: () => {
+        this.remittancesLoading = false;
+        this.remittancesError = true;
+      },
+    });
+  }
+
+  openRemit() {
+    if (!this.isAdmin) return;
+    this.showRemitDialog = true;
+    this.openLayer('remit', () => {
+      this.closeRemit();
+      return true;
+    });
+  }
+
+  closeRemit() {
+    this.showRemitDialog = false;
+    this.dialogs.closed('remit');
+  }
+
+  /** Anyone who can see a remittance can open it; private details arrive for admins only (D6). */
+  openRemittance(remittance: Remittance) {
+    this.selectedRemittance = remittance;
+    this.showRemittanceModal = true;
+    this.openLayer('remittance', () => {
+      this.closeRemittance();
+      return true;
+    });
+  }
+
+  closeRemittance() {
+    this.showRemittanceModal = false;
+    this.selectedRemittance = null;
+    this.dialogs.closed('remittance');
+  }
+
+  /** Keep the dialog open on the now-voided record, and refresh the totals and list (spec 009 Story 4). */
+  async onRemittanceVoided(res: RemittanceChangeResponse) {
+    this.selectedRemittance = res.remittance;
+    this.remittanceSummary = res.summary;
+    this.loadRemittances();
+    const toast = await this.toastController.create({ message: 'Remittance voided', duration: 2000, color: 'success', position: 'top' });
+    await toast.present();
+  }
+
+  /** Show the server's new totals at once, then re-read the list. */
+  async onRemitted(res: RemittanceChangeResponse) {
+    this.remittanceSummary = res.summary;
+    this.closeRemit();
+    this.loadRemittances();
+    const toast = await this.toastController.create({ message: 'Remittance recorded', duration: 2000, color: 'success', position: 'top' });
+    await toast.present();
   }
 
   loadPayments() {
@@ -529,9 +610,11 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave, DialogHost {
                 this.closePayment();
                 this.loadCollection();
               },
-              error: async () => {
+              error: async (err: HttpErrorResponse) => {
                 this.isPaymentActionBusy = false;
-                const toast = await this.toastController.create({ message: 'Failed to delete the payment.', duration: 2000, color: 'danger' });
+                // e.g. a verified payment already remitted (spec 009 D5): say why.
+                const message = err?.error?.message || 'Failed to delete the payment.';
+                const toast = await this.toastController.create({ message, duration: 3000, color: 'danger' });
                 await toast.present();
               }
             });
@@ -612,7 +695,7 @@ export class CollectionDetailPage implements OnInit, ViewWillLeave, DialogHost {
   async deleteCollection() {
     const alert = await this.alertController.create({
       header: 'Delete Collection',
-      message: `Delete "${this.collection?.name}"? This will also remove all associated payments and cannot be undone.`,
+      message: `Delete "${this.collection?.name}"? This will also remove all associated payments and cannot be undone. Any remittances must be voided first.`,
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         {
