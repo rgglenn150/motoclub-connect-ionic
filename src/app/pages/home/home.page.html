@@ -148,7 +148,8 @@
     <div *ngIf="!nearbyClubsLoading && (nearbyClubs.length === 0 || locationError)" class="px-6">
       <div class="asphalt-secondary rounded-xl p-4 text-center">
         <ion-icon name="location-outline" class="text-3xl text-gray-500 mb-2"></ion-icon>
-        <p class="text-sm text-gray-400">{{ locationError || 'No clubs found nearby.' }}</p>
+        <p class="text-sm text-gray-400">{{ locationError || (needsLocationForClubs ? 'Share your location to see clubs near you.' : 'No clubs found nearby.') }}</p>
+        <button *ngIf="needsLocationForClubs" class="mt-3 bg-amber-500 text-gray-900 font-bold py-3 px-4 rounded-lg" (click)="loadNearbyClubs(true)">Use my location</button>
       </div>
     </div>
   </div>

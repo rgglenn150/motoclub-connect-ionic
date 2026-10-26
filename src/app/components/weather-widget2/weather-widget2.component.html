@@ -218,6 +218,19 @@
         <span class="update-text">Location saved {{ getSavedLocationAgeText() }}</span>
       </div>
 
+      <!-- Update Current Location (GPS is only read on an explicit tap) -->
+      <div *ngIf="usingFallbackLocation" class="update-location-section">
+        <ion-button
+          fill="clear"
+          size="small"
+          class="update-location-button"
+          (click)="refreshWithFastLocation()"
+          [disabled]="isLoading || isGettingLocation">
+          <ion-icon slot="start" name="locate-outline"></ion-icon>
+          Update current location
+        </ion-button>
+      </div>
+
     </ion-card-content>
   </div>
 

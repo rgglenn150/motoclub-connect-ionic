@@ -339,6 +339,20 @@
   }
 }
 
+// Update Current Location
+.update-location-section {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+
+  .update-location-button {
+    min-height: 44px;
+    --color: rgba(255, 255, 255, 0.85);
+    font-size: 12px;
+    text-transform: none;
+  }
+}
+
 // --- ENHANCED LOCATION DETAILS ---
 
 .location-details {
