@@ -260,6 +260,14 @@ export class WeatherService {
    * Uses PlacesService to get location then fetches weather data
    * @returns Observable<WeatherData>
    */
+  /**
+   * Get weather for the default location (Iloilo City, Philippines) without reading GPS
+   * @returns Observable<WeatherData>
+   */
+  getDefaultLocationWeather(): Observable<WeatherData> {
+    return this.getCurrentWeather(10.6953, 122.5442);
+  }
+
   getCurrentWeatherForCurrentLocation(): Observable<WeatherData> {
     return from(this.placesService.getCurrentLocation()).pipe(
       switchMap((location) => {

@@ -1,0 +1,135 @@
+:host {
+  display: block;
+}
+
+.remittances {
+  margin: 16px 16px 0;
+}
+
+.section-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ion-text-color);
+}
+
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--ion-card-background);
+
+  .figure {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .label {
+    font-size: 12px;
+    color: var(--ion-color-medium);
+  }
+
+  .value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ion-text-color);
+    overflow-wrap: anywhere;
+  }
+
+  .remit-available .value {
+    color: #F59E0B;
+  }
+}
+
+.remittance-card {
+  margin: 8px 0 0;
+
+  ion-card-content {
+    padding: 12px 14px;
+  }
+
+  .remittance-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .recipient {
+    font-weight: 600;
+    color: var(--ion-text-color);
+    overflow-wrap: anywhere;
+  }
+
+  .amount {
+    font-weight: 600;
+    color: var(--ion-text-color);
+    white-space: nowrap;
+  }
+
+  .remittance-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ion-color-medium);
+  }
+
+  &.voided {
+    opacity: 0.6;
+
+    .amount {
+      text-decoration: line-through;
+    }
+  }
+
+  .voided-label {
+    color: #FC8181;
+    white-space: nowrap;
+  }
+
+  .visibility-label {
+    padding: 0 8px;
+    border: 1px solid #4A5568;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .note {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--ion-text-color);
+    overflow-wrap: anywhere;
+  }
+}
+
+.hidden-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+.remittances-error,
+.empty-state {
+  padding: 16px 0;
+  text-align: center;
+  color: var(--ion-color-medium);
+
+  p {
+    margin: 4px 0 8px;
+  }
+
+  ion-icon {
+    font-size: 28px;
+  }
+}
+
+.remittances-retry {
+  min-height: 44px;
+}

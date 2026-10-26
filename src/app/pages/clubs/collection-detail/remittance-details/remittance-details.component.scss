@@ -1,0 +1,77 @@
+:host {
+  display: block;
+}
+
+// Explicit dark palette, matching the page's other modals (global theme is light).
+$text: #F7FAFC;
+$label: #A0AEC0;
+
+.remittance-details {
+  padding: 16px;
+  color: $text;
+}
+
+.headline {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .recipient {
+    font-size: 18px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .amount {
+    font-size: 18px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 12px;
+  margin: 0;
+}
+
+dt {
+  color: $label;
+  font-size: 13px;
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.voided-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(252, 129, 129, 0.15);
+  color: #FC8181;
+}
+
+.void-error {
+  margin: 12px 0 0;
+  color: #FC8181;
+}
+
+.void-btn {
+  margin-top: 16px;
+  min-height: 44px;
+}
+
+.proof {
+  display: block;
+  max-width: 100%;
+  margin-top: 16px;
+  border-radius: 8px;
+  cursor: zoom-in;
+}

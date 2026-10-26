@@ -3,6 +3,10 @@ import { Router } from '@angular/router';
 import { AuthService } from 'src/app/service/auth.service';
 import { EventService } from 'src/app/service/event.service';
 import { ClubService } from 'src/app/service/club.service';
+import { PlacesService } from 'src/app/service/places.service';
+import { UserService } from 'src/app/service/user.service';
+import { NearbyClubsOptions } from 'src/app/models/club.model';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -30,8 +34,10 @@ export class HomePage implements OnInit {
   nearbyClubs: any[] = [];
   nearbyClubsLoading = true;
   locationError: string | null = null;
+  // No usable location without asking: show a "Use my location" button instead
+  needsLocationForClubs = false;
 
-  constructor(private auth: AuthService, private eventService: EventService, private router: Router, private clubService: ClubService) {}
+  constructor(private auth: AuthService, private eventService: EventService, private router: Router, private clubService: ClubService, private placesService: PlacesService, private userService: UserService) {}
 
   ngOnInit() {
     const loggedInUser = this.auth.getLoggedInUser();
@@ -89,10 +95,19 @@ export class HomePage implements OnInit {
     return club.clubName || '';
   }
 
-  loadNearbyClubs() {
+  async loadNearbyClubs(allowPrompt = false) {
     this.nearbyClubsLoading = true;
     this.locationError = null;
-    this.clubService.getNearbyClubs({ radius: 100, limit: 10 }).subscribe({
+    this.needsLocationForClubs = false;
+
+    const options = await this.resolveNearbyClubsOptions(allowPrompt);
+    if (!options) {
+      this.needsLocationForClubs = true;
+      this.nearbyClubsLoading = false;
+      return;
+    }
+
+    this.clubService.getNearbyClubs(options).subscribe({
       next: (response: any) => {
         this.nearbyClubs = response.clubs || [];
         this.nearbyClubsLoading = false;
@@ -107,6 +122,31 @@ export class HomePage implements OnInit {
         this.nearbyClubsLoading = false;
       }
     });
+  }
+
+  /**
+   * Page loads read GPS only when permission is already granted, so they never pop the
+   * browser location prompt; otherwise search around the user's saved location
+   */
+  private async resolveNearbyClubsOptions(allowPrompt: boolean): Promise<NearbyClubsOptions | null> {
+    const options: NearbyClubsOptions = { radius: 100, limit: 10 };
+    if (allowPrompt || (await this.placesService.getLocationPermissionStatus()) === 'granted') {
+      return options;
+    }
+
+    try {
+      const saved = await firstValueFrom(this.userService.getUserLocation());
+      if (saved?.latitude && saved?.longitude) {
+        return {
+          ...options,
+          useUserLocation: false,
+          fallbackCoordinates: { latitude: saved.latitude, longitude: saved.longitude },
+        };
+      }
+    } catch (error) {
+      console.warn('No saved location for nearby clubs:', error);
+    }
+    return null;
   }
 
   getClubInitials(name: string): string {

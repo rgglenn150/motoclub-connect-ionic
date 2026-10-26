@@ -1,0 +1,120 @@
+:host {
+  display: block;
+}
+
+// Explicit dark palette, matching the page's other modals (global theme is light).
+$text: #F7FAFC;
+$label: #A0AEC0;
+$surface: #2D3748;
+$border: #4A5568;
+$amber: #F59E0B;
+
+.remit-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  color: $text;
+}
+
+.available {
+  margin: 0 0 4px;
+  color: $label;
+
+  strong {
+    color: $amber;
+  }
+}
+
+ion-item {
+  --background: #{$surface};
+  --color: #{$text};
+  --border-color: #{$border};
+  border-radius: 8px;
+  margin-top: 4px;
+
+  ion-label { color: $label !important; }
+  ion-input,
+  ion-textarea,
+  ion-select { --color: #{$text}; --placeholder-color: #718096; color: $text; }
+
+  &.item-invalid {
+    --border-color: #FC8181;
+  }
+}
+
+.group-label {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  color: $label;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: $label;
+}
+
+ion-segment {
+  --background: #{$surface};
+
+  ion-segment-button {
+    --color: #{$label};
+    --color-checked: #000000;
+    --indicator-color: #{$amber};
+    min-height: 44px;
+  }
+}
+
+.proof {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .proof-preview {
+    max-width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+
+  .preparing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: $label;
+  }
+
+  .proof-btn {
+    --border-color: #{$border};
+    --color: #{$text};
+    min-height: 44px;
+  }
+}
+
+.required-star {
+  color: #FC8181;
+}
+
+.field-error {
+  margin: 0;
+  font-size: 13px;
+  color: #FC8181;
+}
+
+.save-error {
+  margin-top: 4px;
+}
+
+.amber-btn {
+  --background: #{$amber};
+  --background-activated: #d88b0a;
+  --color: #000000;
+  margin-top: 12px;
+  min-height: 44px;
+}
+
+.secondary-btn {
+  --color: #{$label};
+  min-height: 44px;
+}

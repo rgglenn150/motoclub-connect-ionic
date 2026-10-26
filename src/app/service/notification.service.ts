@@ -6,7 +6,15 @@ import { environment } from 'src/environments/environment';
 
 export interface Notification {
   _id: string;
-  type: 'join_request' | 'request_approved' | 'request_rejected' | 'new_member' | 'role_change';
+  type:
+    | 'join_request'
+    | 'request_approved'
+    | 'request_rejected'
+    | 'new_member'
+    | 'role_change'
+    // Spec 009: to a member who received collected funds; data carries collectionId.
+    | 'remittance_recorded'
+    | 'remittance_voided';
   message: string;
   club?: {
     _id: string;
@@ -179,7 +187,10 @@ export class NotificationService implements OnDestroy {
       request_approved: `Your request to join ${notification.club?.name} was approved`,
       request_rejected: `Your request to join ${notification.club?.name} was rejected`,
       new_member: `${notification.sender?.name} joined ${notification.club?.name}`,
-      role_change: `You are now an admin of ${notification.club?.name}`
+      role_change: `You are now an admin of ${notification.club?.name}`,
+      // The server's text names the amount and collection (spec 009).
+      remittance_recorded: notification.message,
+      remittance_voided: notification.message
     };
     
     return templates[notification.type] || notification.message;
@@ -194,7 +205,9 @@ export class NotificationService implements OnDestroy {
       request_approved: 'checkmark-circle',
       request_rejected: 'close-circle',
       new_member: 'people',
-      role_change: 'star'
+      role_change: 'star',
+      remittance_recorded: 'cash-outline',
+      remittance_voided: 'cash-outline'
     };
     
     return icons[type as keyof typeof icons] || 'notifications';
@@ -209,7 +222,9 @@ export class NotificationService implements OnDestroy {
       request_approved: 'success',
       request_rejected: 'danger',
       new_member: 'secondary',
-      role_change: 'warning'
+      role_change: 'warning',
+      remittance_recorded: 'success',
+      remittance_voided: 'danger'
     };
     
     return colors[type as keyof typeof colors] || 'medium';
