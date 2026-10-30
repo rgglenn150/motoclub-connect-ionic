@@ -7,6 +7,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LoadingSpinnerComponent } from '../components/utils/loading-spinner/loading-spinner.component';
 import { AuthService } from '../service/auth.service';
+import { SharedModule } from '../shared/shared.module';
 import { of } from 'rxjs';
 
 import { Tab3Page } from './tab3.page';
@@ -28,6 +29,7 @@ describe('Tab3Page', () => {
         IonicModule.forRoot(),
         ExploreContainerComponentModule,
         HttpClientTestingModule,
+        SharedModule,
         RouterTestingModule.withRoutes([{ path: 'login', component: DummyComponent }]),
       ],
       providers: [{ provide: AuthService, useValue: authServiceSpy }],
