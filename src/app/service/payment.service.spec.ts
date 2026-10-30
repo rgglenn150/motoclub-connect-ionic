@@ -71,4 +71,15 @@ describe('PaymentService receipt uploads', () => {
     expect(req.request.body).toBe(formData);
     req.flush({ payment: {} });
   });
+
+  // #112: a statement upload through the service worker hangs on iOS.
+  it('sends statement-check with ngsw-bypass', () => {
+    const file = new File([new Uint8Array(8)], 'statement.pdf', { type: 'application/pdf' });
+    service.checkStatement('c1', file, 'secret').subscribe();
+    const req = httpMock.expectOne((r) => r.url === `${base}/collection/c1/statement-check`);
+    expect(req.request.params.get('ngsw-bypass')).toBe('true');
+    expect((req.request.body as FormData).get('statement')).toBe(file);
+    expect((req.request.body as FormData).get('password')).toBe('secret');
+    req.flush({});
+  });
 });
