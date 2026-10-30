@@ -5,7 +5,7 @@
         <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <ion-title>{{ collection?.name || 'Collection' }}</ion-title>
+    <!-- Title lives in the body (#111): a long name here collides with the end buttons on iPhone -->
     <ion-buttons slot="end">
       <ion-button *ngIf="collection" fill="clear" aria-label="Share collection" (click)="shareCollection()">
         <ion-icon slot="icon-only" name="share-social-outline"></ion-icon>
@@ -36,6 +36,9 @@
       </ion-button>
     </div>
   </ng-container>
+
+  <!-- Collection name -->
+  <h1 class="collection-title" *ngIf="collection">{{ collection.name }}</h1>
 
   <!-- Club name -->
   <div class="club-name-row" *ngIf="clubName">

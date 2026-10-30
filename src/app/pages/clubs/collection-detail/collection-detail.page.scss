@@ -1,8 +1,18 @@
+.collection-title {
+  margin: 0;
+  padding: 16px 16px 0;
+  color: #F7FAFC;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
 .club-name-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px 16px 6px;
+  padding: 8px 16px 6px;
   color: #F7FAFC;
   font-size: 17px;
   font-weight: 600;

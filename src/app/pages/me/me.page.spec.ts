@@ -5,6 +5,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { IonicModule } from '@ionic/angular';
 import { of } from 'rxjs';
 import { AuthService } from 'src/app/service/auth.service';
+import { SharedModule } from 'src/app/shared/shared.module';
 import { LoadingSpinnerComponent } from '../../components/utils/loading-spinner/loading-spinner.component';
 
 import { MePage } from './me.page';
@@ -25,6 +26,7 @@ describe('MePage', () => {
       imports: [
         IonicModule.forRoot(),
         HttpClientTestingModule,
+        SharedModule,
         RouterTestingModule.withRoutes([{ path: 'login', component: DummyComponent }]),
       ],
       providers: [{ provide: AuthService, useValue: authServiceSpy }],

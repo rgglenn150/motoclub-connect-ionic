@@ -1,9 +1,11 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { IonicModule, ToastController, LoadingController } from '@ionic/angular';
 import { of } from 'rxjs';
 import { ClubHomePage } from './club-home.page';
 import { ClubService } from '../../../service/club.service';
+import { SharedModule } from '../../../shared/shared.module';
 
 describe('ClubHomePage', () => {
   let component: ClubHomePage;
@@ -31,13 +33,14 @@ describe('ClubHomePage', () => {
       snapshot: {
         paramMap: {
           get: (key: string) => key === 'id' ? 'test-club-id' : null
-        }
+        },
+        queryParamMap: convertToParamMap({})
       }
     };
 
     await TestBed.configureTestingModule({
       declarations: [ClubHomePage],
-      imports: [IonicModule.forRoot()],
+      imports: [IonicModule.forRoot(), HttpClientTestingModule, SharedModule],
       providers: [
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: ClubService, useValue: mockClubService },
