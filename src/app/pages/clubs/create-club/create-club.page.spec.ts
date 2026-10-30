@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { MapboxAutocompleteModule } from 'src/app/components/mapbox-autocomplete/mapbox-autocomplete.module';
 import { CreateClubPage } from './create-club.page';
 
 describe('CreateClubPage', () => {
@@ -11,7 +12,7 @@ describe('CreateClubPage', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ CreateClubPage ],
-      imports: [IonicModule.forRoot(), ReactiveFormsModule, HttpClientTestingModule]
+      imports: [IonicModule.forRoot(), ReactiveFormsModule, HttpClientTestingModule, MapboxAutocompleteModule]
     }).compileComponents();
 
     fixture = TestBed.createComponent(CreateClubPage);

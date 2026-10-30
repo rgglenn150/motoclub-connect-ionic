@@ -1,8 +1,8 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { WeatherService } from './weather.service';
 import { WeatherData, WeatherResponse } from '../models/weather.model';
-import { PlacesService } from './places.service';
+import { EnhancedLocation, PlacesService } from './places.service';
 
 describe('WeatherService', () => {
   let service: WeatherService;
@@ -30,6 +30,7 @@ describe('WeatherService', () => {
   };
 
   // Expected WeatherData structure after transformation
+  // The mock response has no `daily` block, so min/max and forecast are undefined
   const expectedWeatherData: WeatherData = {
     location: {
       latitude: 10.6953,
@@ -38,7 +39,9 @@ describe('WeatherService', () => {
     },
     temperature: {
       current: 29,
-      feelsLike: 32
+      feelsLike: 32,
+      min: undefined,
+      max: undefined
     },
     conditions: {
       description: 'Partly cloudy',
@@ -52,7 +55,8 @@ describe('WeatherService', () => {
     },
     timestamps: {
       lastUpdated: '2025-01-13T14:00'
-    }
+    },
+    forecast: undefined
   };
 
   beforeEach(() => {
@@ -214,69 +218,73 @@ describe('WeatherService', () => {
   });
 
   describe('Location-based weather methods', () => {
-    it('should get current weather for user location when PlacesService returns coordinates', () => {
-      const mockLocation = { lat: 14.5995, lng: 120.9842 }; // Manila coordinates
+    it('should get current weather for user location when PlacesService returns coordinates', fakeAsync(() => {
+      const mockLocation: EnhancedLocation = { lat: 14.5995, lng: 120.9842, accuracy: 10, timestamp: 0, source: 'browser', confidence: 'high' }; // Manila coordinates
       placesServiceMock.getCurrentLocation.and.returnValue(Promise.resolve(mockLocation));
 
       service.getCurrentWeatherForCurrentLocation().subscribe(weatherData => {
         expect(weatherData).toEqual(expectedWeatherData);
       });
 
+      flushMicrotasks();
       const req = httpMock.expectOne(request => 
         request.url === apiUrl &&
         request.params.get('latitude') === mockLocation.lat.toString() &&
         request.params.get('longitude') === mockLocation.lng.toString()
       );
       req.flush(mockApiResponse);
-    });
+    }));
 
-    it('should use default location when PlacesService returns null', () => {
+    it('should use default location when PlacesService returns null', fakeAsync(() => {
       placesServiceMock.getCurrentLocation.and.returnValue(Promise.resolve(null));
 
       service.getCurrentWeatherForCurrentLocation().subscribe(weatherData => {
         expect(weatherData).toEqual(expectedWeatherData);
       });
 
+      flushMicrotasks();
       const req = httpMock.expectOne(request => 
         request.url === apiUrl &&
         request.params.get('latitude') === '10.6953' &&
         request.params.get('longitude') === '122.5442'
       );
       req.flush(mockApiResponse);
-    });
+    }));
 
-    it('should use default location when PlacesService throws error', () => {
+    it('should use default location when PlacesService throws error', fakeAsync(() => {
       placesServiceMock.getCurrentLocation.and.returnValue(Promise.reject('Location error'));
 
       service.getCurrentWeatherForCurrentLocation().subscribe(weatherData => {
         expect(weatherData).toEqual(expectedWeatherData);
       });
 
+      flushMicrotasks();
       const req = httpMock.expectOne(request => 
         request.url === apiUrl &&
         request.params.get('latitude') === '10.6953' &&
         request.params.get('longitude') === '122.5442'
       );
       req.flush(mockApiResponse);
-    });
+    }));
 
-    it('should use user location in getWeatherWithFallback when available', () => {
-      const mockLocation = { lat: 14.5995, lng: 120.9842 };
+    it('should use user location in getWeatherWithFallback when available', fakeAsync(() => {
+      const mockLocation: EnhancedLocation = { lat: 14.5995, lng: 120.9842, accuracy: 10, timestamp: 0, source: 'browser', confidence: 'high' };
       placesServiceMock.getCurrentLocation.and.returnValue(Promise.resolve(mockLocation));
 
       service.getWeatherWithFallback(16.4023, 120.596).subscribe(weatherData => {
         expect(weatherData).toEqual(expectedWeatherData);
       });
 
+      flushMicrotasks();
       const req = httpMock.expectOne(request => 
         request.url === apiUrl &&
         request.params.get('latitude') === mockLocation.lat.toString() &&
         request.params.get('longitude') === mockLocation.lng.toString()
       );
       req.flush(mockApiResponse);
-    });
+    }));
 
-    it('should use fallback coordinates when user location unavailable', () => {
+    it('should use fallback coordinates when user location unavailable', fakeAsync(() => {
       placesServiceMock.getCurrentLocation.and.returnValue(Promise.resolve(null));
       const fallbackLat = 16.4023;
       const fallbackLng = 120.596;
@@ -285,28 +293,30 @@ describe('WeatherService', () => {
         expect(weatherData).toEqual(expectedWeatherData);
       });
 
+      flushMicrotasks();
       const req = httpMock.expectOne(request => 
         request.url === apiUrl &&
         request.params.get('latitude') === fallbackLat.toString() &&
         request.params.get('longitude') === fallbackLng.toString()
       );
       req.flush(mockApiResponse);
-    });
+    }));
 
-    it('should use default location when both user location and fallback unavailable', () => {
+    it('should use default location when both user location and fallback unavailable', fakeAsync(() => {
       placesServiceMock.getCurrentLocation.and.returnValue(Promise.resolve(null));
 
       service.getWeatherWithFallback().subscribe(weatherData => {
         expect(weatherData).toEqual(expectedWeatherData);
       });
 
+      flushMicrotasks();
       const req = httpMock.expectOne(request => 
         request.url === apiUrl &&
         request.params.get('latitude') === '10.6953' &&
         request.params.get('longitude') === '122.5442'
       );
       req.flush(mockApiResponse);
-    });
+    }));
   });
 
   describe('Caching functionality', () => {

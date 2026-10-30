@@ -55,6 +55,11 @@ describe('EventService', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(mockEventData);
     req.flush(mockEventResponse);
+
+    // A club-scoped event refreshes that club's event list
+    const refresh = httpMock.expectOne(`${environment.apiUrl}/event/club/${mockEventData.club}`);
+    expect(refresh.request.method).toBe('GET');
+    refresh.flush([]);
   });
 
   it('should get all clubs', () => {
