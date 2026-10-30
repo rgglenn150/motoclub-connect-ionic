@@ -68,7 +68,8 @@ export class PaymentService {
     const formData = new FormData();
     formData.append('statement', file);
     if (password) formData.append('password', password);
-    return this.http.post<StatementCheckResponse>(`${this.baseUrl}/collection/${collectionId}/statement-check`, formData);
+    // Multipart like the receipt uploads, so it skips the service worker too (#112)
+    return this.http.post<StatementCheckResponse>(`${this.baseUrl}/collection/${collectionId}/statement-check`, formData, { params: UPLOAD_PARAMS });
   }
 
   /** Verify the chosen payments in one request; already-reviewed ones come back as skipped (spec 004). */
