@@ -21,7 +21,7 @@ import {
 } from '../../../service/network.service';
 import { ErrorService, ErrorInfo } from '../../../service/error.service';
 import { UserStateService } from '../../../service/user-state.service';
-import { EventService, Event } from '../../../service/event.service';
+import { EventService, Event, ClubEventsFilter } from '../../../service/event.service';
 import { CollectionService, Collection } from '../../../service/collection.service';
 import { Subscription } from 'rxjs';
 import { switchMap, tap, finalize } from 'rxjs/operators';
@@ -196,6 +196,9 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   clubEvents: Event[] = [];
   eventsLoading: boolean = false;
   eventsError: string | null = null;
+  // Spec 010: Upcoming / Past / All on the Events tab
+  clubEventsFilter: ClubEventsFilter = 'upcoming';
+  private clubEventsLoadSub?: Subscription;
 
   // --- COLLECTIONS STATE ---
   collections: Collection[] = [];
@@ -301,6 +304,13 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
     this.setupUserStateMonitoring();
 
     if (this.clubId) {
+      // Show every reload of this club's events, including the ones the event
+      // service does by itself after create / join / leave (spec 010 FR-007)
+      this.subscriptions.push(
+        this.eventService
+          .getClubEventsObservable(this.clubId)
+          .subscribe((events) => (this.clubEvents = events))
+      );
       this.fetchClubData(this.clubId);
       // Check user's membership status after getting club ID
       this.checkMembershipStatus();
@@ -329,6 +339,7 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   ngOnDestroy() {
     // Clean up subscriptions
     this.subscriptions.forEach((sub) => sub.unsubscribe());
+    this.clubEventsLoadSub?.unsubscribe();
 
     // Clear any pending operations in error service
     this.errorService.clearQueue();
@@ -2020,28 +2031,66 @@ export class ClubHomePage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   /**
    * Load events for the current club
    */
-  async loadClubEvents() {
-    if (!this.clubId || this.eventsLoading) return;
+  loadClubEvents() {
+    if (!this.clubId) return;
 
     try {
+      // A newer load replaces an older one, so the list always matches the
+      // selected filter (spec 010 research R6)
+      this.clubEventsLoadSub?.unsubscribe();
       this.eventsLoading = true;
       this.eventsError = null;
 
-      this.eventService.getEventsByClub(this.clubId).subscribe({
-        next: (events) => {
-          this.clubEvents = events;
-          this.eventsLoading = false;
-        },
-        error: (error) => {
-          console.error('Error loading club events:', error);
-          this.eventsError = 'Failed to load events';
-          this.eventsLoading = false;
-        },
-      });
+      // The list itself arrives through getClubEventsObservable
+      this.clubEventsLoadSub = this.eventService
+        .getEventsByClub(this.clubId, this.clubEventsFilter)
+        .subscribe({
+          next: () => {
+            this.eventsLoading = false;
+          },
+          error: (error) => {
+            console.error('Error loading club events:', error);
+            this.eventsError = 'Failed to load events';
+            this.eventsLoading = false;
+          },
+        });
     } catch (error) {
       console.error('Exception in loadClubEvents:', error);
       this.eventsError = 'Failed to load events';
       this.eventsLoading = false;
+    }
+  }
+
+  readonly clubEventsFilterOptions: { value: ClubEventsFilter; label: string }[] = [
+    { value: 'upcoming', label: 'Upcoming' },
+    { value: 'past', label: 'Past' },
+    { value: 'all', label: 'All' },
+  ];
+
+  /** Switch the Events tab between upcoming, past and all (spec 010 FR-006). */
+  setClubEventsFilter(filter: ClubEventsFilter) {
+    if (this.clubEventsFilter === filter) return;
+    this.clubEventsFilter = filter;
+    this.loadClubEvents();
+  }
+
+  /** Non-members only get Public events, so tell them why the tab may be empty (spec 010 FR-008). */
+  get showEventsJoinHint(): boolean {
+    return this.userStatus === 'not-member' || this.userStatus === 'pending';
+  }
+
+  /** Empty state wording for the selected filter (spec 010 FR-008). */
+  get emptyEventsMessage(): { title: string; text: string } {
+    switch (this.clubEventsFilter) {
+      case 'past':
+        return { title: 'No past events', text: 'Past events will appear here.' };
+      case 'all':
+        return { title: 'No events yet', text: "This club hasn't posted any events." };
+      default:
+        return {
+          title: 'No upcoming events',
+          text: "This club doesn't have any upcoming events.",
+        };
     }
   }
 

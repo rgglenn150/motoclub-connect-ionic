@@ -57,12 +57,15 @@ export interface PaginatedEventsResponse {
   hasMore: boolean;
 }
 
+// Time filter accepted by the club, My Clubs and Global event lists (spec 010)
+export type ClubEventsFilter = 'upcoming' | 'past' | 'all';
+
 // Query parameters accepted by getMyClubEvents
 export interface MyClubEventsParams {
   page?: number;
   limit?: number;
   q?: string;
-  filter?: 'upcoming' | 'past' | 'all';
+  filter?: ClubEventsFilter;
 }
 
 // Event creation data interface
@@ -91,6 +94,9 @@ export class EventService {
   // Map structure: clubId -> BehaviorSubject<Event[]>
   private clubEventsSubjects = new Map<string, BehaviorSubject<Event[]>>();
 
+  // The filter each club's list was last asked for, so reloads keep it (spec 010 FR-007)
+  private clubEventsFilters = new Map<string, ClubEventsFilter>();
+
   constructor(private http: HttpClient) { }
 
   /**
@@ -117,20 +123,35 @@ export class EventService {
   /**
    * Get events for a specific club
    * @param clubId - The ID of the club
+   * @param filter - Upcoming (default), past or all. Remembered for this club,
+   *   so later calls without a filter (e.g. refreshClubEvents) reuse it.
    * @returns Observable with the events data
    */
-  getEventsByClub(clubId: string): Observable<Event[]> {
-    return this.http.get<Event[]>(`${this.baseUrl}/club/${clubId}`)
+  getEventsByClub(clubId: string, filter?: ClubEventsFilter): Observable<Event[]> {
+    if (filter) {
+      this.clubEventsFilters.set(clubId, filter);
+    }
+    const requested = this.getClubEventsFilter(clubId);
+    const params = new HttpParams().set('filter', requested);
+    return this.http.get<Event[]>(`${this.baseUrl}/club/${clubId}`, { params })
       .pipe(
         tap(events => {
-          // Update the BehaviorSubject with fresh data
-          this.getClubEventsSubject(clubId).next(events);
+          // Update the BehaviorSubject with fresh data, unless the rider has
+          // picked another filter since this request went out (spec 010 R6)
+          if (this.getClubEventsFilter(clubId) === requested) {
+            this.getClubEventsSubject(clubId).next(events);
+          }
         }),
         catchError(error => {
           console.error('Error fetching events for club:', error);
           return throwError(() => error);
         })
       );
+  }
+
+  /** The filter a club's event list uses: the last one asked for, else upcoming. */
+  getClubEventsFilter(clubId: string): ClubEventsFilter {
+    return this.clubEventsFilters.get(clubId) ?? 'upcoming';
   }
 
   /**
