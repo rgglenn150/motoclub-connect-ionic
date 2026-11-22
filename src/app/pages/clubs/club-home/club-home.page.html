@@ -426,6 +426,19 @@
           </ion-button>
         </div>
 
+        <!-- Upcoming / Past / All, same as the main Events screen (spec 010) -->
+        <div class="filter-chips" role="group" aria-label="Show events">
+          <ion-chip
+            *ngFor="let option of clubEventsFilterOptions"
+            class="filter-chip"
+            role="button"
+            [attr.aria-pressed]="clubEventsFilter === option.value"
+            [class.selected]="clubEventsFilter === option.value"
+            (click)="setClubEventsFilter(option.value)">
+            <ion-label>{{ option.label }}</ion-label>
+          </ion-chip>
+        </div>
+
         <!-- Loading State for Events -->
         <div *ngIf="eventsLoading" class="loading-state">
           <div class="events-skeleton">
@@ -459,8 +472,9 @@
         <!-- Empty State for Events -->
         <div *ngIf="!eventsLoading && !eventsError && clubEvents.length === 0" class="empty-state">
           <ion-icon name="calendar-outline" color="medium"></ion-icon>
-          <h4>No Events Yet</h4>
-          <p *ngIf="!isUserAdmin">This club doesn't have any upcoming events.</p>
+          <h4>{{ emptyEventsMessage.title }}</h4>
+          <p *ngIf="!isUserAdmin">{{ emptyEventsMessage.text }}</p>
+          <p *ngIf="showEventsJoinHint" class="events-join-hint">Members see all of the club's events. Join the club to see them.</p>
           <p *ngIf="isUserAdmin">Create your first event to get started!</p>
           <ion-button *ngIf="isUserAdmin" color="brand-amber" (click)="navigateToCreateEvent()">
             <ion-icon name="add-outline" slot="start"></ion-icon>

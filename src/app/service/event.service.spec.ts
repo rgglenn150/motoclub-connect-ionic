@@ -57,7 +57,7 @@ describe('EventService', () => {
     req.flush(mockEventResponse);
 
     // A club-scoped event refreshes that club's event list
-    const refresh = httpMock.expectOne(`${environment.apiUrl}/event/club/${mockEventData.club}`);
+    const refresh = httpMock.expectOne(`${environment.apiUrl}/event/club/${mockEventData.club}?filter=upcoming`);
     expect(refresh.request.method).toBe('GET');
     refresh.flush([]);
   });
@@ -78,5 +78,58 @@ describe('EventService', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/club`);
     expect(req.request.method).toBe('GET');
     req.flush(mockClubs);
+  });
+
+  describe('club events filter (spec 010)', () => {
+    const clubId = '507f1f77bcf86cd799439011';
+    const clubUrl = `${environment.apiUrl}/event/club/${clubId}`;
+    const event = (name: string): ClubEvent => ({
+      _id: name,
+      name,
+      description: '',
+      startTime: '2026-11-24T09:00:00Z',
+      endTime: '',
+      eventType: 'ride',
+      club: clubId,
+      createdBy: 'u1',
+      createdAt: '',
+      updatedAt: '',
+    });
+
+    it('asks for upcoming events by default', () => {
+      service.getEventsByClub(clubId).subscribe();
+      httpMock.expectOne(`${clubUrl}?filter=upcoming`).flush([]);
+    });
+
+    it('sends the given filter', () => {
+      service.getEventsByClub(clubId, 'past').subscribe();
+      httpMock.expectOne(`${clubUrl}?filter=past`).flush([]);
+    });
+
+    it('pushes the result to the club events stream', () => {
+      let shown: ClubEvent[] = [];
+      service.getClubEventsObservable(clubId).subscribe((events) => (shown = events));
+      service.getEventsByClub(clubId).subscribe();
+      httpMock.expectOne(`${clubUrl}?filter=upcoming`).flush([event('a')]);
+      expect(shown.map((e) => e.name)).toEqual(['a']);
+    });
+
+    it('refreshes with the filter last asked for', () => {
+      service.getEventsByClub(clubId, 'past').subscribe();
+      httpMock.expectOne(`${clubUrl}?filter=past`).flush([]);
+      service.refreshClubEvents(clubId);
+      httpMock.expectOne(`${clubUrl}?filter=past`).flush([]);
+    });
+
+    it('ignores a late answer for a filter that is no longer selected', () => {
+      let shown: ClubEvent[] = [];
+      service.getClubEventsObservable(clubId).subscribe((events) => (shown = events));
+      service.getEventsByClub(clubId, 'upcoming').subscribe();
+      service.getEventsByClub(clubId, 'past').subscribe();
+      const slowUpcoming = httpMock.expectOne(`${clubUrl}?filter=upcoming`);
+      httpMock.expectOne(`${clubUrl}?filter=past`).flush([event('old ride')]);
+      slowUpcoming.flush([event('next ride')]);
+      expect(shown.map((e) => e.name)).toEqual(['old ride']);
+    });
   });
 });

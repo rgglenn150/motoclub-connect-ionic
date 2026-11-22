@@ -1601,3 +1601,35 @@ ion-action-sheet.dark-theme-action-sheet {
     padding: 0 16px;
   }
 }
+
+// Spec 010: Upcoming / Past / All chips, copied from events.page.scss (research R7)
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 4px;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar { display: none; }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.filter-chip {
+  --background: #2D3748;
+  --color: #F7FAFC;
+  border: 1px solid #4A5568;
+  font-weight: 500;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  ion-label { color: #F7FAFC; }
+
+  &.selected {
+    --background: #F59E0B;
+    --color: #000000;
+    background: #F59E0B;
+    border-color: #F59E0B;
+
+    ion-label { color: #000000; font-weight: 600; }
+  }
+}
