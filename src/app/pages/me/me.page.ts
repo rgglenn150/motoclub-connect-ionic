@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, ElementRef, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
-import { UserService } from '../../service/user.service';
+import { UserService, UserStats } from '../../service/user.service';
 import { UserStateService } from '../../service/user-state.service';
 import { Subject, takeUntil } from 'rxjs';
 import { ViewWillLeave } from '@ionic/angular';
@@ -23,12 +23,10 @@ export class MePage implements OnInit, OnDestroy, ViewWillLeave {
     username: 'Rider Glenn',
     joinDate: 'March 2024',
     profilePhoto: 'https://placehold.co/100x100/F59E0B/2D3748?text=R',
-    stats: {
-      rides: 12,
-      kmRidden: 1450,
-      clubs: 3,
-    },
   };
+
+  // Live stats from the backend (rides attended, km ridden, clubs joined)
+  stats: UserStats | null = null;
 
   imageChangedEvent: any = null;
   croppedImage: any = '';
@@ -44,6 +42,18 @@ export class MePage implements OnInit, OnDestroy, ViewWillLeave {
 
   ngOnInit() {
     this.subscribeToUserState();
+    this.loadStats();
+  }
+
+  loadStats() {
+    this.userService.getUserStats().subscribe({
+      next: (stats) => {
+        this.stats = stats;
+      },
+      error: (err) => {
+        console.error('Failed to load user stats:', err);
+      },
+    });
   }
 
   ngOnDestroy() {

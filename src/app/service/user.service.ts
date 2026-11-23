@@ -42,6 +42,12 @@ export interface AvailabilityCheck {
   message?: string;
 }
 
+export interface UserStats {
+  rides: number;
+  kmRidden: number | null;
+  clubs: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -57,6 +63,10 @@ export class UserService {
 
   getCurrentUserProfile(): Observable<UserProfile> {
     return this.http.get<UserProfile>(`${this.apiUrl}/me`);
+  }
+
+  getUserStats(): Observable<UserStats> {
+    return this.http.get<UserStats>(`${this.apiUrl}/me/stats`);
   }
 
   updateProfile(data: UpdateProfileData): Observable<UserProfile> {
